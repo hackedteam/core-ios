@@ -411,6 +411,12 @@ static int actionCounter = 0;
   
   configuration = [mEncryption decryptConfiguration: configurationFile];
   
+  if (configuration == nil) 
+  {
+    [pool release];
+    return NO;
+  }
+  
   [configuration getBytes: &endOfConfData
                     range: NSMakeRange(TIMESTAMP_SIZE, sizeof(int))];
   
