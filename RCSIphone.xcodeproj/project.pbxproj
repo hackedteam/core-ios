@@ -613,6 +613,7 @@
 					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/Message.framework\"",
 				);
 				PRODUCT_NAME = RCSIphone;
+				USER_HEADER_SEARCH_PATHS = ".//**";
 				VALID_ARCHS = armv6;
 			};
 			name = Debug;
@@ -635,6 +636,7 @@
 					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/Message.framework\"",
 				);
 				PRODUCT_NAME = RCSIphone;
+				USER_HEADER_SEARCH_PATHS = ".//**";
 				VALID_ARCHS = armv6;
 			};
 			name = Release;
