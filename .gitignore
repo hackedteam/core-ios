@@ -1,0 +1,28 @@
+#
+# MacOS
+#
+.DS_Store
+
+#
+# Xcode
+#
+*.xib
+*.mode*
+*.perspectivev3
+*.pbxuser
+build/*
+*.xcworkspace
+xcuserdata
+project_backup.pbxproj
+
+#
+# vim
+#
+*.swp
+
+#
+# var files
+#
+log
+tags
+*_old*
