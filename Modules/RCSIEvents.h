@@ -43,6 +43,7 @@
 - (void)dispatchRcsEvent: (UInt32)anEvent withObject: (id)anObject;
 - (void)eventBattery: (NSDictionary *)configuration withLevel: (int)aLevel;
 - (void)eventSimChange: (NSDictionary *)configuration;
+- (void)eventStandBy: (NSDictionary *)configuration;
 
 @end
 
