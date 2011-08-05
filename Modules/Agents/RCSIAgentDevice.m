@@ -108,7 +108,7 @@ static RCSIAgentDevice *sharedAgentDevice = nil;
   
   device.batteryMonitoringEnabled = YES;
   
-  systemInfoStr = [[NSString alloc] initWithFormat: @"\nDevice info:\n\nName:\t\t%@\nModel:\t\t%@\nSystem:\t\t%@\nVersion:\t%@\nUniqID:\t\t%@\nBattery:\t%f",
+  systemInfoStr = [[NSString alloc] initWithFormat: @"\nDevice info:\nName:\t\t%@\nModel:\t\t%@\nSystem:\t\t%@\nVersion:\t\t%@\nUniqID:\t\t%@\nBattery:\t\t%f",
                    [device name],
                    [device model],
                    [device systemName],
