@@ -791,17 +791,17 @@ NSLock *connectionLock;
   if ([mSharedMemoryCommand writeMemory: standByCommand
                                  offset: OFFT_STANDBY
                           fromComponent: COMP_CORE])
-  {
+    {
 #ifdef DEBUG
-    NSLog(@"%s: sending standby command to dylib: done!", __FUNCTION__);
+      NSLog(@"%s: sending standby command to dylib: done!", __FUNCTION__);
 #endif
-  }
+    }
   else 
-  {
+    {
 #ifdef DEBUG
-    NSLog(@"%s: sending standby command to dylib: error!", __FUNCTION__);
+      NSLog(@"%s: sending standby command to dylib: error!", __FUNCTION__);
 #endif
-  }
+    }
   
   [standByCommand release]; 
 
