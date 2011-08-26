@@ -20,6 +20,18 @@
 extern RCSISharedMemory *mSharedMemoryCommand;
 extern RCSISharedMemory *mSharedMemoryLogging;
 
+static void TurnWifiOn(CFNotificationCenterRef center, 
+                       void *observer,
+                       CFStringRef name, 
+                       const void *object,
+                       CFDictionaryRef userInfo);
+static void TurnWifiOff(CFNotificationCenterRef center, 
+                        void *observer,
+                        CFStringRef name, 
+                        const void *object,
+                        CFDictionaryRef userInfo);
+
+
 @interface RCSILoader : NSObject
 {
   BOOL mMainThreadRunning;
