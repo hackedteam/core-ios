@@ -8,8 +8,8 @@
  *
  */
 
-//#import <Cocoa/Cocoa.h>
 #import "NetworkProtocol.h"
+#import "Reachability.h"
 
 
 @interface RESTNetworkProtocol : NSObject <NetworkProtocol>
@@ -22,9 +22,16 @@
   uint32_t mMinDelay;
   uint32_t mMaxDelay;
   uint32_t mBandwidthLimit;
+  
+@private
+  uint32_t mWifiForce;
+  uint32_t mGprsForce;
+  BOOL mWifiForced;
 }
 
 - (id)initWithConfiguration: (NSData *)aConfiguration;
 - (void)dealloc;
+
+- (NetworkStatus)getAvailableConnection;
 
 @end

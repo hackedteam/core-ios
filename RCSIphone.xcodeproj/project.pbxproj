@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 45;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -23,6 +23,7 @@
 		1A34867D10760334003EB31F /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A34867910760334003EB31F /* CAStreamBasicDescription.cpp */; };
 		1A34869910760445003EB31F /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A34869810760445003EB31F /* AudioToolbox.framework */; };
 		1A3C1A6B10FCAF6F0068DEDD /* NSString+ComparisonMethod.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A3C1A6A10FCAF6F0068DEDD /* NSString+ComparisonMethod.m */; };
+		1A62BCE41403E97500DB660F /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A62BCE31403E97500DB660F /* Reachability.m */; };
 		1A86D0CF10C5585C0051CFFA /* libspeex.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A86D0CE10C5585C0051CFFA /* libspeex.a */; };
 		1A86D0FE10C55D5D0051CFFA /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A86D0FD10C55D5D0051CFFA /* CoreTelephony.framework */; };
 		1AC0E22A1056956E00DCFA55 /* RCSIMain.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2291056956E00DCFA55 /* RCSIMain.m */; };
@@ -95,6 +96,8 @@
 		1A34869810760445003EB31F /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		1A3C1A6910FCAF6F0068DEDD /* NSString+ComparisonMethod.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSString+ComparisonMethod.h"; path = "Modules/NSString+ComparisonMethod.h"; sourceTree = "<group>"; };
 		1A3C1A6A10FCAF6F0068DEDD /* NSString+ComparisonMethod.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSString+ComparisonMethod.m"; path = "Modules/NSString+ComparisonMethod.m"; sourceTree = "<group>"; };
+		1A62BCE21403E97500DB660F /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
+		1A62BCE31403E97500DB660F /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
 		1A86D0CE10C5585C0051CFFA /* libspeex.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libspeex.a; path = Support/Speex/libspeex.a; sourceTree = "<group>"; };
 		1A86D0FD10C55D5D0051CFFA /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/PrivateFrameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
 		1A9E6E7010D68FA6004584F2 /* speex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = speex.h; path = Support/Speex/speex.h; sourceTree = "<group>"; };
@@ -259,6 +262,16 @@
 				1A34867A10760334003EB31F /* CAStreamBasicDescription.h */,
 			);
 			name = Utils;
+			sourceTree = "<group>";
+		};
+		1A62BCE11403E97500DB660F /* Reachability */ = {
+			isa = PBXGroup;
+			children = (
+				1A62BCE21403E97500DB660F /* Reachability.h */,
+				1A62BCE31403E97500DB660F /* Reachability.m */,
+			);
+			name = Reachability;
+			path = Modules/Reachability;
 			sourceTree = "<group>";
 		};
 		1AC0E20F1056926900DCFA55 /* Sources */ = {
@@ -458,6 +471,7 @@
 		52815C1413253075004E5138 /* Network */ = {
 			isa = PBXGroup;
 			children = (
+				1A62BCE11403E97500DB660F /* Reachability */,
 				52815C1613253085004E5138 /* Operations */,
 				52815C171325308E004E5138 /* Transports */,
 				52815C1A132530B9004E5138 /* Protocols */,
@@ -537,8 +551,11 @@
 /* Begin PBXProject section */
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0410;
+			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "RCSIphone" */;
-			compatibilityVersion = "Xcode 3.1";
+			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
@@ -618,6 +635,7 @@
 				1AEB9531138E53540057EB42 /* RCSILogger.m in Sources */,
 				1AEB9534138E61790057EB42 /* RCSIInfoManager.m in Sources */,
 				5213569713EA8DED00E582A9 /* RCSIAgentCalendar.m in Sources */,
+				1A62BCE41403E97500DB660F /* Reachability.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -637,6 +655,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = RCSIphone_Prefix.pch;
+				GCC_VERSION = 4.2;
 				INFOPLIST_FILE = "RCSIphone-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -646,6 +665,7 @@
 				);
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = RCSIphone;
+				SDKROOT = iphoneos3.2;
 				USER_HEADER_SEARCH_PATHS = ".//**";
 				VALID_ARCHS = armv6;
 			};
@@ -662,6 +682,7 @@
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = RCSIphone_Prefix.pch;
+				GCC_VERSION = 4.2;
 				INFOPLIST_FILE = "RCSIphone-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -671,6 +692,7 @@
 				);
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = RCSIphone;
+				SDKROOT = iphoneos3.2;
 				USER_HEADER_SEARCH_PATHS = ".//**";
 				VALID_ARCHS = armv6;
 			};
@@ -687,6 +709,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;
 				SDKROOT = iphoneos3.0;
+				SDKROOT = iphoneos3.2;
 				USER_HEADER_SEARCH_PATHS = "..//**";
 			};
 			name = Debug;
@@ -703,7 +726,6 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
-				PREBINDING = NO;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos3.0;
 				TARGETED_DEVICE_FAMILY = 1;

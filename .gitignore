@@ -26,3 +26,4 @@ project_backup.pbxproj
 log
 tags
 *_old*
+*.dylib

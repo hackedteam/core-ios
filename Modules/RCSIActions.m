@@ -48,7 +48,7 @@
       if (tmpDevice != nil &&
           tmpDevice->isEnabled == AGENT_DEV_ENABLED)
         {          
-          bSuccess =[taskManager startAgent: AGENT_DEVICE];
+          bSuccess = [taskManager startAgent: AGENT_DEVICE];
           
 #ifdef DEBUG
           NSLog(@"%s: sync performed... restarting DEVICE Agent %d", __FUNCTION__, bSuccess);
