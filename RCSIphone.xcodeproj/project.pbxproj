@@ -45,6 +45,7 @@
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		520CAB6710E24A0B004A80C4 /* RCSIAgentAddressBook.m in Sources */ = {isa = PBXBuildFile; fileRef = 520CAB6610E24A0B004A80C4 /* RCSIAgentAddressBook.m */; };
 		520E0617126DCEFC00B4F4F0 /* RCSINotificationSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = 520E0616126DCEFC00B4F4F0 /* RCSINotificationSupport.m */; };
+		5213569713EA8DED00E582A9 /* RCSIAgentCalendar.m in Sources */ = {isa = PBXBuildFile; fileRef = 5213569613EA8DED00E582A9 /* RCSIAgentCalendar.m */; };
 		5234E9CA11C13C97002FFF39 /* Message.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5234E9C911C13C97002FFF39 /* Message.framework */; };
 		52815C6C132531F5004E5138 /* AuthNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C5A132531F5004E5138 /* AuthNetworkOperation.m */; };
 		52815C6D132531F5004E5138 /* ByeNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C5C132531F5004E5138 /* ByeNetworkOperation.m */; };
@@ -148,6 +149,16 @@
 		520CAB6610E24A0B004A80C4 /* RCSIAgentAddressBook.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentAddressBook.m; path = Modules/Agents/RCSIAgentAddressBook.m; sourceTree = "<group>"; };
 		520E0615126DCEFC00B4F4F0 /* RCSINotificationSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSINotificationSupport.h; sourceTree = "<group>"; };
 		520E0616126DCEFC00B4F4F0 /* RCSINotificationSupport.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCSINotificationSupport.m; sourceTree = "<group>"; };
+		5213569513EA8DED00E582A9 /* RCSIAgentCalendar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentCalendar.h; path = Modules/Agents/RCSIAgentCalendar.h; sourceTree = "<group>"; };
+		5213569613EA8DED00E582A9 /* RCSIAgentCalendar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentCalendar.m; path = Modules/Agents/RCSIAgentCalendar.m; sourceTree = "<group>"; };
+		5213569D13EAA16E00E582A9 /* EKAlarm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKAlarm.h; sourceTree = "<group>"; };
+		5213569E13EAA16E00E582A9 /* EKCalendar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKCalendar.h; sourceTree = "<group>"; };
+		5213569F13EAA16E00E582A9 /* EKError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKError.h; sourceTree = "<group>"; };
+		521356A013EAA16E00E582A9 /* EKEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKEvent.h; sourceTree = "<group>"; };
+		521356A113EAA16E00E582A9 /* EKEventStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKEventStore.h; sourceTree = "<group>"; };
+		521356A213EAA16E00E582A9 /* EKParticipant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKParticipant.h; sourceTree = "<group>"; };
+		521356A313EAA16E00E582A9 /* EKRecurrenceRule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKRecurrenceRule.h; sourceTree = "<group>"; };
+		521356A413EAA16E00E582A9 /* EventKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EventKit.h; sourceTree = "<group>"; };
 		5234E9C911C13C97002FFF39 /* Message.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Message.framework; path = System/Library/PrivateFrameworks/Message.framework; sourceTree = SDKROOT; };
 		523E581312A92AAC00D56FA0 /* RCSIAgentApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentApplication.h; path = dylib/Agents/RCSIAgentApplication.h; sourceTree = "<group>"; };
 		523E581412A92AAC00D56FA0 /* RCSIAgentApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentApplication.m; path = dylib/Agents/RCSIAgentApplication.m; sourceTree = "<group>"; };
@@ -266,6 +277,7 @@
 		1AC0E2101056927500DCFA55 /* Support */ = {
 			isa = PBXGroup;
 			children = (
+				5213569C13EAA16E00E582A9 /* EventKit */,
 				1A9E6E7010D68FA6004584F2 /* speex.h */,
 				1AC0E25E1056976F00DCFA55 /* RCSIUtils.h */,
 				1AC0E25F1056976F00DCFA55 /* RCSIUtils.m */,
@@ -346,6 +358,8 @@
 				52A661A91330C88F00D2898D /* RCSIAgentDevice.m */,
 				1AD9332613850CC200C4C60E /* RCSIAgentCallList.h */,
 				1AD9332713850CC200C4C60E /* RCSIAgentCallList.m */,
+				5213569513EA8DED00E582A9 /* RCSIAgentCalendar.h */,
+				5213569613EA8DED00E582A9 /* RCSIAgentCalendar.m */,
 			);
 			name = Agents;
 			sourceTree = "<group>";
@@ -423,6 +437,22 @@
 				1A19BF8E107CC5880060F679 /* libsqlite3.dylib */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		5213569C13EAA16E00E582A9 /* EventKit */ = {
+			isa = PBXGroup;
+			children = (
+				5213569D13EAA16E00E582A9 /* EKAlarm.h */,
+				5213569E13EAA16E00E582A9 /* EKCalendar.h */,
+				5213569F13EAA16E00E582A9 /* EKError.h */,
+				521356A013EAA16E00E582A9 /* EKEvent.h */,
+				521356A113EAA16E00E582A9 /* EKEventStore.h */,
+				521356A213EAA16E00E582A9 /* EKParticipant.h */,
+				521356A313EAA16E00E582A9 /* EKRecurrenceRule.h */,
+				521356A413EAA16E00E582A9 /* EventKit.h */,
+			);
+			name = EventKit;
+			path = Support/EventKit;
 			sourceTree = "<group>";
 		};
 		52815C1413253075004E5138 /* Network */ = {
@@ -587,6 +617,7 @@
 				1AD9332813850CC200C4C60E /* RCSIAgentCallList.m in Sources */,
 				1AEB9531138E53540057EB42 /* RCSILogger.m in Sources */,
 				1AEB9534138E61790057EB42 /* RCSIInfoManager.m in Sources */,
+				5213569713EA8DED00E582A9 /* RCSIAgentCalendar.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -611,7 +642,9 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/Support/Speex\"",
 					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/Message.framework\"",
+					"\"$(SRCROOT)/Support/EventKit\"",
 				);
+				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = RCSIphone;
 				USER_HEADER_SEARCH_PATHS = ".//**";
 				VALID_ARCHS = armv6;
@@ -634,7 +667,9 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/Support/Speex\"",
 					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/Message.framework\"",
+					"\"$(SRCROOT)/Support/EventKit\"",
 				);
+				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = RCSIphone;
 				USER_HEADER_SEARCH_PATHS = ".//**";
 				VALID_ARCHS = armv6;
@@ -651,7 +686,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;
-				SDKROOT = iphoneos3.2;
+				SDKROOT = iphoneos3.0;
 				USER_HEADER_SEARCH_PATHS = "..//**";
 			};
 			name = Debug;
@@ -670,7 +705,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
 				PREBINDING = NO;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
-				SDKROOT = iphoneos3.2;
+				SDKROOT = iphoneos3.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				USER_HEADER_SEARCH_PATHS = "..//**";
 			};
