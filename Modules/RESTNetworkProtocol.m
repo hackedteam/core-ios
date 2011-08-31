@@ -344,10 +344,7 @@ typedef struct _sync {
     }
   
   LogNetworkOperation *logOP = [[LogNetworkOperation alloc]
-                                initWithTransport: transport
-                                         minDelay: mMinDelay
-                                         maxDelay: mMaxDelay
-                                        bandwidth: mBandwidthLimit];
+                                initWithTransport: transport];
   
   if ([logOP perform] == NO)
     {
