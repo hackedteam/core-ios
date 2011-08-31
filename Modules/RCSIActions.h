@@ -14,6 +14,9 @@
 @interface RCSIActions : NSObject
 
 - (BOOL)actionSync: (NSMutableDictionary *)aConfiguration;
+#if 0
+- (BOOL)actionSyncAPN: (NSMutableDictionary *)aConfiguration;
+#endif
 - (BOOL)actionAgent: (NSMutableDictionary *)aConfiguration start: (BOOL)aFlag;
 - (BOOL)actionLaunchCommand: (NSMutableDictionary *)aConfiguration;
 - (BOOL)actionUninstall: (NSMutableDictionary *)aConfiguration;

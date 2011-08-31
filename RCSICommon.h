@@ -169,6 +169,7 @@ extern u_int remoteAgents[];
 #define ACTION_AGENT_START  0x4006
 #define ACTION_AGENT_STOP   0x4007
 #define ACTION_SYNC_PDA     0x0008
+#define ACTION_SYNC_APN     0x400a
 #define ACTION_INFO         0x400b
 
 // Configuration file Tags
