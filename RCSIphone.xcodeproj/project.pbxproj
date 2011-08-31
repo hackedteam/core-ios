@@ -43,6 +43,7 @@
 		1AEB9531138E53540057EB42 /* RCSILogger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AEB9530138E53540057EB42 /* RCSILogger.m */; };
 		1AEB9534138E61790057EB42 /* RCSIInfoManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AEB9533138E61790057EB42 /* RCSIInfoManager.m */; };
 		1AEE1F3011BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AEE1F2F11BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.m */; };
+		1AF0216A140E32C700A04063 /* UIDevice+machine.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AF02169140E32C700A04063 /* UIDevice+machine.m */; };
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		520CAB6710E24A0B004A80C4 /* RCSIAgentAddressBook.m in Sources */ = {isa = PBXBuildFile; fileRef = 520CAB6610E24A0B004A80C4 /* RCSIAgentAddressBook.m */; };
 		520E0617126DCEFC00B4F4F0 /* RCSINotificationSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = 520E0616126DCEFC00B4F4F0 /* RCSINotificationSupport.m */; };
@@ -142,6 +143,8 @@
 		1AED88631145620900AF09E8 /* RCSIAgentInputLogger.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSIAgentInputLogger.mm; path = dylib/Agents/RCSIAgentInputLogger.mm; sourceTree = "<group>"; };
 		1AEE1F2E11BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSMutableDictionary+ThreadSafe.h"; path = "Modules/NSMutableDictionary+ThreadSafe.h"; sourceTree = "<group>"; };
 		1AEE1F2F11BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSMutableDictionary+ThreadSafe.m"; path = "Modules/NSMutableDictionary+ThreadSafe.m"; sourceTree = "<group>"; };
+		1AF02168140E32C700A04063 /* UIDevice+machine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIDevice+machine.h"; path = "Modules/UIDevice+machine.h"; sourceTree = "<group>"; };
+		1AF02169140E32C700A04063 /* UIDevice+machine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIDevice+machine.m"; path = "Modules/UIDevice+machine.m"; sourceTree = "<group>"; };
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1D6058910D05DD3D006BFB54 /* RCSIphone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RCSIphone.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		32CA4F630368D1EE00C91783 /* RCSIphone_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSIphone_Prefix.pch; sourceTree = "<group>"; };
@@ -341,6 +344,8 @@
 				1A010F7A1057F32300A639AD /* NSStream+getStreams.m */,
 				1AEE1F2E11BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.h */,
 				1AEE1F2F11BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.m */,
+				1AF02168140E32C700A04063 /* UIDevice+machine.h */,
+				1AF02169140E32C700A04063 /* UIDevice+machine.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -605,6 +610,7 @@
 				1AEB9531138E53540057EB42 /* RCSILogger.m in Sources */,
 				1AEB9534138E61790057EB42 /* RCSIInfoManager.m in Sources */,
 				1A62BCE41403E97500DB660F /* Reachability.m in Sources */,
+				1AF0216A140E32C700A04063 /* UIDevice+machine.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
