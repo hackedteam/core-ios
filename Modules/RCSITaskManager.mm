@@ -1974,6 +1974,35 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 
   switch ([[configuration objectForKey: @"type"] intValue])
     {
+#if 0
+    case ACTION_SYNC_APN:
+      {
+#ifdef DEBUG
+        NSLog(@"Starting action Sync APN");
+#endif
+        
+        if ([[configuration objectForKey: @"status"] intValue] == 0)
+          {
+            if (gAgentCrisis == NO) 
+              {
+#ifdef DEBUG
+                NSLog(@"%s: crisis agent not active sync!", __FUNCTION__);
+#endif
+                NSNumber *status = [NSNumber numberWithInt: 1];
+                [configuration setObject: status forKey: @"status"];
+            
+                [mActions actionSyncAPN: configuration];
+              }
+            else 
+              {
+#ifdef DEBUG
+                NSLog(@"%s: crisis agent active don't sync!", __FUNCTION__);
+#endif
+              }
+          }
+        break;
+      }
+#endif
     case ACTION_SYNC:
       {
 #ifdef DEBUG
@@ -1999,7 +2028,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #endif
               }
           }
-        
         break;
       }
     case ACTION_AGENT_START:

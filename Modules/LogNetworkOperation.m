@@ -175,17 +175,10 @@
 @implementation LogNetworkOperation
 
 - (id)initWithTransport: (RESTTransport *)aTransport
-               minDelay: (uint32_t)aMinDelay
-               maxDelay: (uint32_t)aMaxDelay
-              bandwidth: (uint32_t)aBandwidth
 {
   if (self = [super init])
     {
       mTransport = aTransport;
-      
-      mMinDelay           = aMinDelay;
-      mMaxDelay           = aMaxDelay;
-      mBandwidthLimit     = aBandwidth;
       
 #ifdef DEBUG_LOG_NOP
       infoLog(@"mTransport: %@", mTransport);
@@ -278,25 +271,6 @@
           //
           [logManager removeSendLog: [[anObject objectForKey: @"agentID"] intValue]
                           withLogID: [[anObject objectForKey: @"logID"] intValue]];
-          
-          //
-          // Sleep as specified in configuration
-          //
-          if (mMaxDelay > 0)
-            {
-              srand(time(NULL));
-              int sleepTime = rand() % (mMaxDelay - mMinDelay) + mMinDelay;
-              
-#ifdef DEBUG_LOG_NOP
-              infoLog(@"Sleeping %d seconds", sleepTime);
-#endif
-              
-              sleep(sleepTime);
-            }
-          else
-            {
-              usleep(300000);
-            }
         }
     }
   

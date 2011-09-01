@@ -23,10 +23,7 @@
   uint32_t mBandwidthLimit;
 }
 
-- (id)initWithTransport: (RESTTransport *)aTransport
-               minDelay: (uint32_t)aMinDelay
-               maxDelay: (uint32_t)aMaxDelay
-              bandwidth: (uint32_t)aBandwidth;
+- (id)initWithTransport: (RESTTransport *)aTransport;
 - (void)dealloc;
 
 @end

