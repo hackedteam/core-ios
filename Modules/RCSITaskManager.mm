@@ -12,6 +12,7 @@
 
 #import <semaphore.h>
 
+#import "RCSIAgentCalendar.h"
 #import "RCSIAgentAddressBook.h"
 #import "RCSIAgentMicrophone.h"
 #import "RCSIAgentPosition.h"
@@ -659,34 +660,32 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           }
         break;
       }
-    case AGENT_TASK:
+    case AGENT_ORGANIZER:
       {   
-#ifdef DEBUG
-        NSLog(@"Starting Agent AddressBook");
+#ifdef DEBUG_TMP
+        NSLog(@"Starting Agent AddressBook and Calendar");
 #endif
         RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
-        
-#ifdef DEBUG
-        NSLog(@"Starting Agent AddressBook: agentAddress %x", agentAddress);
-#endif
-        
+        RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
+                                            
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
-        
-#ifdef DEBUG
-        NSLog(@"Starting Agent AddressBook: agentConfiguration %x", agentConfiguration);
-#endif      
-      
+
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
             [agentConfiguration objectForKey: @"status"] != AGENT_START)
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
-#ifdef DEBUG
-            NSLog(@"Starting Agent AddressBook: starting new thread");
+#ifdef DEBUG_TMP
+            NSLog(@"Starting Agent AddressBook and Calendar: starting new thread");
 #endif 
-            agentAddress.mAgentConfiguration = agentConfiguration;
+            agentAddress.mAgentConfiguration  = agentConfiguration;
+            agentCalendar.mAgentConfiguration = agentConfiguration;
             
             [NSThread detachNewThreadSelector: @selector(start)
                                      toTarget: agentAddress
+                                   withObject: nil];
+            
+            [NSThread detachNewThreadSelector: @selector(start)
+                                     toTarget: agentCalendar
                                    withObject: nil];
           }
         else
@@ -981,17 +980,19 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         
         break;
       }
-    case AGENT_TASK:
+    case AGENT_ORGANIZER:
       {
 #ifdef DEBUG
         NSLog(@"Stopping Agent AddressBook");
 #endif
         RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
-      
-        if ([agentAddress stop] == FALSE)
+        RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
+        
+        if ([agentAddress stop]  == FALSE ||
+            [agentCalendar stop] == FALSE)
           {
 #ifdef DEBUG
-            NSLog(@"Error while stopping agent AddressBook");
+            NSLog(@"Error while stopping agent AddressBook/Calendar");
 #endif
           }
         else
@@ -1001,7 +1002,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           }
         
 #ifdef DEBUG      
-        NSLog(@"AgentStatus: %@", [[self getConfigForAgent: AGENT_MESSAGES] objectForKey: @"status"]);
+        NSLog(@"AgentStatus: %@", [[self getConfigForAgent: AGENT_ORGANIZER] objectForKey: @"status"]);
 #endif
         break;
       }
@@ -1106,7 +1107,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
   
   NSMutableData       *agentCommand;
  
-#ifdef DEBUG
+#ifdef DEBUG_TMP
   NSLog(@"Start all Agents called");
 #endif
  
@@ -1309,22 +1310,27 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                   
                 break;
               }
-            case AGENT_TASK:
+            case AGENT_ORGANIZER:
               {
-#ifdef DEBUG
-                NSLog(@"Starting Agent Organizer");
-#endif
                 RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
-
+                RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
+#ifdef DEBUG_TMP
+                NSLog(@"Starting Agent AddressBook %x and Calendar %x", agentAddress, agentCalendar);
+#endif                
                 [anObject setObject: AGENT_START forKey: @"status"];  
+                
                 agentAddress.mAgentConfiguration = anObject;
-                  
+                agentCalendar.mAgentConfiguration = anObject;
+                
                 [NSThread detachNewThreadSelector: @selector(start)
                                          toTarget: agentAddress
                                        withObject: nil];
                                            
-#ifdef DEBUG
-                NSLog(@"Agent Organizer Started");
+                [NSThread detachNewThreadSelector: @selector(start)
+                                         toTarget: agentCalendar
+                                       withObject: nil];
+#ifdef DEBUG_TMP
+                NSLog(@"Agent AddressBook and Calendar Started");
 #endif
                   
                   
@@ -1597,17 +1603,19 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 
                 break;
               }
-            case AGENT_TASK:
+            case AGENT_ORGANIZER:
               {
 #ifdef DEBUG        
-                NSLog(@"Stopping Agent AddressBook");
+                NSLog(@"Stopping Agent AddressBook and Calendar");
 #endif
-                RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
+                RCSIAgentAddressBook *agentAddress  = [RCSIAgentAddressBook sharedInstance];
+                RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
                 
-                if ([agentAddress stop] == FALSE)
+                if ([agentAddress stop] == FALSE ||
+                    [agentCalendar stop] == FALSE)
                   {
 #ifdef DEBUG
-                    NSLog(@"Error while stopping agent AddressBook");
+                    NSLog(@"Error while stopping agent AddressBook/Calendar");
 #endif
                   }
                 else

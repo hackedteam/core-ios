@@ -106,7 +106,7 @@ typedef struct kinfo_proc kinfo_proc;
 // Agents
 //
 #define AGENT_MESSAGES    0x1001
-#define AGENT_TASK        0x1002
+#define AGENT_ORGANIZER        0x1002
 #define AGENT_CALL_LIST   0x1003
 #define AGENT_DEVICE      0x1004
 #define AGENT_POSITION    0x1005
