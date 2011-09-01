@@ -665,7 +665,7 @@
 				);
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = RCSIphone;
-				SDKROOT = iphoneos3.2;
+				SDKROOT = iphoneos3.0;
 				USER_HEADER_SEARCH_PATHS = ".//**";
 				VALID_ARCHS = armv6;
 			};
@@ -692,7 +692,7 @@
 				);
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = RCSIphone;
-				SDKROOT = iphoneos3.2;
+				SDKROOT = iphoneos3.0;
 				USER_HEADER_SEARCH_PATHS = ".//**";
 				VALID_ARCHS = armv6;
 			};
@@ -709,7 +709,6 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;
 				SDKROOT = iphoneos3.0;
-				SDKROOT = iphoneos3.2;
 				USER_HEADER_SEARCH_PATHS = "..//**";
 			};
 			name = Debug;
