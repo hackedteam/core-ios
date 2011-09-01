@@ -19,9 +19,9 @@
 //#import "RCSMDebug.h"
 
 //#define DEBUG_UPGRADE_NOP
-#define infoLog NSLog
-#define errorLog NSLog
-#define warnLog NSLog
+//#define infoLog NSLog
+//#define errorLog NSLog
+//#define warnLog NSLog
 
 #define	S_ISUID		0004000		/* [XSI] set user id on execution */
 #define	S_IRWXU		0000700		/* [XSI] RWX mask for owner */
