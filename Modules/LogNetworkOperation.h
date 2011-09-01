@@ -16,11 +16,6 @@
 {
 @private
   RESTTransport *mTransport;
-
-@private
-  uint32_t mMinDelay;
-  uint32_t mMaxDelay;
-  uint32_t mBandwidthLimit;
 }
 
 - (id)initWithTransport: (RESTTransport *)aTransport;
