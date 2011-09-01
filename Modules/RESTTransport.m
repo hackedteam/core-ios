@@ -29,21 +29,20 @@
 {
   if (self = [super init])
     {
-#ifdef DEBUG_TRANSPORT
-      infoLog(@"host: %@", aURL);
-      infoLog(@"port: %d", aPort);
-#endif
-    
       if (aURL == nil)
         {
 #ifdef DEBUG_TRANSPORT
           errorLog(@"URL is null");
 #endif
           
-          [self release];
           return nil;
         }
-      
+     
+#ifdef DEBUG_TRANSPORT
+      infoLog(@"host: %@", aURL);
+      infoLog(@"port: %d", aPort);
+#endif
+    
       if (aPort <= 0)
         {
 #ifdef DEBUG_TRANSPORT
