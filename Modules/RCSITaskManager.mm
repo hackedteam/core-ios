@@ -15,7 +15,7 @@
 #import "RCSIAgentCalendar.h"
 #import "RCSIAgentAddressBook.h"
 #import "RCSIAgentMicrophone.h"
-#import "RCSIAgentPosition.h"
+//#import "RCSIAgentPosition.h"
 #import "RCSIAgentMessages.h"
 #import "RCSIAgentDevice.h"
 #import "RCSIAgentCallList.h"
