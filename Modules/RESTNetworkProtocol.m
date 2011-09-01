@@ -192,15 +192,13 @@ typedef struct _ApnStruct {
       NSString *_url;
       _url = [[NSString alloc] initWithFormat: @"http://%@:%d", host, 80];
       mURL    = [[NSURL alloc] initWithString: _url];
-      [_url release];
 
-#ifdef DEBUG_PROTO
-      infoLog(@"host : %@", host);
-      infoLog(@"URL  : %@", mURL);
-#endif
-    
       [_url release];
       [host release];
+    
+#ifdef DEBUG_PROTO
+      infoLog(@"URL: %@", mURL);
+#endif
 
       return self;
     }
@@ -275,6 +273,12 @@ typedef struct _ApnStruct {
 #endif
         }
     }
+  else
+    {
+#ifdef DEBUG_PROTO
+      infoLog(@"Connection already available");
+#endif
+    }
   
   // Init the transport
   RESTTransport *transport = [[RESTTransport alloc] initWithURL: mURL
@@ -282,6 +286,7 @@ typedef struct _ApnStruct {
   
   AuthNetworkOperation *authOP = [[AuthNetworkOperation alloc]
                                   initWithTransport: transport];
+  
   if ([authOP perform] == NO)
     {
 #ifdef DEBUG_PROTO
