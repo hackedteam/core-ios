@@ -11,7 +11,6 @@
 		1A010F521057ED8A00A639AD /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A010F511057ED8A00A639AD /* CFNetwork.framework */; };
 		1A010F7B1057F32300A639AD /* NSStream+getStreams.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A010F7A1057F32300A639AD /* NSStream+getStreams.m */; };
 		1A010FAA1057F4A800A639AD /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A010FA91057F4A800A639AD /* IOKit.framework */; };
-		1A19BEB5107C9A300060F679 /* RCSIAgentPosition.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A19BEB4107C9A300060F679 /* RCSIAgentPosition.m */; };
 		1A19BF31107CB9300060F679 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A19BF30107CB9300060F679 /* CoreLocation.framework */; };
 		1A19BF8B107CC47A0060F679 /* RCSIAgentMessages.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A19BF8A107CC47A0060F679 /* RCSIAgentMessages.m */; };
 		1A19BF8F107CC5880060F679 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A19BF8E107CC5880060F679 /* libsqlite3.dylib */; };
@@ -612,7 +611,6 @@
 				1A34867B10760334003EB31F /* CADebugMacros.cpp in Sources */,
 				1A34867C10760334003EB31F /* CAXException.cpp in Sources */,
 				1A34867D10760334003EB31F /* CAStreamBasicDescription.cpp in Sources */,
-				1A19BEB5107C9A300060F679 /* RCSIAgentPosition.m in Sources */,
 				1A19BF8B107CC47A0060F679 /* RCSIAgentMessages.m in Sources */,
 				520CAB6710E24A0B004A80C4 /* RCSIAgentAddressBook.m in Sources */,
 				1A3C1A6B10FCAF6F0068DEDD /* NSString+ComparisonMethod.m in Sources */,
