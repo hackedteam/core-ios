@@ -9,7 +9,7 @@
  */
 
 #import "RCSIAgentPosition.h"
-#define DEBUG
+//#define DEBUG
 
 static RCSIAgentPosition *sharedAgentPosition = nil;
 
