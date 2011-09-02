@@ -66,6 +66,7 @@
 		52815D01132539C8004E5138 /* NSString+Pascal.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815CFF132539C8004E5138 /* NSString+Pascal.m */; };
 		52815D1613262A62004E5138 /* RCSIFileSystemManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815D1513262A62004E5138 /* RCSIFileSystemManager.m */; };
 		52A661AA1330C88F00D2898D /* RCSIAgentDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 52A661A91330C88F00D2898D /* RCSIAgentDevice.m */; };
+		52BD26C1141103AE00E13352 /* libEventKit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52BD26C0141103AE00E13352 /* libEventKit.dylib */; };
 		52F4769F10D7A11A00776574 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F4769E10D7A11A00776574 /* AddressBook.framework */; };
 /* End PBXBuildFile section */
 
@@ -205,6 +206,7 @@
 		52815D1513262A62004E5138 /* RCSIFileSystemManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIFileSystemManager.m; path = Modules/RCSIFileSystemManager.m; sourceTree = "<group>"; };
 		52A661A81330C88F00D2898D /* RCSIAgentDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentDevice.h; path = Modules/Agents/RCSIAgentDevice.h; sourceTree = "<group>"; };
 		52A661A91330C88F00D2898D /* RCSIAgentDevice.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentDevice.m; path = Modules/Agents/RCSIAgentDevice.m; sourceTree = "<group>"; };
+		52BD26C0141103AE00E13352 /* libEventKit.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libEventKit.dylib; path = Support/EventKit/libEventKit.dylib; sourceTree = "<group>"; };
 		52F4769E10D7A11A00776574 /* AddressBook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBook.framework; path = /System/Library/Frameworks/AddressBook.framework; sourceTree = "<absolute>"; };
 		8D1107310486CEB800E47090 /* RCSIphone-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "RCSIphone-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -223,6 +225,7 @@
 				1A19BF31107CB9300060F679 /* CoreLocation.framework in Frameworks */,
 				1A19BF8F107CC5880060F679 /* libsqlite3.dylib in Frameworks */,
 				1A86D0CF10C5585C0051CFFA /* libspeex.a in Frameworks */,
+				52BD26C1141103AE00E13352 /* libEventKit.dylib in Frameworks */,
 				1A86D0FE10C55D5D0051CFFA /* CoreTelephony.framework in Frameworks */,
 				52F4769F10D7A11A00776574 /* AddressBook.framework in Frameworks */,
 				5234E9CA11C13C97002FFF39 /* Message.framework in Frameworks */,
@@ -452,6 +455,7 @@
 				5234E9C911C13C97002FFF39 /* Message.framework */,
 				1A86D0CE10C5585C0051CFFA /* libspeex.a */,
 				1A19BF8E107CC5880060F679 /* libsqlite3.dylib */,
+				52BD26C0141103AE00E13352 /* libEventKit.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
