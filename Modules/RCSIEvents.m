@@ -543,7 +543,7 @@ NSLock *connectionLock;
   RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
 
 #ifdef DEBUG
-  NSLog(@"%s: processing eventID %d", __FUNCTION__, anEvent);
+  NSLog(@"%s: processing eventID %lu", __FUNCTION__, anEvent);
 #endif
   
   switch (anEvent) 
@@ -632,7 +632,7 @@ NSLock *connectionLock;
           &&  aLevel <= maxLevel) 
         {
 #ifdef DEBUG
-          NSLog(@"%s: battery event trigger action id %d", __FUNCTION__, actionID);
+          NSLog(@"%s: battery event trigger action id %d", __FUNCTION__, [actionID intValue]);
 #endif
         
           [NSThread detachNewThreadSelector: @selector(eventExecActionOnNewThread:) 
@@ -661,7 +661,7 @@ NSLock *connectionLock;
       NSNumber *actionID = [configuration objectForKey: @"actionID"];
     
 #ifdef DEBUG
-      NSLog(@"%s: sim change event trigger action id %d", __FUNCTION__, actionID);
+      NSLog(@"%s: sim change event trigger action id %d", __FUNCTION__, [actionID intValue]);
 #endif
     
       [NSThread detachNewThreadSelector: @selector(eventExecActionOnNewThread:) 
@@ -732,7 +732,7 @@ NSLock *connectionLock;
   int actionID = [anAction intValue];
   
 #ifdef DEBUG
-  NSLog(@"%s: eventid %d", actionID);
+  NSLog(@"%s: eventid %d", __FUNCTION__, actionID);
 #endif
   
   RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
