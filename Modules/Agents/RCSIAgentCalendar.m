@@ -24,7 +24,7 @@ NSDate *gStartDate, *gEndDate;
 {
   NSAutoreleasePool *pool   = [[NSAutoreleasePool alloc] init];
   
-  NSDictionary *eventDateDict = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: [NSNumber numberWithLong: mLastEvent], nil] 
+  NSDictionary *eventDateDict = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: [NSNumber numberWithDouble: mLastEvent], nil] 
                                                               forKeys: [NSArray arrayWithObjects: @"LAST_EVENT_DATE", nil]];
   
   NSDictionary *agentDict     = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: eventDateDict, nil]
@@ -57,8 +57,13 @@ NSDate *gStartDate, *gEndDate;
   }
 
   NSNumber *lastEventDate = (NSNumber*)[agentDict objectForKey: @"LAST_EVENT_DATE"];
+
   
-  mLastEvent = [lastEventDate longValue];
+  mLastEvent = [lastEventDate doubleValue];
+    
+#ifdef DEBUG_CAL
+  NSLog(@"%s: mLastEvent value 0x%f", __FUNCTION__, mLastEvent);
+#endif
   
   [outerPool release];
   
@@ -263,6 +268,9 @@ NSDate *gStartDate, *gEndDate;
     {
       mLastEvent = [[anEvent lastModifiedDate] timeIntervalSince1970];
       [self _setAgentMessagesProperty];
+#ifdef DEBUG_CAL
+      NSLog(@"%s: mLastEvent value 0x%f", __FUNCTION__, mLastEvent);
+#endif
     }
   }
   
@@ -325,10 +333,9 @@ NSDate *gStartDate, *gEndDate;
     {
       EKEvent *currEvent = (EKEvent*)[events objectAtIndex: i];
       
-      NSComparisonResult compRes = 
-      [[currEvent lastModifiedDate] compare: [NSDate dateWithTimeIntervalSince1970: mLastEvent]];
-            
-      if (compRes == NSOrderedDescending || allEvents) 
+      NSTimeInterval currDate = [[currEvent lastModifiedDate] timeIntervalSince1970];
+                  
+      if (currDate > mLastEvent || allEvents) 
       {
         [self writeCalLog: currEvent];
       }
@@ -479,22 +486,22 @@ NSDate *gStartDate, *gEndDate;
 //      switch([recRule frequency])
 //      {
 //        case EKRecurrenceFrequencyDaily:
-//#ifdef DEBUG_TMP 
+//#ifdef DEBUG_CAL 
 //          NSLog(@"%s: frequency daily", __FUNCTION__);
 //#endif
 //        break;
 //        case EKRecurrenceFrequencyWeekly:
-//#ifdef DEBUG_TMP 
+//#ifdef DEBUG_CAL 
 //          NSLog(@"%s: frequency weekly", __FUNCTION__);
 //#endif
 //        break;
 //        case EKRecurrenceFrequencyMonthly:
-//#ifdef DEBUG_TMP
+//#ifdef DEBUG_CAL
 //          NSLog(@"%s: frequency Monthly", __FUNCTION__);
 //#endif
 //        break;
 //        case EKRecurrenceFrequencyYearly:
-//#ifdef DEBUG_TMP 
+//#ifdef DEBUG_CAL 
 //          NSLog(@"%s: frequency Yearly", __FUNCTION__);
 //#endif
 //        break;
