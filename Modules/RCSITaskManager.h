@@ -42,9 +42,9 @@
   RCSISharedMemory  *mSharedMemory;
 }
 
-@property (readonly, retain) NSMutableArray *mEventsList;
-@property (readonly, retain) NSMutableArray *mActionsList;
-@property (readonly, retain) NSMutableArray *mAgentsList;
+@property (readwrite, retain) NSMutableArray *mEventsList;
+@property (readwrite, retain) NSMutableArray *mActionsList;
+@property (readwrite, retain) NSMutableArray *mAgentsList;
 @property (readonly, retain) NSMutableArray *mGlobalConfiguration;
 @property (readwrite, copy)  NSString *mBackdoorControlFlag;
 @property (readwrite)        BOOL mShouldReloadConfiguration;
