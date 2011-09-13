@@ -1,0 +1,767 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1A010F261057B9B800A639AD /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A010F251057B9B800A639AD /* SystemConfiguration.framework */; };
+		1A010F521057ED8A00A639AD /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A010F511057ED8A00A639AD /* CFNetwork.framework */; };
+		1A010F7B1057F32300A639AD /* NSStream+getStreams.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A010F7A1057F32300A639AD /* NSStream+getStreams.m */; };
+		1A010FAA1057F4A800A639AD /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A010FA91057F4A800A639AD /* IOKit.framework */; };
+		1A19BF31107CB9300060F679 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A19BF30107CB9300060F679 /* CoreLocation.framework */; };
+		1A19BF8B107CC47A0060F679 /* RCSIAgentMessages.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A19BF8A107CC47A0060F679 /* RCSIAgentMessages.m */; };
+		1A19BF8F107CC5880060F679 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A19BF8E107CC5880060F679 /* libsqlite3.dylib */; };
+		1A1D7CCC105A5C9F0098D4D5 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A1D7CCB105A5C9F0098D4D5 /* UIKit.framework */; };
+		1A34865910760044003EB31F /* RCSIAgentMicrophone.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1A34865810760044003EB31F /* RCSIAgentMicrophone.mm */; };
+		1A34865D10760083003EB31F /* RCSIMicrophoneRecorder.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1A34865C10760083003EB31F /* RCSIMicrophoneRecorder.mm */; };
+		1A34867B10760334003EB31F /* CADebugMacros.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A34867410760334003EB31F /* CADebugMacros.cpp */; };
+		1A34867C10760334003EB31F /* CAXException.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A34867610760334003EB31F /* CAXException.cpp */; };
+		1A34867D10760334003EB31F /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A34867910760334003EB31F /* CAStreamBasicDescription.cpp */; };
+		1A34869910760445003EB31F /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A34869810760445003EB31F /* AudioToolbox.framework */; };
+		1A3C1A6B10FCAF6F0068DEDD /* NSString+ComparisonMethod.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A3C1A6A10FCAF6F0068DEDD /* NSString+ComparisonMethod.m */; };
+		1A62BCE41403E97500DB660F /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A62BCE31403E97500DB660F /* Reachability.m */; };
+		1A86D0CF10C5585C0051CFFA /* libspeex.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A86D0CE10C5585C0051CFFA /* libspeex.a */; };
+		1A86D0FE10C55D5D0051CFFA /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A86D0FD10C55D5D0051CFFA /* CoreTelephony.framework */; };
+		1AC0E22A1056956E00DCFA55 /* RCSIMain.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2291056956E00DCFA55 /* RCSIMain.m */; };
+		1AC0E2311056961000DCFA55 /* RCSICommon.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2301056961000DCFA55 /* RCSICommon.m */; };
+		1AC0E2381056966A00DCFA55 /* RCSICore.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2371056966A00DCFA55 /* RCSICore.m */; };
+		1AC0E23F105696D800DCFA55 /* NSMutableData+AES128.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E23C105696D800DCFA55 /* NSMutableData+AES128.m */; };
+		1AC0E240105696D800DCFA55 /* NSString+SHA1.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E23E105696D800DCFA55 /* NSString+SHA1.m */; };
+		1AC0E2571056975100DCFA55 /* RCSIActions.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E24A1056975100DCFA55 /* RCSIActions.m */; };
+		1AC0E2591056975100DCFA55 /* RCSIConfManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E24E1056975100DCFA55 /* RCSIConfManager.m */; };
+		1AC0E25A1056975100DCFA55 /* RCSIEncryption.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2501056975100DCFA55 /* RCSIEncryption.mm */; };
+		1AC0E25B1056975100DCFA55 /* RCSIEvents.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2521056975100DCFA55 /* RCSIEvents.m */; };
+		1AC0E25C1056975100DCFA55 /* RCSILogManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2541056975100DCFA55 /* RCSILogManager.mm */; };
+		1AC0E25D1056975100DCFA55 /* RCSITaskManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2561056975100DCFA55 /* RCSITaskManager.mm */; };
+		1AC0E2621056976F00DCFA55 /* RCSIUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E25F1056976F00DCFA55 /* RCSIUtils.m */; };
+		1AC0E2631056976F00DCFA55 /* RCSISharedMemory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2611056976F00DCFA55 /* RCSISharedMemory.m */; };
+		1AD9332813850CC200C4C60E /* RCSIAgentCallList.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AD9332713850CC200C4C60E /* RCSIAgentCallList.m */; };
+		1AEB9531138E53540057EB42 /* RCSILogger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AEB9530138E53540057EB42 /* RCSILogger.m */; };
+		1AEB9534138E61790057EB42 /* RCSIInfoManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AEB9533138E61790057EB42 /* RCSIInfoManager.m */; };
+		1AEE1F3011BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AEE1F2F11BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.m */; };
+		1AF0216A140E32C700A04063 /* UIDevice+machine.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AF02169140E32C700A04063 /* UIDevice+machine.m */; };
+		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
+		520CAB6710E24A0B004A80C4 /* RCSIAgentAddressBook.m in Sources */ = {isa = PBXBuildFile; fileRef = 520CAB6610E24A0B004A80C4 /* RCSIAgentAddressBook.m */; };
+		520E0617126DCEFC00B4F4F0 /* RCSINotificationSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = 520E0616126DCEFC00B4F4F0 /* RCSINotificationSupport.m */; };
+		5213569713EA8DED00E582A9 /* RCSIAgentCalendar.m in Sources */ = {isa = PBXBuildFile; fileRef = 5213569613EA8DED00E582A9 /* RCSIAgentCalendar.m */; };
+		5234E9CA11C13C97002FFF39 /* Message.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5234E9C911C13C97002FFF39 /* Message.framework */; };
+		52815C6C132531F5004E5138 /* AuthNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C5A132531F5004E5138 /* AuthNetworkOperation.m */; };
+		52815C6D132531F5004E5138 /* ByeNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C5C132531F5004E5138 /* ByeNetworkOperation.m */; };
+		52815C6E132531F5004E5138 /* ConfNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C5E132531F5004E5138 /* ConfNetworkOperation.m */; };
+		52815C6F132531F5004E5138 /* DownloadNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C60132531F5004E5138 /* DownloadNetworkOperation.m */; };
+		52815C70132531F5004E5138 /* FSNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C62132531F5004E5138 /* FSNetworkOperation.m */; };
+		52815C71132531F5004E5138 /* IDNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C64132531F5004E5138 /* IDNetworkOperation.m */; };
+		52815C72132531F5004E5138 /* LogNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C66132531F5004E5138 /* LogNetworkOperation.m */; };
+		52815C73132531F5004E5138 /* UpgradeNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C69132531F5004E5138 /* UpgradeNetworkOperation.m */; };
+		52815C74132531F5004E5138 /* UploadNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C6B132531F5004E5138 /* UploadNetworkOperation.m */; };
+		52815C791325320E004E5138 /* RESTTransport.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C761325320E004E5138 /* RESTTransport.m */; };
+		52815C7A1325320E004E5138 /* Transport.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C781325320E004E5138 /* Transport.m */; };
+		52815C7E13253235004E5138 /* RESTNetworkProtocol.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C7D13253235004E5138 /* RESTNetworkProtocol.m */; };
+		52815C9F13253438004E5138 /* NSMutableData+SHA1.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C9913253438004E5138 /* NSMutableData+SHA1.m */; };
+		52815CA013253438004E5138 /* NSData+SHA1.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C9A13253438004E5138 /* NSData+SHA1.m */; };
+		52815CA113253438004E5138 /* NSData+Pascal.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C9B13253438004E5138 /* NSData+Pascal.m */; };
+		52815D01132539C8004E5138 /* NSString+Pascal.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815CFF132539C8004E5138 /* NSString+Pascal.m */; };
+		52815D1613262A62004E5138 /* RCSIFileSystemManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815D1513262A62004E5138 /* RCSIFileSystemManager.m */; };
+		52A661AA1330C88F00D2898D /* RCSIAgentDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 52A661A91330C88F00D2898D /* RCSIAgentDevice.m */; };
+		52BD26C1141103AE00E13352 /* libEventKit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52BD26C0141103AE00E13352 /* libEventKit.dylib */; };
+		52F4769F10D7A11A00776574 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F4769E10D7A11A00776574 /* AddressBook.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1A010F251057B9B800A639AD /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		1A010F511057ED8A00A639AD /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
+		1A010F791057F32300A639AD /* NSStream+getStreams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSStream+getStreams.h"; path = "Modules/NSStream+getStreams.h"; sourceTree = "<group>"; };
+		1A010F7A1057F32300A639AD /* NSStream+getStreams.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSStream+getStreams.m"; path = "Modules/NSStream+getStreams.m"; sourceTree = "<group>"; };
+		1A010FA91057F4A800A639AD /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		1A19BEB3107C9A300060F679 /* RCSIAgentPosition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentPosition.h; path = Modules/Agents/RCSIAgentPosition.h; sourceTree = "<group>"; };
+		1A19BEB4107C9A300060F679 /* RCSIAgentPosition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentPosition.m; path = Modules/Agents/RCSIAgentPosition.m; sourceTree = "<group>"; };
+		1A19BF30107CB9300060F679 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
+		1A19BF89107CC47A0060F679 /* RCSIAgentMessages.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentMessages.h; path = Modules/Agents/RCSIAgentMessages.h; sourceTree = "<group>"; };
+		1A19BF8A107CC47A0060F679 /* RCSIAgentMessages.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentMessages.m; path = Modules/Agents/RCSIAgentMessages.m; sourceTree = "<group>"; };
+		1A19BF8E107CC5880060F679 /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
+		1A1D7CCB105A5C9F0098D4D5 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		1A34865710760044003EB31F /* RCSIAgentMicrophone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentMicrophone.h; path = Modules/Agents/Microphone/RCSIAgentMicrophone.h; sourceTree = "<group>"; };
+		1A34865810760044003EB31F /* RCSIAgentMicrophone.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSIAgentMicrophone.mm; path = Modules/Agents/Microphone/RCSIAgentMicrophone.mm; sourceTree = "<group>"; };
+		1A34865B10760083003EB31F /* RCSIMicrophoneRecorder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIMicrophoneRecorder.h; path = Modules/Agents/Microphone/RCSIMicrophoneRecorder.h; sourceTree = "<group>"; };
+		1A34865C10760083003EB31F /* RCSIMicrophoneRecorder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSIMicrophoneRecorder.mm; path = Modules/Agents/Microphone/RCSIMicrophoneRecorder.mm; sourceTree = "<group>"; };
+		1A34867410760334003EB31F /* CADebugMacros.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CADebugMacros.cpp; sourceTree = "<group>"; };
+		1A34867510760334003EB31F /* CADebugMacros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CADebugMacros.h; sourceTree = "<group>"; };
+		1A34867610760334003EB31F /* CAXException.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CAXException.cpp; sourceTree = "<group>"; };
+		1A34867710760334003EB31F /* CAMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CAMath.h; sourceTree = "<group>"; };
+		1A34867810760334003EB31F /* CAXException.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CAXException.h; sourceTree = "<group>"; };
+		1A34867910760334003EB31F /* CAStreamBasicDescription.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CAStreamBasicDescription.cpp; sourceTree = "<group>"; };
+		1A34867A10760334003EB31F /* CAStreamBasicDescription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CAStreamBasicDescription.h; sourceTree = "<group>"; };
+		1A34869810760445003EB31F /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		1A3C1A6910FCAF6F0068DEDD /* NSString+ComparisonMethod.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSString+ComparisonMethod.h"; path = "Modules/NSString+ComparisonMethod.h"; sourceTree = "<group>"; };
+		1A3C1A6A10FCAF6F0068DEDD /* NSString+ComparisonMethod.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSString+ComparisonMethod.m"; path = "Modules/NSString+ComparisonMethod.m"; sourceTree = "<group>"; };
+		1A62BCE21403E97500DB660F /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
+		1A62BCE31403E97500DB660F /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
+		1A86D0CE10C5585C0051CFFA /* libspeex.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libspeex.a; path = Support/Speex/libspeex.a; sourceTree = "<group>"; };
+		1A86D0FD10C55D5D0051CFFA /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/PrivateFrameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
+		1A9E6E7010D68FA6004584F2 /* speex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = speex.h; path = Support/Speex/speex.h; sourceTree = "<group>"; };
+		1AAFAE3F1186DC99002AA6B7 /* ARMHooker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARMHooker.h; path = dylib/ARMHooker.h; sourceTree = "<group>"; };
+		1AAFAE401186DC99002AA6B7 /* ARMHooker.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ARMHooker.mm; path = dylib/ARMHooker.mm; sourceTree = "<group>"; };
+		1AC0E2291056956E00DCFA55 /* RCSIMain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCSIMain.m; sourceTree = "<group>"; };
+		1AC0E22F1056961000DCFA55 /* RCSICommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSICommon.h; sourceTree = "<group>"; };
+		1AC0E2301056961000DCFA55 /* RCSICommon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCSICommon.m; sourceTree = "<group>"; };
+		1AC0E2361056966A00DCFA55 /* RCSICore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSICore.h; sourceTree = "<group>"; };
+		1AC0E2371056966A00DCFA55 /* RCSICore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCSICore.m; sourceTree = "<group>"; };
+		1AC0E23B105696D800DCFA55 /* NSMutableData+AES128.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSMutableData+AES128.h"; path = "Modules/NSMutableData+AES128.h"; sourceTree = "<group>"; };
+		1AC0E23C105696D800DCFA55 /* NSMutableData+AES128.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSMutableData+AES128.m"; path = "Modules/NSMutableData+AES128.m"; sourceTree = "<group>"; };
+		1AC0E23D105696D800DCFA55 /* NSString+SHA1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSString+SHA1.h"; path = "Modules/NSString+SHA1.h"; sourceTree = "<group>"; };
+		1AC0E23E105696D800DCFA55 /* NSString+SHA1.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSString+SHA1.m"; path = "Modules/NSString+SHA1.m"; sourceTree = "<group>"; };
+		1AC0E2491056975100DCFA55 /* RCSIActions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIActions.h; path = Modules/RCSIActions.h; sourceTree = "<group>"; };
+		1AC0E24A1056975100DCFA55 /* RCSIActions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIActions.m; path = Modules/RCSIActions.m; sourceTree = "<group>"; };
+		1AC0E24D1056975100DCFA55 /* RCSIConfManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIConfManager.h; path = Modules/RCSIConfManager.h; sourceTree = "<group>"; };
+		1AC0E24E1056975100DCFA55 /* RCSIConfManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIConfManager.m; path = Modules/RCSIConfManager.m; sourceTree = "<group>"; };
+		1AC0E24F1056975100DCFA55 /* RCSIEncryption.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIEncryption.h; path = Modules/RCSIEncryption.h; sourceTree = "<group>"; };
+		1AC0E2501056975100DCFA55 /* RCSIEncryption.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSIEncryption.mm; path = Modules/RCSIEncryption.mm; sourceTree = "<group>"; };
+		1AC0E2511056975100DCFA55 /* RCSIEvents.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIEvents.h; path = Modules/RCSIEvents.h; sourceTree = "<group>"; };
+		1AC0E2521056975100DCFA55 /* RCSIEvents.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIEvents.m; path = Modules/RCSIEvents.m; sourceTree = "<group>"; };
+		1AC0E2531056975100DCFA55 /* RCSILogManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSILogManager.h; path = Modules/RCSILogManager.h; sourceTree = "<group>"; };
+		1AC0E2541056975100DCFA55 /* RCSILogManager.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSILogManager.mm; path = Modules/RCSILogManager.mm; sourceTree = "<group>"; };
+		1AC0E2551056975100DCFA55 /* RCSITaskManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSITaskManager.h; path = Modules/RCSITaskManager.h; sourceTree = "<group>"; };
+		1AC0E2561056975100DCFA55 /* RCSITaskManager.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSITaskManager.mm; path = Modules/RCSITaskManager.mm; sourceTree = "<group>"; };
+		1AC0E25E1056976F00DCFA55 /* RCSIUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIUtils.h; path = Support/RCSIUtils.h; sourceTree = "<group>"; };
+		1AC0E25F1056976F00DCFA55 /* RCSIUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIUtils.m; path = Support/RCSIUtils.m; sourceTree = "<group>"; };
+		1AC0E2601056976F00DCFA55 /* RCSISharedMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSISharedMemory.h; path = Support/RCSISharedMemory.h; sourceTree = "<group>"; };
+		1AC0E2611056976F00DCFA55 /* RCSISharedMemory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSISharedMemory.m; path = Support/RCSISharedMemory.m; sourceTree = "<group>"; };
+		1AD9332613850CC200C4C60E /* RCSIAgentCallList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentCallList.h; path = Modules/Agents/RCSIAgentCallList.h; sourceTree = "<group>"; };
+		1AD9332713850CC200C4C60E /* RCSIAgentCallList.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentCallList.m; path = Modules/Agents/RCSIAgentCallList.m; sourceTree = "<group>"; };
+		1AEB952E138E53540057EB42 /* RCSIDebug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIDebug.h; path = Support/RCSIDebug.h; sourceTree = "<group>"; };
+		1AEB952F138E53540057EB42 /* RCSILogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSILogger.h; path = Support/RCSILogger.h; sourceTree = "<group>"; };
+		1AEB9530138E53540057EB42 /* RCSILogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSILogger.m; path = Support/RCSILogger.m; sourceTree = "<group>"; };
+		1AEB9532138E61780057EB42 /* RCSIInfoManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIInfoManager.h; path = Modules/RCSIInfoManager.h; sourceTree = "<group>"; };
+		1AEB9533138E61790057EB42 /* RCSIInfoManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIInfoManager.m; path = Modules/RCSIInfoManager.m; sourceTree = "<group>"; };
+		1AED88421145605D00AF09E8 /* RCSILoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSILoader.h; path = dylib/RCSILoader.h; sourceTree = "<group>"; };
+		1AED88431145605D00AF09E8 /* RCSILoader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSILoader.mm; path = dylib/RCSILoader.mm; sourceTree = "<group>"; };
+		1AED885D114561DE00AF09E8 /* RCSIAgentURL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentURL.h; path = dylib/Agents/RCSIAgentURL.h; sourceTree = "<group>"; };
+		1AED885E114561DE00AF09E8 /* RCSIAgentURL.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentURL.m; path = dylib/Agents/RCSIAgentURL.m; sourceTree = "<group>"; };
+		1AED88621145620900AF09E8 /* RCSIAgentInputLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentInputLogger.h; path = dylib/Agents/RCSIAgentInputLogger.h; sourceTree = "<group>"; };
+		1AED88631145620900AF09E8 /* RCSIAgentInputLogger.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSIAgentInputLogger.mm; path = dylib/Agents/RCSIAgentInputLogger.mm; sourceTree = "<group>"; };
+		1AEE1F2E11BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSMutableDictionary+ThreadSafe.h"; path = "Modules/NSMutableDictionary+ThreadSafe.h"; sourceTree = "<group>"; };
+		1AEE1F2F11BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSMutableDictionary+ThreadSafe.m"; path = "Modules/NSMutableDictionary+ThreadSafe.m"; sourceTree = "<group>"; };
+		1AF02168140E32C700A04063 /* UIDevice+machine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIDevice+machine.h"; path = "Modules/UIDevice+machine.h"; sourceTree = "<group>"; };
+		1AF02169140E32C700A04063 /* UIDevice+machine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIDevice+machine.m"; path = "Modules/UIDevice+machine.m"; sourceTree = "<group>"; };
+		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		1D6058910D05DD3D006BFB54 /* RCSIphone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RCSIphone.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		32CA4F630368D1EE00C91783 /* RCSIphone_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSIphone_Prefix.pch; sourceTree = "<group>"; };
+		520052B8114E6E38002508C7 /* RCSIAgentScreenshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentScreenshot.h; path = dylib/Agents/RCSIAgentScreenshot.h; sourceTree = "<group>"; };
+		520052B9114E6E38002508C7 /* RCSIAgentScreenshot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentScreenshot.m; path = dylib/Agents/RCSIAgentScreenshot.m; sourceTree = "<group>"; };
+		520CAB6510E24A0B004A80C4 /* RCSIAgentAddressBook.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentAddressBook.h; path = Modules/Agents/RCSIAgentAddressBook.h; sourceTree = "<group>"; };
+		520CAB6610E24A0B004A80C4 /* RCSIAgentAddressBook.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentAddressBook.m; path = Modules/Agents/RCSIAgentAddressBook.m; sourceTree = "<group>"; };
+		520E0615126DCEFC00B4F4F0 /* RCSINotificationSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSINotificationSupport.h; sourceTree = "<group>"; };
+		520E0616126DCEFC00B4F4F0 /* RCSINotificationSupport.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCSINotificationSupport.m; sourceTree = "<group>"; };
+		5213569513EA8DED00E582A9 /* RCSIAgentCalendar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentCalendar.h; path = Modules/Agents/RCSIAgentCalendar.h; sourceTree = "<group>"; };
+		5213569613EA8DED00E582A9 /* RCSIAgentCalendar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentCalendar.m; path = Modules/Agents/RCSIAgentCalendar.m; sourceTree = "<group>"; };
+		5213569D13EAA16E00E582A9 /* EKAlarm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKAlarm.h; sourceTree = "<group>"; };
+		5213569E13EAA16E00E582A9 /* EKCalendar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKCalendar.h; sourceTree = "<group>"; };
+		5213569F13EAA16E00E582A9 /* EKError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKError.h; sourceTree = "<group>"; };
+		521356A013EAA16E00E582A9 /* EKEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKEvent.h; sourceTree = "<group>"; };
+		521356A113EAA16E00E582A9 /* EKEventStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKEventStore.h; sourceTree = "<group>"; };
+		521356A213EAA16E00E582A9 /* EKParticipant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKParticipant.h; sourceTree = "<group>"; };
+		521356A313EAA16E00E582A9 /* EKRecurrenceRule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKRecurrenceRule.h; sourceTree = "<group>"; };
+		521356A413EAA16E00E582A9 /* EventKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EventKit.h; sourceTree = "<group>"; };
+		5234E9C911C13C97002FFF39 /* Message.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Message.framework; path = System/Library/PrivateFrameworks/Message.framework; sourceTree = SDKROOT; };
+		523E581312A92AAC00D56FA0 /* RCSIAgentApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentApplication.h; path = dylib/Agents/RCSIAgentApplication.h; sourceTree = "<group>"; };
+		523E581412A92AAC00D56FA0 /* RCSIAgentApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentApplication.m; path = dylib/Agents/RCSIAgentApplication.m; sourceTree = "<group>"; };
+		52815C59132531F5004E5138 /* AuthNetworkOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AuthNetworkOperation.h; path = Modules/AuthNetworkOperation.h; sourceTree = "<group>"; };
+		52815C5A132531F5004E5138 /* AuthNetworkOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AuthNetworkOperation.m; path = Modules/AuthNetworkOperation.m; sourceTree = "<group>"; };
+		52815C5B132531F5004E5138 /* ByeNetworkOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ByeNetworkOperation.h; path = Modules/ByeNetworkOperation.h; sourceTree = "<group>"; };
+		52815C5C132531F5004E5138 /* ByeNetworkOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ByeNetworkOperation.m; path = Modules/ByeNetworkOperation.m; sourceTree = "<group>"; };
+		52815C5D132531F5004E5138 /* ConfNetworkOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConfNetworkOperation.h; path = Modules/ConfNetworkOperation.h; sourceTree = "<group>"; };
+		52815C5E132531F5004E5138 /* ConfNetworkOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ConfNetworkOperation.m; path = Modules/ConfNetworkOperation.m; sourceTree = "<group>"; };
+		52815C5F132531F5004E5138 /* DownloadNetworkOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DownloadNetworkOperation.h; path = Modules/DownloadNetworkOperation.h; sourceTree = "<group>"; };
+		52815C60132531F5004E5138 /* DownloadNetworkOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DownloadNetworkOperation.m; path = Modules/DownloadNetworkOperation.m; sourceTree = "<group>"; };
+		52815C61132531F5004E5138 /* FSNetworkOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FSNetworkOperation.h; path = Modules/FSNetworkOperation.h; sourceTree = "<group>"; };
+		52815C62132531F5004E5138 /* FSNetworkOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FSNetworkOperation.m; path = Modules/FSNetworkOperation.m; sourceTree = "<group>"; };
+		52815C63132531F5004E5138 /* IDNetworkOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IDNetworkOperation.h; path = Modules/IDNetworkOperation.h; sourceTree = "<group>"; };
+		52815C64132531F5004E5138 /* IDNetworkOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IDNetworkOperation.m; path = Modules/IDNetworkOperation.m; sourceTree = "<group>"; };
+		52815C65132531F5004E5138 /* LogNetworkOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LogNetworkOperation.h; path = Modules/LogNetworkOperation.h; sourceTree = "<group>"; };
+		52815C66132531F5004E5138 /* LogNetworkOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = LogNetworkOperation.m; path = Modules/LogNetworkOperation.m; sourceTree = "<group>"; };
+		52815C67132531F5004E5138 /* NetworkOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NetworkOperation.h; path = Modules/NetworkOperation.h; sourceTree = "<group>"; };
+		52815C68132531F5004E5138 /* UpgradeNetworkOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UpgradeNetworkOperation.h; path = Modules/UpgradeNetworkOperation.h; sourceTree = "<group>"; };
+		52815C69132531F5004E5138 /* UpgradeNetworkOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = UpgradeNetworkOperation.m; path = Modules/UpgradeNetworkOperation.m; sourceTree = "<group>"; };
+		52815C6A132531F5004E5138 /* UploadNetworkOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UploadNetworkOperation.h; path = Modules/UploadNetworkOperation.h; sourceTree = "<group>"; };
+		52815C6B132531F5004E5138 /* UploadNetworkOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = UploadNetworkOperation.m; path = Modules/UploadNetworkOperation.m; sourceTree = "<group>"; };
+		52815C751325320E004E5138 /* RESTTransport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RESTTransport.h; path = Modules/RESTTransport.h; sourceTree = "<group>"; };
+		52815C761325320E004E5138 /* RESTTransport.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RESTTransport.m; path = Modules/RESTTransport.m; sourceTree = "<group>"; };
+		52815C771325320E004E5138 /* Transport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Transport.h; path = Modules/Transport.h; sourceTree = "<group>"; };
+		52815C781325320E004E5138 /* Transport.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Transport.m; path = Modules/Transport.m; sourceTree = "<group>"; };
+		52815C7B13253235004E5138 /* NetworkProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NetworkProtocol.h; path = Modules/NetworkProtocol.h; sourceTree = "<group>"; };
+		52815C7C13253235004E5138 /* RESTNetworkProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RESTNetworkProtocol.h; path = Modules/RESTNetworkProtocol.h; sourceTree = "<group>"; };
+		52815C7D13253235004E5138 /* RESTNetworkProtocol.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RESTNetworkProtocol.m; path = Modules/RESTNetworkProtocol.m; sourceTree = "<group>"; };
+		52815C9913253438004E5138 /* NSMutableData+SHA1.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSMutableData+SHA1.m"; path = "Modules/NSMutableData+SHA1.m"; sourceTree = "<group>"; };
+		52815C9A13253438004E5138 /* NSData+SHA1.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSData+SHA1.m"; path = "Modules/NSData+SHA1.m"; sourceTree = "<group>"; };
+		52815C9B13253438004E5138 /* NSData+Pascal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSData+Pascal.m"; path = "Modules/NSData+Pascal.m"; sourceTree = "<group>"; };
+		52815C9C13253438004E5138 /* NSMutableData+SHA1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSMutableData+SHA1.h"; path = "Modules/NSMutableData+SHA1.h"; sourceTree = "<group>"; };
+		52815C9D13253438004E5138 /* NSData+SHA1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSData+SHA1.h"; path = "Modules/NSData+SHA1.h"; sourceTree = "<group>"; };
+		52815C9E13253438004E5138 /* NSData+Pascal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSData+Pascal.h"; path = "Modules/NSData+Pascal.h"; sourceTree = "<group>"; };
+		52815CFF132539C8004E5138 /* NSString+Pascal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSString+Pascal.m"; path = "Modules/NSString+Pascal.m"; sourceTree = "<group>"; };
+		52815D00132539C8004E5138 /* NSString+Pascal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSString+Pascal.h"; path = "Modules/NSString+Pascal.h"; sourceTree = "<group>"; };
+		52815D1413262A62004E5138 /* RCSIFileSystemManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIFileSystemManager.h; path = Modules/RCSIFileSystemManager.h; sourceTree = "<group>"; };
+		52815D1513262A62004E5138 /* RCSIFileSystemManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIFileSystemManager.m; path = Modules/RCSIFileSystemManager.m; sourceTree = "<group>"; };
+		52A661A81330C88F00D2898D /* RCSIAgentDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentDevice.h; path = Modules/Agents/RCSIAgentDevice.h; sourceTree = "<group>"; };
+		52A661A91330C88F00D2898D /* RCSIAgentDevice.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentDevice.m; path = Modules/Agents/RCSIAgentDevice.m; sourceTree = "<group>"; };
+		52BD26C0141103AE00E13352 /* libEventKit.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libEventKit.dylib; path = Support/EventKit/libEventKit.dylib; sourceTree = "<group>"; };
+		52F4769E10D7A11A00776574 /* AddressBook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBook.framework; path = /System/Library/Frameworks/AddressBook.framework; sourceTree = "<absolute>"; };
+		8D1107310486CEB800E47090 /* RCSIphone-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "RCSIphone-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1D60588F0D05DD3D006BFB54 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */,
+				1A010F261057B9B800A639AD /* SystemConfiguration.framework in Frameworks */,
+				1A010F521057ED8A00A639AD /* CFNetwork.framework in Frameworks */,
+				1A010FAA1057F4A800A639AD /* IOKit.framework in Frameworks */,
+				1A1D7CCC105A5C9F0098D4D5 /* UIKit.framework in Frameworks */,
+				1A34869910760445003EB31F /* AudioToolbox.framework in Frameworks */,
+				1A19BF31107CB9300060F679 /* CoreLocation.framework in Frameworks */,
+				1A19BF8F107CC5880060F679 /* libsqlite3.dylib in Frameworks */,
+				1A86D0CF10C5585C0051CFFA /* libspeex.a in Frameworks */,
+				52BD26C1141103AE00E13352 /* libEventKit.dylib in Frameworks */,
+				1A86D0FE10C55D5D0051CFFA /* CoreTelephony.framework in Frameworks */,
+				52F4769F10D7A11A00776574 /* AddressBook.framework in Frameworks */,
+				5234E9CA11C13C97002FFF39 /* Message.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		19C28FACFE9D520D11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1D6058910D05DD3D006BFB54 /* RCSIphone.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1A34865A1076004B003EB31F /* Microphone */ = {
+			isa = PBXGroup;
+			children = (
+				1A34867310760325003EB31F /* Utils */,
+				1A34865710760044003EB31F /* RCSIAgentMicrophone.h */,
+				1A34865810760044003EB31F /* RCSIAgentMicrophone.mm */,
+				1A34865B10760083003EB31F /* RCSIMicrophoneRecorder.h */,
+				1A34865C10760083003EB31F /* RCSIMicrophoneRecorder.mm */,
+			);
+			name = Microphone;
+			sourceTree = "<group>";
+		};
+		1A34867310760325003EB31F /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				1A34867410760334003EB31F /* CADebugMacros.cpp */,
+				1A34867510760334003EB31F /* CADebugMacros.h */,
+				1A34867610760334003EB31F /* CAXException.cpp */,
+				1A34867710760334003EB31F /* CAMath.h */,
+				1A34867810760334003EB31F /* CAXException.h */,
+				1A34867910760334003EB31F /* CAStreamBasicDescription.cpp */,
+				1A34867A10760334003EB31F /* CAStreamBasicDescription.h */,
+			);
+			name = Utils;
+			sourceTree = "<group>";
+		};
+		1A62BCE11403E97500DB660F /* Reachability */ = {
+			isa = PBXGroup;
+			children = (
+				1A62BCE21403E97500DB660F /* Reachability.h */,
+				1A62BCE31403E97500DB660F /* Reachability.m */,
+			);
+			name = Reachability;
+			path = Modules/Reachability;
+			sourceTree = "<group>";
+		};
+		1AC0E20F1056926900DCFA55 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				1AC0E2291056956E00DCFA55 /* RCSIMain.m */,
+				1AC0E2361056966A00DCFA55 /* RCSICore.h */,
+				1AC0E2371056966A00DCFA55 /* RCSICore.m */,
+				1AC0E22F1056961000DCFA55 /* RCSICommon.h */,
+				1AC0E2301056961000DCFA55 /* RCSICommon.m */,
+				32CA4F630368D1EE00C91783 /* RCSIphone_Prefix.pch */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		1AC0E2101056927500DCFA55 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				5213569C13EAA16E00E582A9 /* EventKit */,
+				1A9E6E7010D68FA6004584F2 /* speex.h */,
+				1AC0E25E1056976F00DCFA55 /* RCSIUtils.h */,
+				1AC0E25F1056976F00DCFA55 /* RCSIUtils.m */,
+				1AAFAE3F1186DC99002AA6B7 /* ARMHooker.h */,
+				1AAFAE401186DC99002AA6B7 /* ARMHooker.mm */,
+				520E0615126DCEFC00B4F4F0 /* RCSINotificationSupport.h */,
+				520E0616126DCEFC00B4F4F0 /* RCSINotificationSupport.m */,
+				1AC0E2601056976F00DCFA55 /* RCSISharedMemory.h */,
+				1AC0E2611056976F00DCFA55 /* RCSISharedMemory.m */,
+				1AEB952F138E53540057EB42 /* RCSILogger.h */,
+				1AEB9530138E53540057EB42 /* RCSILogger.m */,
+				1AEB952E138E53540057EB42 /* RCSIDebug.h */,
+			);
+			name = Support;
+			sourceTree = "<group>";
+		};
+		1AC0E2111056927A00DCFA55 /* Modules */ = {
+			isa = PBXGroup;
+			children = (
+				52815C1413253075004E5138 /* Network */,
+				1AC0E2AF10569D7300DCFA55 /* Agents */,
+				52815D1413262A62004E5138 /* RCSIFileSystemManager.h */,
+				52815D1513262A62004E5138 /* RCSIFileSystemManager.m */,
+				1AEB9532138E61780057EB42 /* RCSIInfoManager.h */,
+				1AEB9533138E61790057EB42 /* RCSIInfoManager.m */,
+				1AC0E24D1056975100DCFA55 /* RCSIConfManager.h */,
+				1AC0E24E1056975100DCFA55 /* RCSIConfManager.m */,
+				1AC0E24F1056975100DCFA55 /* RCSIEncryption.h */,
+				1AC0E2501056975100DCFA55 /* RCSIEncryption.mm */,
+				1AC0E2551056975100DCFA55 /* RCSITaskManager.h */,
+				1AC0E2561056975100DCFA55 /* RCSITaskManager.mm */,
+				1AC0E2531056975100DCFA55 /* RCSILogManager.h */,
+				1AC0E2541056975100DCFA55 /* RCSILogManager.mm */,
+				1AC0E2511056975100DCFA55 /* RCSIEvents.h */,
+				1AC0E2521056975100DCFA55 /* RCSIEvents.m */,
+				1AC0E2491056975100DCFA55 /* RCSIActions.h */,
+				1AC0E24A1056975100DCFA55 /* RCSIActions.m */,
+			);
+			name = Modules;
+			sourceTree = "<group>";
+		};
+		1AC0E212105692A600DCFA55 /* Categories */ = {
+			isa = PBXGroup;
+			children = (
+				52815CFF132539C8004E5138 /* NSString+Pascal.m */,
+				52815D00132539C8004E5138 /* NSString+Pascal.h */,
+				52815C9C13253438004E5138 /* NSMutableData+SHA1.h */,
+				52815C9913253438004E5138 /* NSMutableData+SHA1.m */,
+				52815C9A13253438004E5138 /* NSData+SHA1.m */,
+				52815C9B13253438004E5138 /* NSData+Pascal.m */,
+				52815C9D13253438004E5138 /* NSData+SHA1.h */,
+				52815C9E13253438004E5138 /* NSData+Pascal.h */,
+				1AC0E23B105696D800DCFA55 /* NSMutableData+AES128.h */,
+				1AC0E23C105696D800DCFA55 /* NSMutableData+AES128.m */,
+				1AC0E23D105696D800DCFA55 /* NSString+SHA1.h */,
+				1AC0E23E105696D800DCFA55 /* NSString+SHA1.m */,
+				1A3C1A6910FCAF6F0068DEDD /* NSString+ComparisonMethod.h */,
+				1A3C1A6A10FCAF6F0068DEDD /* NSString+ComparisonMethod.m */,
+				1A010F791057F32300A639AD /* NSStream+getStreams.h */,
+				1A010F7A1057F32300A639AD /* NSStream+getStreams.m */,
+				1AEE1F2E11BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.h */,
+				1AEE1F2F11BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.m */,
+				1AF02168140E32C700A04063 /* UIDevice+machine.h */,
+				1AF02169140E32C700A04063 /* UIDevice+machine.m */,
+			);
+			name = Categories;
+			sourceTree = "<group>";
+		};
+		1AC0E2AF10569D7300DCFA55 /* Agents */ = {
+			isa = PBXGroup;
+			children = (
+				1A34865A1076004B003EB31F /* Microphone */,
+				520CAB6510E24A0B004A80C4 /* RCSIAgentAddressBook.h */,
+				520CAB6610E24A0B004A80C4 /* RCSIAgentAddressBook.m */,
+				1A19BF89107CC47A0060F679 /* RCSIAgentMessages.h */,
+				1A19BF8A107CC47A0060F679 /* RCSIAgentMessages.m */,
+				1A19BEB3107C9A300060F679 /* RCSIAgentPosition.h */,
+				1A19BEB4107C9A300060F679 /* RCSIAgentPosition.m */,
+				52A661A81330C88F00D2898D /* RCSIAgentDevice.h */,
+				52A661A91330C88F00D2898D /* RCSIAgentDevice.m */,
+				1AD9332613850CC200C4C60E /* RCSIAgentCallList.h */,
+				1AD9332713850CC200C4C60E /* RCSIAgentCallList.m */,
+				5213569513EA8DED00E582A9 /* RCSIAgentCalendar.h */,
+				5213569613EA8DED00E582A9 /* RCSIAgentCalendar.m */,
+			);
+			name = Agents;
+			sourceTree = "<group>";
+		};
+		1AED88351145603D00AF09E8 /* Dylib */ = {
+			isa = PBXGroup;
+			children = (
+				1AED885B1145613800AF09E8 /* Agents */,
+				1AED88421145605D00AF09E8 /* RCSILoader.h */,
+				1AED88431145605D00AF09E8 /* RCSILoader.mm */,
+			);
+			name = Dylib;
+			sourceTree = "<group>";
+		};
+		1AED885B1145613800AF09E8 /* Agents */ = {
+			isa = PBXGroup;
+			children = (
+				520052B8114E6E38002508C7 /* RCSIAgentScreenshot.h */,
+				520052B9114E6E38002508C7 /* RCSIAgentScreenshot.m */,
+				1AED885D114561DE00AF09E8 /* RCSIAgentURL.h */,
+				1AED885E114561DE00AF09E8 /* RCSIAgentURL.m */,
+				1AED88621145620900AF09E8 /* RCSIAgentInputLogger.h */,
+				1AED88631145620900AF09E8 /* RCSIAgentInputLogger.mm */,
+				523E581312A92AAC00D56FA0 /* RCSIAgentApplication.h */,
+				523E581412A92AAC00D56FA0 /* RCSIAgentApplication.m */,
+			);
+			name = Agents;
+			sourceTree = "<group>";
+		};
+		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
+			isa = PBXGroup;
+			children = (
+				29B97315FDCFA39411CA2CEA /* Core */,
+				1AED88351145603D00AF09E8 /* Dylib */,
+				29B97317FDCFA39411CA2CEA /* Resources */,
+				29B97323FDCFA39411CA2CEA /* Frameworks */,
+				19C28FACFE9D520D11CA2CBB /* Products */,
+			);
+			name = CustomTemplate;
+			sourceTree = "<group>";
+		};
+		29B97315FDCFA39411CA2CEA /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				1AC0E2101056927500DCFA55 /* Support */,
+				1AC0E2111056927A00DCFA55 /* Modules */,
+				1AC0E212105692A600DCFA55 /* Categories */,
+				1AC0E20F1056926900DCFA55 /* Sources */,
+			);
+			name = Core;
+			sourceTree = "<group>";
+		};
+		29B97317FDCFA39411CA2CEA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				8D1107310486CEB800E47090 /* RCSIphone-Info.plist */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1A86D0FD10C55D5D0051CFFA /* CoreTelephony.framework */,
+				1A19BF30107CB9300060F679 /* CoreLocation.framework */,
+				1A34869810760445003EB31F /* AudioToolbox.framework */,
+				1A1D7CCB105A5C9F0098D4D5 /* UIKit.framework */,
+				1A010FA91057F4A800A639AD /* IOKit.framework */,
+				1A010F511057ED8A00A639AD /* CFNetwork.framework */,
+				1A010F251057B9B800A639AD /* SystemConfiguration.framework */,
+				1D30AB110D05D00D00671497 /* Foundation.framework */,
+				52F4769E10D7A11A00776574 /* AddressBook.framework */,
+				5234E9C911C13C97002FFF39 /* Message.framework */,
+				1A86D0CE10C5585C0051CFFA /* libspeex.a */,
+				1A19BF8E107CC5880060F679 /* libsqlite3.dylib */,
+				52BD26C0141103AE00E13352 /* libEventKit.dylib */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		5213569C13EAA16E00E582A9 /* EventKit */ = {
+			isa = PBXGroup;
+			children = (
+				5213569D13EAA16E00E582A9 /* EKAlarm.h */,
+				5213569E13EAA16E00E582A9 /* EKCalendar.h */,
+				5213569F13EAA16E00E582A9 /* EKError.h */,
+				521356A013EAA16E00E582A9 /* EKEvent.h */,
+				521356A113EAA16E00E582A9 /* EKEventStore.h */,
+				521356A213EAA16E00E582A9 /* EKParticipant.h */,
+				521356A313EAA16E00E582A9 /* EKRecurrenceRule.h */,
+				521356A413EAA16E00E582A9 /* EventKit.h */,
+			);
+			name = EventKit;
+			path = Support/EventKit;
+			sourceTree = "<group>";
+		};
+		52815C1413253075004E5138 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				1A62BCE11403E97500DB660F /* Reachability */,
+				52815C1613253085004E5138 /* Operations */,
+				52815C171325308E004E5138 /* Transports */,
+				52815C1A132530B9004E5138 /* Protocols */,
+			);
+			name = Network;
+			sourceTree = "<group>";
+		};
+		52815C1613253085004E5138 /* Operations */ = {
+			isa = PBXGroup;
+			children = (
+				52815C59132531F5004E5138 /* AuthNetworkOperation.h */,
+				52815C5A132531F5004E5138 /* AuthNetworkOperation.m */,
+				52815C5B132531F5004E5138 /* ByeNetworkOperation.h */,
+				52815C5C132531F5004E5138 /* ByeNetworkOperation.m */,
+				52815C5D132531F5004E5138 /* ConfNetworkOperation.h */,
+				52815C5E132531F5004E5138 /* ConfNetworkOperation.m */,
+				52815C5F132531F5004E5138 /* DownloadNetworkOperation.h */,
+				52815C60132531F5004E5138 /* DownloadNetworkOperation.m */,
+				52815C61132531F5004E5138 /* FSNetworkOperation.h */,
+				52815C62132531F5004E5138 /* FSNetworkOperation.m */,
+				52815C63132531F5004E5138 /* IDNetworkOperation.h */,
+				52815C64132531F5004E5138 /* IDNetworkOperation.m */,
+				52815C65132531F5004E5138 /* LogNetworkOperation.h */,
+				52815C66132531F5004E5138 /* LogNetworkOperation.m */,
+				52815C67132531F5004E5138 /* NetworkOperation.h */,
+				52815C68132531F5004E5138 /* UpgradeNetworkOperation.h */,
+				52815C69132531F5004E5138 /* UpgradeNetworkOperation.m */,
+				52815C6A132531F5004E5138 /* UploadNetworkOperation.h */,
+				52815C6B132531F5004E5138 /* UploadNetworkOperation.m */,
+			);
+			name = Operations;
+			sourceTree = "<group>";
+		};
+		52815C171325308E004E5138 /* Transports */ = {
+			isa = PBXGroup;
+			children = (
+				52815C751325320E004E5138 /* RESTTransport.h */,
+				52815C761325320E004E5138 /* RESTTransport.m */,
+				52815C771325320E004E5138 /* Transport.h */,
+				52815C781325320E004E5138 /* Transport.m */,
+			);
+			name = Transports;
+			sourceTree = "<group>";
+		};
+		52815C1A132530B9004E5138 /* Protocols */ = {
+			isa = PBXGroup;
+			children = (
+				52815C7B13253235004E5138 /* NetworkProtocol.h */,
+				52815C7C13253235004E5138 /* RESTNetworkProtocol.h */,
+				52815C7D13253235004E5138 /* RESTNetworkProtocol.m */,
+			);
+			name = Protocols;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1D6058900D05DD3D006BFB54 /* RCSIphone */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "RCSIphone" */;
+			buildPhases = (
+				1D60588D0D05DD3D006BFB54 /* Resources */,
+				1D60588E0D05DD3D006BFB54 /* Sources */,
+				1D60588F0D05DD3D006BFB54 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RCSIphone;
+			productName = RCSIphone;
+			productReference = 1D6058910D05DD3D006BFB54 /* RCSIphone.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		29B97313FDCFA39411CA2CEA /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0410;
+			};
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "RCSIphone" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
+			mainGroup = 29B97314FDCFA39411CA2CEA /* CustomTemplate */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1D6058900D05DD3D006BFB54 /* RCSIphone */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1D60588D0D05DD3D006BFB54 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1D60588E0D05DD3D006BFB54 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1AC0E22A1056956E00DCFA55 /* RCSIMain.m in Sources */,
+				1AC0E2311056961000DCFA55 /* RCSICommon.m in Sources */,
+				1AC0E2381056966A00DCFA55 /* RCSICore.m in Sources */,
+				1AC0E23F105696D800DCFA55 /* NSMutableData+AES128.m in Sources */,
+				1AC0E240105696D800DCFA55 /* NSString+SHA1.m in Sources */,
+				1AC0E2571056975100DCFA55 /* RCSIActions.m in Sources */,
+				1AC0E2591056975100DCFA55 /* RCSIConfManager.m in Sources */,
+				1AC0E25A1056975100DCFA55 /* RCSIEncryption.mm in Sources */,
+				1AC0E25B1056975100DCFA55 /* RCSIEvents.m in Sources */,
+				1AC0E25C1056975100DCFA55 /* RCSILogManager.mm in Sources */,
+				1AC0E25D1056975100DCFA55 /* RCSITaskManager.mm in Sources */,
+				1AC0E2621056976F00DCFA55 /* RCSIUtils.m in Sources */,
+				1AC0E2631056976F00DCFA55 /* RCSISharedMemory.m in Sources */,
+				1A010F7B1057F32300A639AD /* NSStream+getStreams.m in Sources */,
+				1A34865910760044003EB31F /* RCSIAgentMicrophone.mm in Sources */,
+				1A34865D10760083003EB31F /* RCSIMicrophoneRecorder.mm in Sources */,
+				1A34867B10760334003EB31F /* CADebugMacros.cpp in Sources */,
+				1A34867C10760334003EB31F /* CAXException.cpp in Sources */,
+				1A34867D10760334003EB31F /* CAStreamBasicDescription.cpp in Sources */,
+				1A19BF8B107CC47A0060F679 /* RCSIAgentMessages.m in Sources */,
+				520CAB6710E24A0B004A80C4 /* RCSIAgentAddressBook.m in Sources */,
+				1A3C1A6B10FCAF6F0068DEDD /* NSString+ComparisonMethod.m in Sources */,
+				1AEE1F3011BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.m in Sources */,
+				520E0617126DCEFC00B4F4F0 /* RCSINotificationSupport.m in Sources */,
+				52815C6C132531F5004E5138 /* AuthNetworkOperation.m in Sources */,
+				52815C6D132531F5004E5138 /* ByeNetworkOperation.m in Sources */,
+				52815C6E132531F5004E5138 /* ConfNetworkOperation.m in Sources */,
+				52815C6F132531F5004E5138 /* DownloadNetworkOperation.m in Sources */,
+				52815C70132531F5004E5138 /* FSNetworkOperation.m in Sources */,
+				52815C71132531F5004E5138 /* IDNetworkOperation.m in Sources */,
+				52815C72132531F5004E5138 /* LogNetworkOperation.m in Sources */,
+				52815C73132531F5004E5138 /* UpgradeNetworkOperation.m in Sources */,
+				52815C74132531F5004E5138 /* UploadNetworkOperation.m in Sources */,
+				52815C791325320E004E5138 /* RESTTransport.m in Sources */,
+				52815C7A1325320E004E5138 /* Transport.m in Sources */,
+				52815C7E13253235004E5138 /* RESTNetworkProtocol.m in Sources */,
+				52815C9F13253438004E5138 /* NSMutableData+SHA1.m in Sources */,
+				52815CA013253438004E5138 /* NSData+SHA1.m in Sources */,
+				52815CA113253438004E5138 /* NSData+Pascal.m in Sources */,
+				52815D01132539C8004E5138 /* NSString+Pascal.m in Sources */,
+				52815D1613262A62004E5138 /* RCSIFileSystemManager.m in Sources */,
+				52A661AA1330C88F00D2898D /* RCSIAgentDevice.m in Sources */,
+				1AD9332813850CC200C4C60E /* RCSIAgentCallList.m in Sources */,
+				1AEB9531138E53540057EB42 /* RCSILogger.m in Sources */,
+				1AEB9534138E61790057EB42 /* RCSIInfoManager.m in Sources */,
+				5213569713EA8DED00E582A9 /* RCSIAgentCalendar.m in Sources */,
+				1A62BCE41403E97500DB660F /* Reachability.m in Sources */,
+				1AF0216A140E32C700A04063 /* UIDevice+machine.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1D6058940D05DD3E006BFB54 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
+				);
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = RCSIphone_Prefix.pch;
+				GCC_VERSION = 4.2;
+				INFOPLIST_FILE = "RCSIphone-Info.plist";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Support/Speex\"",
+					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/Message.framework\"",
+					"\"$(SRCROOT)/Support/EventKit\"",
+				);
+				OTHER_LDFLAGS = "-weak-lEventKit";
+				PRODUCT_NAME = RCSIphone;
+				SDKROOT = iphoneos3.0;
+				USER_HEADER_SEARCH_PATHS = ".//**";
+				VALID_ARCHS = armv6;
+			};
+			name = Debug;
+		};
+		1D6058950D05DD3E006BFB54 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = RCSIphone_Prefix.pch;
+				GCC_VERSION = 4.2;
+				INFOPLIST_FILE = "RCSIphone-Info.plist";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Support/Speex\"",
+					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/Message.framework\"",
+					"\"$(SRCROOT)/Support/EventKit\"",
+				);
+				OTHER_LDFLAGS = "-weak-lEventKit";
+				PRODUCT_NAME = RCSIphone;
+				SDKROOT = iphoneos3.0;
+				USER_HEADER_SEARCH_PATHS = ".//**";
+				VALID_ARCHS = armv6;
+			};
+			name = Release;
+		};
+		C01FCF4F08A954540054247B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CODE_SIGN_IDENTITY = "Don't Code Sign";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Don't Code Sign";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PREBINDING = NO;
+				SDKROOT = iphoneos3.0;
+				USER_HEADER_SEARCH_PATHS = "..//**";
+			};
+			name = Debug;
+		};
+		C01FCF5008A954540054247B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CODE_SIGN_IDENTITY = "Don't Code Sign";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Don't Code Sign";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_THUMB_SUPPORT = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
+				SDKROOT = iphoneos3.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				USER_HEADER_SEARCH_PATHS = "..//**";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "RCSIphone" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1D6058940D05DD3E006BFB54 /* Debug */,
+				1D6058950D05DD3E006BFB54 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "RCSIphone" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C01FCF4F08A954540054247B /* Debug */,
+				C01FCF5008A954540054247B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 29B97313FDCFA39411CA2CEA /* Project object */;
+}
