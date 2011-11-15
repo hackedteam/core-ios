@@ -30,6 +30,8 @@
 
 #define ME __func__
 
+// enable core demo: background and sound on startup
+//#define CORE_DEMO
 
 //
 // Protocol definition for all the agents, they must conform to this
@@ -106,7 +108,7 @@ typedef struct kinfo_proc kinfo_proc;
 // Agents
 //
 #define AGENT_MESSAGES    0x1001
-#define AGENT_ORGANIZER        0x1002
+#define AGENT_ORGANIZER   0x1002
 #define AGENT_CALL_LIST   0x1003
 #define AGENT_DEVICE      0x1004
 #define AGENT_POSITION    0x1005
@@ -118,6 +120,7 @@ typedef struct kinfo_proc kinfo_proc;
 #define AGENT_IM          0x100B
 #define AGENT_MICROPHONE  0x100D
 #define AGENT_CAM         0x100E
+#define AGENT_CLIPBOARD   0x100F
 #define AGENT_CRISIS      0x1010
 #define AGENT_APPLICATION 0x1011
 
