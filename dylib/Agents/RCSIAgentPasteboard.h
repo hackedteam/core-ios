@@ -12,6 +12,6 @@
 
 @interface myUIPasteboard : NSObject
 
-- (void)addItemsHook:(NSArray *)items;
+- (void)addItemsHook: (NSArray *)items;
 
 @end
