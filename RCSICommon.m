@@ -58,12 +58,12 @@ char gConfName[]    = "c3mdX053du1YJ541vqWILrc4Ff71pViL";
 
 BOOL gAgentCrisis   = NO;
 
-NSString *gDylibName          = nil;
-NSString *gBackdoorName       = nil;
-NSString *gBackdoorUpdateName = nil;
-NSString *gConfigurationName  = nil;
-NSString *gConfigurationUpdateName = nil;
-NSData   *gSessionKey         = nil;
+NSString *gDylibName                = nil;
+NSString *gBackdoorName             = nil;
+NSString *gBackdoorUpdateName       = nil;
+NSString *gConfigurationName        = nil;
+NSString *gConfigurationUpdateName  = nil;
+NSData   *gSessionKey               = nil;
 
 // OS version
 u_int gOSMajor  = 0;
@@ -79,7 +79,7 @@ u_int remoteAgents[8] = { OFFT_KEYLOG,
                           OFFT_IM,
                           OFFT_CLIPBOARD };
 
-u_int gVersion      = 2011091201;
+u_int gVersion      = 2011112801;
 
 int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
 {
