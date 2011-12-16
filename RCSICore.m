@@ -352,12 +352,26 @@ RCSISharedMemory  *mSharedMemoryLogging;
                 [clipData release];
                 break;
               }
+            case AGENT_CAM:
+              {
+#ifdef DEBUG
+                NSLog(@"%s: Camera triggering action %d", __FUNCTION__, shMemLog->flag);
+#endif                
+                if (shMemLog->flag == 1)
+                  {
+                    gCameraActive = TRUE;
+                  }
+                else if (shMemLog->flag == 2)
+                  {
+                    gCameraActive = FALSE;
+                  }                
+                break;
+              }
             default:
               {
 #ifdef DEBUG
                 errorLog(ME, @"Agent not yet implemented suckers");
 #endif
-                
                 break;
               }
           }
