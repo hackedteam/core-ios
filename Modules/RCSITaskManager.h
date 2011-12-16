@@ -92,7 +92,7 @@
 - (BOOL)registerParameter: (NSData *)confData;
 - (BOOL)unregisterParameter: (NSData *)confData;
 
-- (NSMutableDictionary *)getConfigForAction: (u_int)anActionID;
+- (NSArray *)getConfigForAction: (u_int)anActionID;
 - (NSMutableDictionary *)getConfigForAgent: (u_int)anAgentID;
 
 - (void)removeAllElements;

