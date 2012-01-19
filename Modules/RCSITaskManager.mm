@@ -34,8 +34,6 @@
 
 //#define DEBUG
 //#define NO_START_AT_LAUNCH
-#define SEM_NAME            "com.apple.mdworker_executed"
-
 
 static NSLock *gTaskManagerLock             = nil;
 static RCSITaskManager  *sharedTaskManager  = nil;
@@ -413,18 +411,19 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             }
 
           //
-          // Unlinking semaphore
+          // Closing lock socket
           //
-          if (sem_unlink(SEM_NAME) == 0)
+          if (gLockSock != -1)
             {
+              close(gLockSock);
 #ifdef DEBUG
-              NSLog(@"sem_unlink went ok");
+              NSLog(@"closing socket ok");
 #endif
             }
           else
             {
 #ifdef DEBUG
-              NSLog(@"An error occurred while unlinking semaphore");
+              NSLog(@"An error occurred while closing socket");
 #endif
             }
 

