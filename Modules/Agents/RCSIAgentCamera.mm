@@ -117,7 +117,7 @@ typedef struct _cameraStruct
   
   BOOL bRet = FALSE;
 
-  if (gOSMajor == 4)
+  if (gOSMajor >= 4)
     {
 #ifdef DEBUG_CAMERA
     NSLog(@"%s: running on iOS4", __FUNCTION__);
