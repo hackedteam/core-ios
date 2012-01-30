@@ -76,16 +76,6 @@
 		52F4769F10D7A11A00776574 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F4769E10D7A11A00776574 /* AddressBook.framework */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		526EAEB2149B535D00269BCF /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 52682E6A149B413000CE9ADB;
-			remoteInfo = camera;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
 		1A010F251057B9B800A639AD /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		1A010F511057ED8A00A639AD /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
@@ -187,7 +177,7 @@
 		523E581312A92AAC00D56FA0 /* RCSIAgentApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentApplication.h; path = dylib/Agents/RCSIAgentApplication.h; sourceTree = "<group>"; };
 		523E581412A92AAC00D56FA0 /* RCSIAgentApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentApplication.m; path = dylib/Agents/RCSIAgentApplication.m; sourceTree = "<group>"; };
 		52682E48149B3FF900CE9ADB /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
-		52682E6B149B413000CE9ADB /* camera.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = camera.app; path = camera.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		52682E6B149B413000CE9ADB /* camera.dylib */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = camera.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		52682E78149B413000CE9ADB /* camera-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "camera-Prefix.pch"; sourceTree = "<group>"; };
 		52682E8D149B418200CE9ADB /* CameraSupport.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CameraSupport.h; sourceTree = "<group>"; };
 		52682E8E149B418200CE9ADB /* CameraSupport.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = CameraSupport.mm; sourceTree = "<group>"; };
@@ -275,7 +265,7 @@
 			isa = PBXGroup;
 			children = (
 				1D6058910D05DD3D006BFB54 /* RCSIphone.app */,
-				52682E6B149B413000CE9ADB /* camera.app */,
+				52682E6B149B413000CE9ADB /* camera.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -612,7 +602,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				526EAEB3149B535D00269BCF /* PBXTargetDependency */,
 			);
 			name = RCSIphone;
 			productName = RCSIphone;
@@ -633,7 +622,7 @@
 			);
 			name = camera;
 			productName = camera;
-			productReference = 52682E6B149B413000CE9ADB /* camera.app */;
+			productReference = 52682E6B149B413000CE9ADB /* camera.dylib */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -751,14 +740,6 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXTargetDependency section */
-		526EAEB3149B535D00269BCF /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 52682E6A149B413000CE9ADB /* camera */;
-			targetProxy = 526EAEB2149B535D00269BCF /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
 /* Begin XCBuildConfiguration section */
 		1D6058940D05DD3E006BFB54 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -775,6 +756,7 @@
 				GCC_PREFIX_HEADER = RCSIphone_Prefix.pch;
 				GCC_VERSION = 4.2;
 				INFOPLIST_FILE = "RCSIphone-Info.plist";
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "-weak-lEventKit";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Support/Speex\"",
@@ -782,10 +764,12 @@
 					"\"$(SRCROOT)/Support/EventKit\"",
 					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/AppSupport.framework\"",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_CFLAGS = "-mthumb-interwork";
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = RCSIphone;
 				SDKROOT = iphoneos3.0;
+				TARGETED_DEVICE_FAMILY = 1;
 				USER_HEADER_SEARCH_PATHS = ".//**";
 				VALID_ARCHS = armv6;
 			};
@@ -804,6 +788,7 @@
 				GCC_PREFIX_HEADER = RCSIphone_Prefix.pch;
 				GCC_VERSION = 4.2;
 				INFOPLIST_FILE = "RCSIphone-Info.plist";
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "-weak-lEventKit";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Support/Speex\"",
@@ -811,10 +796,12 @@
 					"\"$(SRCROOT)/Support/EventKit\"",
 					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/AppSupport.framework\"",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_CFLAGS = "-mthumb-interwork";
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = RCSIphone;
 				SDKROOT = iphoneos3.0;
+				TARGETED_DEVICE_FAMILY = 1;
 				USER_HEADER_SEARCH_PATHS = ".//**";
 				VALID_ARCHS = armv6;
 			};
@@ -837,14 +824,14 @@
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = 4.2;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				INFOPLIST_FILE = "";
 				INSTALL_PATH = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				MACH_O_TYPE = mh_dylib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
+				SDKROOT = iphoneos4.2;
 				STRIP_INSTALLED_PRODUCT = NO;
 				SUPPORTED_PLATFORMS = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -865,7 +852,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "camera/camera-Prefix.pch";
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = 4.2;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				INFOPLIST_FILE = "";
 				INSTALL_PATH = "";
@@ -873,7 +860,7 @@
 				MACH_O_TYPE = mh_dylib;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
+				SDKROOT = iphoneos4.2;
 				STRIP_INSTALLED_PRODUCT = NO;
 				SUPPORTED_PLATFORMS = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -887,27 +874,36 @@
 		C01FCF4F08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				ARCHS = (
+					armv6,
+					armv7,
+				);
 				CODE_SIGN_IDENTITY = "Don't Code Sign";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Don't Code Sign";
 				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_VERSION = 4.2;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;
 				SDKROOT = iphoneos3.0;
 				USER_HEADER_SEARCH_PATHS = "..//**";
+				VALID_ARCHS = armv6;
 			};
 			name = Debug;
 		};
 		C01FCF5008A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				ARCHS = (
+					armv6,
+					armv7,
+				);
 				CODE_SIGN_IDENTITY = "Don't Code Sign";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Don't Code Sign";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_THUMB_SUPPORT = YES;
+				GCC_VERSION = 4.2;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
@@ -915,6 +911,7 @@
 				SDKROOT = iphoneos3.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				USER_HEADER_SEARCH_PATHS = "..//**";
+				VALID_ARCHS = armv6;
 			};
 			name = Release;
 		};
