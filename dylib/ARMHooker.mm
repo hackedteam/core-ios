@@ -21,11 +21,17 @@
 
 //#define DEBUG
 
+int _AHOverride_ARM(char        *originalFunctionPtr,
+                    const void  *newFunctionAddress,
+                    void        **reentryIsland);
+
+int _AHOverride_THUMB(char        *originalFunctionPtr,
+                      const void  *newFunctionAddress,
+                      void        **reentryIsland);
 
 //
 // stolen from MobileSubstrate
 //
-
 enum A$r {
   A$r0, A$r1, A$r2, A$r3,
   A$r4, A$r5, A$r6, A$r7,
@@ -153,7 +159,7 @@ int _AHOverride_ARM(char        *originalFunctionPtr,
   uint32_t *code = (uint32_t *)originalFunctionPtr;
   const size_t used(2);
   
-  uint32_t backup[used] = {code[0], code[1]};
+  //uint32_t backup[used] = {code[0], code[1]};
   
   code[0] = A$ldr_rd_$rn_im$(A$pc, A$pc, 4 - 8);
   code[1] = (uint32_t)newFunctionAddress;
