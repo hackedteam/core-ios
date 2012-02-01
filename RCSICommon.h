@@ -188,6 +188,8 @@ extern u_int remoteAgents[];
 #define AGENT_ENABLED     @"ENABLED"
 #define AGENT_RUNNING     @"RUNNING"
 #define AGENT_STOPPED     @"STOPPED"
+#define AGENT_SUSPENDED   @"SUSPENDED"
+#define AGENT_RESTART     @"RESTART"
 
 // Monitor Status
 #define EVENT_RUNNING     @"RUNNING"

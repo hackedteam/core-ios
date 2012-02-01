@@ -69,6 +69,9 @@
 - (BOOL)suspendAgent: (u_int)agentID;
 - (BOOL)stopAgent: (u_int)agentID;
 
+- (BOOL)suspendAgents;
+- (BOOL)restartAgents;
+
 - (BOOL)startAgents;
 - (BOOL)stopAgents;
 

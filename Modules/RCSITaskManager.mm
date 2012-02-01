@@ -475,7 +475,8 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
       
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
-            [agentConfiguration objectForKey: @"status"] != AGENT_START)
+            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
             
@@ -517,7 +518,8 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
-            [agentConfiguration objectForKey: @"status"] != AGENT_START)
+            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
             
@@ -544,7 +546,8 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING
-            && [agentConfiguration objectForKey: @"status"] != AGENT_START)
+            && [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
             
@@ -591,8 +594,9 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
-        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING
-            && [agentConfiguration objectForKey: @"status"] != AGENT_START)
+        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING && 
+            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
             
@@ -642,7 +646,8 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
-            [agentConfiguration objectForKey: @"status"] != AGENT_START)
+            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
             
@@ -671,7 +676,8 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
 
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
-            [agentConfiguration objectForKey: @"status"] != AGENT_START)
+            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
 #ifdef DEBUG
@@ -704,8 +710,9 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
-        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING
-            && [agentConfiguration objectForKey: @"status"] != AGENT_START)
+        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING && 
+            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
             
@@ -766,7 +773,8 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
 
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
-            [agentConfiguration objectForKey: @"status"] != AGENT_START)
+            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
 
@@ -793,7 +801,8 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
-            [agentConfiguration objectForKey: @"status"] != AGENT_START)
+            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             [agentConfiguration setObject: AGENT_START
                                    forKey: @"status"];
@@ -820,8 +829,9 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
 
-        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING
-            && [agentConfiguration objectForKey: @"status"] != AGENT_START)
+        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING && 
+            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
 
@@ -870,7 +880,8 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
       
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
-            [agentConfiguration objectForKey: @"status"] != AGENT_START)
+            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
         
@@ -907,6 +918,109 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 
 - (BOOL)suspendAgent: (u_int)agentID
 {
+  return YES;
+}
+
+#define MAX_RETRY_TIME 6
+
+- (BOOL)restartAgents
+{
+  NSAutoreleasePool *outerPool    = [[NSAutoreleasePool alloc] init];
+  
+#ifdef DEBUG_TASK_MANAGER
+  NSLog(@"Restart suspended agents");
+#endif
+  
+  NSMutableDictionary *anObject;
+  
+  for (int i = 0; i < [mAgentsList count]; i++)
+    {
+      NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
+      
+      anObject = [mAgentsList objectAtIndex: i];
+      
+      [anObject retain];
+      
+      int agentID = [[anObject objectForKey: @"agentID"] intValue];
+      
+#ifdef DEBUG_TASK_MANAGER
+      NSLog(@"Agent %#x status %@", agentID, [anObject objectForKey: @"status"]);
+#endif
+    
+      if ([anObject objectForKey: @"status"] == AGENT_SUSPENDED )
+        {
+          [anObject setObject: AGENT_RESTART forKey: @"status"];
+          [self startAgent:agentID];
+      
+#ifdef DEBUG_TASK_MANAGER
+          sleep(1);
+          NSLog(@"Agent %#x new status %@", agentID, [anObject objectForKey: @"status"]);
+#endif
+        }
+    
+      [anObject release];
+    
+      [innerPool release];
+    }
+  
+  [outerPool release];
+  
+  return YES;
+}
+
+- (BOOL)suspendAgents
+{
+  NSAutoreleasePool *outerPool    = [[NSAutoreleasePool alloc] init];
+  
+#ifdef DEBUG_TASK_MANAGER
+  NSLog(@"Suspend running agents");
+#endif
+  
+  NSMutableDictionary *anObject;
+  
+  for (int i = 0; i < [mAgentsList count]; i++)
+    {
+      NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
+      
+      anObject = [mAgentsList objectAtIndex: i];
+      
+      [anObject retain];
+      
+      int agentID = [[anObject objectForKey: @"agentID"] intValue];
+      
+      if ([anObject objectForKey: @"status"] == AGENT_RUNNING)
+        {
+          int retry = 0;
+        
+#ifdef DEBUG_TASK_MANAGER
+          NSLog(@"Agent %#x found %@", agentID, [anObject objectForKey: @"status"]);
+#endif
+          [self stopAgent:agentID];
+          
+          while (([anObject objectForKey: @"status"] != AGENT_STOPPED) &&
+                 (retry++ < MAX_RETRY_TIME))
+            {
+              sleep(1);
+            }
+          
+          [anObject setObject: AGENT_SUSPENDED forKey: @"status"];
+        
+#ifdef DEBUG_TASK_MANAGER
+          NSLog(@"Agent %#x new status %@", agentID, [anObject objectForKey: @"status"]);
+#endif
+        }
+    
+      [anObject release];
+    
+      [innerPool release];
+    }
+  
+#ifdef DEBUG_TASK_MANAGER
+  NSLog(@"suspending agents done");
+#endif
+  
+  [outerPool release];
+  
   return YES;
 }
 

