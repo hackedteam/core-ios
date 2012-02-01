@@ -193,7 +193,7 @@ static BOOL gCameraRun = NO;
     [outImg captureStillImageAsynchronouslyFromConnection: conn completionHandler:
      (^(CMSampleBufferRef imageDataSampleBuffer, NSError *error)
         {
-          if (imageDataSampleBuffer != NULL)
+          if (imageDataSampleBuffer != NULL && error == nil)
             {
               gImageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
               
