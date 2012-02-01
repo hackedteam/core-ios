@@ -45,6 +45,8 @@ enum {
 {
 @private
   NSMutableArray *mActiveQueue;
+  NSMutableArray *mQueue1;
+  NSMutableArray *mQueue2;
   NSMutableArray *mSendQueue;
   NSMutableArray *mTempQueue;
   
@@ -71,14 +73,6 @@ enum {
 - (BOOL)createLog: (u_int)agentID
       agentHeader: (NSData *)anAgentHeader
         withLogID: (u_int)logID;
-
-//
-// @author
-//  revenge
-// @abstract
-//  Close ALL the logs in the mActiveQueue and move them inside the mSendQueue
-//
-- (BOOL)closeActiveLogs: (BOOL)continueLogging;
 
 - (BOOL)closeActiveLogsAndContinueLogging: (BOOL)continueLogging;
 

