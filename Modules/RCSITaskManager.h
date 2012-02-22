@@ -78,6 +78,8 @@
 - (void)eventsMonitor;
 - (BOOL)stopEvents;
 
+- (BOOL)startEvents;
+
 - (BOOL)triggerAction: (int)anActionID;
 
 - (BOOL)registerEvent: (NSData *)eventData
