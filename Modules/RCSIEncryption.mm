@@ -10,6 +10,7 @@
  */
 
 #import <CommonCrypto/CommonCryptor.h>
+#import <CommonCrypto/CommonDigest.h>
 #import <zlib.h>
 
 #import "RCSICommon.h"
@@ -102,6 +103,51 @@
 {
   [mKey release];
   [super dealloc];
+}
+
+- (NSData *)decryptJSonConfiguration: (NSString *)aConfigurationFile
+{
+  NSData *clearConfig = nil;
+  
+  if ([[NSFileManager defaultManager] fileExistsAtPath: aConfigurationFile] == FALSE)
+    {
+      return clearConfig;
+    }
+  
+  NSMutableData *tmpConfig = [NSData dataWithContentsOfFile: aConfigurationFile];
+  
+  if (tmpConfig != nil)
+    {
+      CCCryptorStatus result = 0;
+      result = [tmpConfig decryptWithKey: mKey];
+    
+      if (result == kCCSuccess)
+        {
+          u_char *confBuffer = (u_char*)[tmpConfig bytes];
+          u_int confLen = [tmpConfig length] - CC_SHA1_DIGEST_LENGTH;
+          
+          u_char *confSha1 = (confBuffer + confLen);
+          
+          u_char tmpSha1[CC_SHA1_DIGEST_LENGTH+1];
+          memset(tmpSha1, 0, sizeof(tmpSha1));
+          
+          CC_SHA1(confBuffer, confLen, tmpSha1);
+          
+          clearConfig = [[NSData alloc] initWithBytes:confBuffer length:confLen];
+        
+          for (int i=0; i < CC_SHA1_DIGEST_LENGTH; i++) 
+            {
+              if (tmpSha1[i] != confSha1[i])
+                {
+                  [clearConfig release];
+                  clearConfig = nil;
+                  break;
+                }
+            }
+        }
+    }
+    
+  return clearConfig;
 }
 
 - (NSData *)decryptConfiguration: (NSString *)aConfigurationFile
