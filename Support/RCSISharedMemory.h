@@ -28,11 +28,15 @@
   int mFD;
   int mKey;
   int qID;
+  NSMutableArray      *mCoreMessageQueue;
+  NSMutableArray      *mLogMessageQueue;
 }
 
 @property (readwrite) char              *mSharedMemory;
 @property (readonly)  NSString          *mFilename;
 @property (readwrite) int               mSize;
+@property (readonly) NSMutableArray    *mCoreMessageQueue;
+@property (readonly) NSMutableArray    *mLogMessageQueue;
 
 - (id)initWithFilename: (NSString *)aFilename
                   size: (u_int)aSize;
@@ -71,6 +75,11 @@
 - (void)runMethod: (NSDictionary *)aDict;
 - (BOOL)isShMemValid;
 - (BOOL)restartShMem;
+
+//////////////////////////////////////
+
+- (int)createCoreRLSource;
+- (NSMutableArray*)fetchMessages;
 
 @end
 

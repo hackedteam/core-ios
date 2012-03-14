@@ -63,10 +63,7 @@
 - (BOOL)reloadConfiguration;
 - (void)uninstallMeh;
 
-- (id)initAgent: (u_int)agentID;
 - (BOOL)startAgent: (u_int)agentID;
-- (BOOL)restartAgent: (u_int)agentID;
-- (BOOL)suspendAgent: (u_int)agentID;
 - (BOOL)stopAgent: (u_int)agentID;
 
 - (BOOL)suspendAgents;
@@ -75,9 +72,8 @@
 - (BOOL)startAgents;
 - (BOOL)stopAgents;
 
-- (void)eventsMonitor;
+- (BOOL)startEventsMonitors;
 - (BOOL)stopEvents;
-
 - (BOOL)startEvents;
 
 - (BOOL)triggerAction: (int)anActionID;
@@ -86,21 +82,26 @@
                  type: (u_int)aType
                action: (u_int)actionID;
 - (BOOL)unregisterEvent: (u_int)eventID;
+
 - (BOOL)registerAction: (NSData *)actionData
                   type: (u_int)actionType
                 action: (u_int)actionID;
 - (BOOL)unregisterAction: (u_int)actionID;
+
 - (BOOL)registerAgent: (NSData *)agentData
               agentID: (u_int)agentID
                status: (u_int)status;
 - (BOOL)unregisterAgent: (u_int)agentID;
+
 - (BOOL)registerParameter: (NSData *)confData;
 - (BOOL)unregisterParameter: (NSData *)confData;
 
 - (NSArray *)getConfigForAction: (u_int)anActionID;
 - (NSMutableDictionary *)getConfigForAgent: (u_int)anAgentID;
 
+- (NSMutableArray*)getCopyOfEvents;
 - (void)removeAllElements;
+- (void)checkManagersAndRestart;
 
 @end
 

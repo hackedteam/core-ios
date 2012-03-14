@@ -403,17 +403,17 @@ NSDate *gStartDate, *gEndDate;
   int internalCounter = 0;
 
   // Already set by Agent AddressBook: not mandatory...
-       [mAgentConfiguration setObject: AGENT_STOP
-                               forKey: @"status"];
+  [mAgentConfiguration setObject: AGENT_STOP
+                          forKey: @"status"];
 
-       while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED
-              && internalCounter <= 5)
-         {
-           internalCounter++;
-           sleep(1);
-         }
+  while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED
+         && internalCounter <= 5)
+    {
+      internalCounter++;
+      sleep(1);
+    }
 
-       return YES;
+ return YES;
 }
 
 - (BOOL)resume

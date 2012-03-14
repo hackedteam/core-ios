@@ -30,8 +30,8 @@ u_int gPrevStringLen               = 0;
     {
       gKeylogLock = [[NSLock alloc] init];
       mContextHasBeenSwitched = TRUE;
-      return self;
     }
+  return self;
 }
 
 - (void)dealloc

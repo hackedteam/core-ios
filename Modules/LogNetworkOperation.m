@@ -79,7 +79,7 @@
   replyData = [mTransport sendData: commandData
                  returningResponse: urlResponse];
   
-  if (replyData == nil)
+  if (replyData == nil/* or == null*/)
     {
 #ifdef DEBUG_LOG_NOP
       errorLog(@"empty reply from server");

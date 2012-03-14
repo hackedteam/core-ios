@@ -191,7 +191,6 @@ extern RCSISharedMemory     *mSharedMemoryLogging;
 
 - (BOOL)grabInfo: (NSString*)aStatus
 {
-  NSString *pStatus;
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
 #ifdef DEBUG

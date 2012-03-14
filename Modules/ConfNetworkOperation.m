@@ -248,4 +248,46 @@
   return YES;
 }
 
+- (BOOL)sendConfAck:(BOOL)retAck
+{
+  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+  
+  uint32_t command = PROTO_NEW_CONF;
+  NSMutableData *commandData = [[NSMutableData alloc] initWithBytes: &command
+                                                             length: sizeof(uint32_t)];
+                                                             
+  [commandData appendBytes: &retAck length:sizeof(int)];                                                          
+  
+  NSData *commandSha = [commandData sha1Hash];
+  [commandData appendData: commandSha];
+  
+#ifdef DEBUG_CONF_NOP
+  infoLog(@"commandData: %@", commandData);
+#endif
+  
+  [commandData encryptWithKey: gSessionKey];
+  
+  //
+  // Send encrypted message
+  //
+  NSURLResponse *urlResponse    = nil;
+  NSData *replyData             = nil;
+  
+  replyData = [mTransport sendData: commandData
+                 returningResponse: urlResponse];
+
+  if (replyData == nil)
+    {
+#ifdef DEBUG_CONF_NOP
+    errorLog(@"empty reply from server");
+#endif
+    [commandData release];
+    [outerPool release];
+    
+    return NO;
+    }
+    
+  [outerPool release];
+  return YES;
+}
 @end

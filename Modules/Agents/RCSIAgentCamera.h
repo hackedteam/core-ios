@@ -10,6 +10,13 @@
 #ifndef __RCSIAgentCamera_h__
 #define __RCSIAgentCamera_h__
 
+typedef struct _cameraStruct
+{
+  UInt32 timeStep;
+  UInt32 numStep;
+} cameraStruct;
+
+
 @interface RCSIAgentCamera : NSObject
 {
 @public

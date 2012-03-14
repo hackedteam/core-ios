@@ -51,9 +51,14 @@ enum {
   
   NSMutableArray *mSendQueue;
   
+  NSMutableArray *mLogMessageQueue;
+  NSMachPort     *notificationPort;
+  
 @private
   RCSIEncryption *mEncryption;
 }
+
+@property (readonly) NSMachPort *notificationPort;
 
 + (RCSILogManager *)sharedInstance;
 + (id)allocWithZone: (NSZone *)aZone;
@@ -121,7 +126,9 @@ enum {
 
 - (BOOL)clearSendLogQueue: (NSMutableIndexSet *)theSet;
 
+- (BOOL)addMessage: (NSData*)aMessage;
 
+- (void)start;
 @end
 
 #endif
