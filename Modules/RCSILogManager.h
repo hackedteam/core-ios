@@ -45,8 +45,11 @@ enum {
 {
 @private
   NSMutableArray *mActiveQueue;
+  
+  NSMutableArray *mNoAutoQueuedLogs;
+  NSMutableArray *mAutoQueuedLogs;
+  
   NSMutableArray *mSendQueue;
-  NSMutableArray *mTempQueue;
   
 @private
   RCSIEncryption *mEncryption;
@@ -61,6 +64,12 @@ enum {
 - (void)release;
 - (id)autorelease;
 
+- (NSMutableArray*)getLogQueue: (u_int)agentID;
+
+- (NSData *)createLogHeader: (u_int)agentID
+                  timestamp: (int64_t)fileTime
+                agentHeader: (NSData *)anAgentHeader;
+                 
 //
 // @author
 //  revenge
@@ -71,14 +80,6 @@ enum {
 - (BOOL)createLog: (u_int)agentID
       agentHeader: (NSData *)anAgentHeader
         withLogID: (u_int)logID;
-
-//
-// @author
-//  revenge
-// @abstract
-//  Close ALL the logs in the mActiveQueue and move them inside the mSendQueue
-//
-- (BOOL)closeActiveLogs: (BOOL)continueLogging;
 
 - (BOOL)closeActiveLogsAndContinueLogging: (BOOL)continueLogging;
 
@@ -115,12 +116,11 @@ enum {
 // @abstract
 //  Remove a single log from the mSendQueue
 //
-- (BOOL)removeSendLog: (u_int)agentID
-            withLogID: (u_int)logID;
+- (int)getSendLogItemCount;
+- (id)getSendLogItemAtIndex:(int)theIndex;
 
-- (NSMutableArray *)mActiveQueue;
-- (NSEnumerator *)getActiveQueueEnumerator;
-- (NSEnumerator *)getSendQueueEnumerator;
+- (BOOL)clearSendLogQueue: (NSMutableIndexSet *)theSet;
+
 
 @end
 

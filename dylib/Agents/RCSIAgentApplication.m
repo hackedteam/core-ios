@@ -157,7 +157,7 @@ extern RCSISharedMemory     *mSharedMemoryLogging;
   // Log buffer
   shMemoryHeader->status          = SHMEM_WRITTEN;
   shMemoryHeader->logID           = 0;
-  shMemoryHeader->agentID         = AGENT_APPLICATION;
+  shMemoryHeader->agentID         = LOG_APPLICATION;
   shMemoryHeader->direction       = D_TO_CORE;
   shMemoryHeader->commandType     = CM_LOG_DATA;
   shMemoryHeader->flag            = 0;

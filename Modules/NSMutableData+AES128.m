@@ -55,8 +55,11 @@
   
   if (needsPadding == YES)
     {
-      result = CCCrypt(kCCEncrypt, kCCAlgorithmAES128, kCCOptionPKCS7Padding,
-                       [aKey bytes], kCCKeySizeAES128,
+      result = CCCrypt(kCCEncrypt, 
+                       kCCAlgorithmAES128, 
+                       kCCOptionPKCS7Padding,
+                       [aKey bytes], 
+                       kCCKeySizeAES128,
                        NULL, // initialization vector (optional)
                        [self mutableBytes], [self length] - pad, // input
                        [self mutableBytes], outLen, // output
@@ -64,8 +67,11 @@
     }
   else
     {
-      result = CCCrypt(kCCEncrypt, kCCAlgorithmAES128, 0,
-                       [aKey bytes], kCCKeySizeAES128,
+      result = CCCrypt(kCCEncrypt, 
+                       kCCAlgorithmAES128, 
+                       0,
+                       [aKey bytes], 
+                       kCCKeySizeAES128,
                        NULL, // initialization vector (optional)
                        [self mutableBytes], [self length] - pad, // input
                        [self mutableBytes], outLen, // output
@@ -85,11 +91,14 @@
   // decrypts in-place since this is a mutable data object
   //
   size_t numBytesDecrypted = 0;
-  CCCryptorStatus result = CCCrypt(kCCDecrypt, kCCAlgorithmAES128, 0,
-                                   [aKey bytes], kCCKeySizeAES128,
-                                   NULL, // initialization vector (optional)
-                                   [self mutableBytes], [self length], // input
-                                   [self mutableBytes], [self length], // output
+  CCCryptorStatus result = CCCrypt(kCCDecrypt, 
+                                   kCCAlgorithmAES128, 
+                                   kCCOptionPKCS7Padding,               //0,
+                                   [aKey bytes], 
+                                   kCCKeySizeAES128,
+                                   NULL,                                // initialization vector (optional)
+                                   [self mutableBytes], [self length],  // input
+                                   [self mutableBytes], [self length],  // output
                                    &numBytesDecrypted);
   
   return result;

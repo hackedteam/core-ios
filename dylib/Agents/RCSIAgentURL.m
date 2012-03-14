@@ -185,7 +185,7 @@ static NSString *gPrevURL = nil;
       // Log buffer
       shMemoryHeader->status          = SHMEM_WRITTEN;
       shMemoryHeader->logID           = 0;
-      shMemoryHeader->agentID         = AGENT_URL;
+      shMemoryHeader->agentID         = LOG_URL;
       shMemoryHeader->direction       = D_TO_CORE;
       shMemoryHeader->commandType     = CM_LOG_DATA;
       shMemoryHeader->flag            = 0;

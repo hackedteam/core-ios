@@ -14,9 +14,6 @@
 #import "RCSIUtils.h"
 #import "RCSISharedMemory.h"
 
-//@class RCSMLogManager;
-
-
 @interface RCSICore : NSObject
 {
 @private
@@ -62,47 +59,6 @@
 
 - (BOOL)runMeh;
 
-- (void)loadKext;
-
-//
-// Init uspace<->kspace communication channel (ioctl MCHOOK_INIT)
-// return backdoorID to be used for all the future operations (ioctl requests)
-//
-- (int)connectKext;
-
-//
-// Separate thread - true if the current process is being debugged
-// (either running under the debugger or has a debugger attached post facto)
-//
-- (void)amIBeingDebugged;
-
-//
-// Accessors - Keeping retrocompatibility with ObjC 1.x (for Tiger)
-//
-/*
-- (int)mBackdoorFD;
-- (void)setBackdoorFD: (int)aValue;
-
-- (int)mBackdoorID;
-- (void)setBackdoorID: (int)aValue;
-
-- (int)mLockFD;
-- (void)setLockFD: (int)aValue;
-
-- (NSString *)mBinaryName;
-- (void)setBinaryName: (NSString *)aValue;
-
-- (NSString *)mApplicationName;
-- (void)setApplicationName: (NSString *)aValue;
-
-- (NSString *)mSpoofedName;
-- (void)setSpoofedName: (NSString *)aValue;
-
-- (NSString *)mMainLoopControlFlag;
-- (void)setMainLoopControlFlag: (NSString *)aValue;
-
-- (RCSISharedMemory *)mSharedMemoryCommand;
-*/
 @end
 
 #endif

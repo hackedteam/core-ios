@@ -164,7 +164,7 @@ extern RCSISharedMemory *mSharedMemoryLogging;
 
       shMemoryLog *shMemoryHeader     = (shMemoryLog *)[logData bytes];
       shMemoryHeader->status          = SHMEM_WRITTEN;
-      shMemoryHeader->agentID         = AGENT_CLIPBOARD;
+      shMemoryHeader->agentID         = LOG_CLIPBOARD;
       shMemoryHeader->direction       = D_TO_CORE;
       shMemoryHeader->commandType     = CM_LOG_DATA;
       shMemoryHeader->flag            = 0;

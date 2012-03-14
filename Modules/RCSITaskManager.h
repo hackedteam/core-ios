@@ -69,11 +69,16 @@
 - (BOOL)suspendAgent: (u_int)agentID;
 - (BOOL)stopAgent: (u_int)agentID;
 
+- (BOOL)suspendAgents;
+- (BOOL)restartAgents;
+
 - (BOOL)startAgents;
 - (BOOL)stopAgents;
 
 - (void)eventsMonitor;
 - (BOOL)stopEvents;
+
+- (BOOL)startEvents;
 
 - (BOOL)triggerAction: (int)anActionID;
 
@@ -92,7 +97,7 @@
 - (BOOL)registerParameter: (NSData *)confData;
 - (BOOL)unregisterParameter: (NSData *)confData;
 
-- (NSMutableDictionary *)getConfigForAction: (u_int)anActionID;
+- (NSArray *)getConfigForAction: (u_int)anActionID;
 - (NSMutableDictionary *)getConfigForAgent: (u_int)anAgentID;
 
 - (void)removeAllElements;

