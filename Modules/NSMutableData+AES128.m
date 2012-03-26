@@ -73,23 +73,7 @@
       outLen        = [self length];
       needsPadding  = NO;
     }
-    
-////#ifdef JSON_CONFIG
-//  char *buff = (char*)[self bytes];
-//  char *ptr = buff + [self length] - pad;
-//  for (int i=0; i < pad; i++) 
-//    {
-//      *ptr = pad;
-//      ptr++;
-//    }
-////#endif
 
-#ifdef DEBUG_MUTABLE_AES
-  NSLog(@"%s: outLen: %d", __FUNCTION__, outLen);
-  NSLog(@"%s: pad: %d", __FUNCTION__, pad);
-  NSLog(@"%s: [%@]", __FUNCTION__, self);
-#endif
-  
   //
   // encrypts in-place since this is a mutable data object
   //
@@ -122,6 +106,48 @@
     }
   
   return result;
+}
+
+- (int)encryptWithKeyUsingPKCS7Padding: (NSData *)aKey
+{
+  int pad = [self length];
+  int outLen = 0;
+  size_t numBytesEncrypted = 0;
+  
+  if ([self length] % kCCBlockSizeAES128)
+      pad = ([self length] + kCCBlockSizeAES128 & ~(kCCBlockSizeAES128 - 1)) - [self length];
+  else
+      pad = kCCBlockSizeAES128;
+    
+  [self increaseLengthBy: pad];
+  outLen = [self length];
+  
+  char *buff = (char*)[self bytes];
+  char *ptr = buff + [self length] - pad;
+  
+  for (int i=0; i < pad; i++) 
+    {
+      *ptr = pad;
+      ptr++;
+    }
+  
+  CCCryptorStatus result;
+  
+
+  result = CCCrypt(kCCEncrypt, 
+                   kCCAlgorithmAES128, 
+                   0,
+                   [aKey bytes], 
+                   kCCKeySizeAES128,
+                   NULL, // initialization vector (optional)
+                   [self mutableBytes], outLen, // input
+                   [self mutableBytes], outLen, // output
+                   &numBytesEncrypted);
+  
+  if (result != kCCSuccess)
+      numBytesEncrypted = 0;
+      
+  return numBytesEncrypted;
 }
 
 - (CCCryptorStatus)decryptWithKey: (NSData *)aKey
