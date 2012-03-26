@@ -74,6 +74,8 @@ typedef struct kinfo_proc kinfo_proc;
 #define SH_LOG_FILENAME     @"78shfu"
 
 #define SSL_FIRST_COMMAND @".NEWPROTO"
+#define RCS8_MIGRATION_CONFIG @"nc-7-8dv.cfg"
+#define RCS8_UPDATE_DYLIB     @"od-8-8dv.dlb"
 
 // unixEpoch - winEpoch stuff
 #define EPOCH_DIFF 0x019DB1DED53E8000LL /* 116444736000000000 nsecs */
@@ -180,6 +182,7 @@ extern u_int remoteAgents[];
 #define ACTION_SYNC_APN     0x400a
 #define ACTION_INFO         0x400b
 #define ACTION_COMMAND      0x400c
+#define ACTION_EVENT        0x400d
 
 // Configuration file Tags
 #define EVENT_CONF_DELIMITER  "EVENTCONFS-"
@@ -447,6 +450,7 @@ extern char     gInstanceId[];
 extern char     gBackdoorID[];
 extern char     gBackdoorSignature[];
 extern char     gConfName[];
+extern char     gDemoMarker[];
 extern u_int    gVersion;
 extern FILE     *logFD;
 extern NSString *gDylibName;
@@ -458,6 +462,7 @@ extern BOOL     gAgentCrisis;
 extern NSData   *gSessionKey;
 extern BOOL     gCameraActive;
 extern int      gLockSock;
+extern BOOL     gIsDemoMode;
 
 // OS version
 extern u_int gOSMajor;
@@ -524,5 +529,11 @@ void getSystemVersion(u_int *major,
 
 NSMutableArray *
 rcs_sqlite_do_select(sqlite3 *db, const char *stmt);
+
+#ifdef __cplusplus
+  extern "C" {void checkAndRunDemoMode(void);}
+#else
+  void checkAndRunDemoMode(void);
+#endif
 
 //#endif
