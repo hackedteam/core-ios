@@ -196,6 +196,10 @@
 		52F2B80A14F67D6C00AB51B2 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A1D7CCB105A5C9F0098D4D5 /* UIKit.framework */; };
 		52F2B80B14F67D6C00AB51B2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		52F2B80C14F67D6C00AB51B2 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52682E48149B3FF900CE9ADB /* CoreGraphics.framework */; };
+<<<<<<< HEAD
+=======
+		52F2B83614F67E7700AB51B2 /* RCSISharedMemory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2611056976F00DCFA55 /* RCSISharedMemory.m */; };
+>>>>>>> 8ca82e43d99bd9c5dd20638b2386603847af4b07
 		52F4769F10D7A11A00776574 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F4769E10D7A11A00776574 /* AddressBook.framework */; };
 		52FAE93614FB8A10003D1527 /* RCSIAgentApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE92D14FB8A10003D1527 /* RCSIAgentApplication.m */; };
 		52FAE93714FB8A10003D1527 /* RCSIAgentInputLogger.mm in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE92F14FB8A10003D1527 /* RCSIAgentInputLogger.mm */; };
@@ -335,6 +339,7 @@
 		5234E9C911C13C97002FFF39 /* Message.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Message.framework; path = System/Library/PrivateFrameworks/Message.framework; sourceTree = SDKROOT; };
 		523CDB7E1488EF6D00A7947E /* RCSIAgentCamera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentCamera.h; path = Modules/Agents/RCSIAgentCamera.h; sourceTree = "<group>"; };
 		523CDB7F1488EF6D00A7947E /* RCSIAgentCamera.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSIAgentCamera.mm; path = Modules/Agents/RCSIAgentCamera.mm; sourceTree = "<group>"; };
+<<<<<<< HEAD
 		5243499B1500B78400841ECF /* RCSIEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIEvent.h; path = Modules/RCSIEvent.h; sourceTree = "<group>"; };
 		5243499C1500B78400841ECF /* RCSIEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; name = RCSIEvent.m; path = Modules/RCSIEvent.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		524349A31500DDAF00841ECF /* RCSIEventProcess.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIEventProcess.h; path = Modules/RCSIEventProcess.h; sourceTree = "<group>"; };
@@ -361,6 +366,8 @@
 		5264A9E115109CE400A4D90D /* RCSIAgentScreenshot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentScreenshot.m; path = dylib/Agents/RCSIAgentScreenshot.m; sourceTree = SOURCE_ROOT; };
 		5264A9E215109CE400A4D90D /* RCSIAgentURL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentURL.h; path = dylib/Agents/RCSIAgentURL.h; sourceTree = SOURCE_ROOT; };
 		5264A9E315109CE400A4D90D /* RCSIAgentURL.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentURL.m; path = dylib/Agents/RCSIAgentURL.m; sourceTree = SOURCE_ROOT; };
+=======
+>>>>>>> 8ca82e43d99bd9c5dd20638b2386603847af4b07
 		52682E48149B3FF900CE9ADB /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		52682E6B149B413000CE9ADB /* camera.ios */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = camera.ios; sourceTree = BUILT_PRODUCTS_DIR; };
 		52682E78149B413000CE9ADB /* camera-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "camera-Prefix.pch"; sourceTree = "<group>"; };
@@ -436,6 +443,22 @@
 		52DA63DA14892BE20022C1D3 /* RCSICameraSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSICameraSupport.h; path = Modules/Agents/RCSICameraSupport.h; sourceTree = "<group>"; };
 		52F2B80814F67D6C00AB51B2 /* dylib.ios */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = dylib.ios; sourceTree = BUILT_PRODUCTS_DIR; };
 		52F4769E10D7A11A00776574 /* AddressBook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBook.framework; path = /System/Library/Frameworks/AddressBook.framework; sourceTree = "<absolute>"; };
+<<<<<<< HEAD
+=======
+		52FAE92C14FB8A10003D1527 /* RCSIAgentApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentApplication.h; path = dylib/Agents/RCSIAgentApplication.h; sourceTree = SOURCE_ROOT; };
+		52FAE92D14FB8A10003D1527 /* RCSIAgentApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentApplication.m; path = dylib/Agents/RCSIAgentApplication.m; sourceTree = SOURCE_ROOT; };
+		52FAE92E14FB8A10003D1527 /* RCSIAgentInputLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentInputLogger.h; path = dylib/Agents/RCSIAgentInputLogger.h; sourceTree = SOURCE_ROOT; };
+		52FAE92F14FB8A10003D1527 /* RCSIAgentInputLogger.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSIAgentInputLogger.mm; path = dylib/Agents/RCSIAgentInputLogger.mm; sourceTree = SOURCE_ROOT; };
+		52FAE93014FB8A10003D1527 /* RCSIAgentPasteboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentPasteboard.h; path = dylib/Agents/RCSIAgentPasteboard.h; sourceTree = SOURCE_ROOT; };
+		52FAE93114FB8A10003D1527 /* RCSIAgentPasteboard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentPasteboard.m; path = dylib/Agents/RCSIAgentPasteboard.m; sourceTree = SOURCE_ROOT; };
+		52FAE93214FB8A10003D1527 /* RCSIAgentScreenshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentScreenshot.h; path = dylib/Agents/RCSIAgentScreenshot.h; sourceTree = SOURCE_ROOT; };
+		52FAE93314FB8A10003D1527 /* RCSIAgentScreenshot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentScreenshot.m; path = dylib/Agents/RCSIAgentScreenshot.m; sourceTree = SOURCE_ROOT; };
+		52FAE93414FB8A10003D1527 /* RCSIAgentURL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentURL.h; path = dylib/Agents/RCSIAgentURL.h; sourceTree = SOURCE_ROOT; };
+		52FAE93514FB8A10003D1527 /* RCSIAgentURL.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentURL.m; path = dylib/Agents/RCSIAgentURL.m; sourceTree = SOURCE_ROOT; };
+		52FAE93B14FB8A24003D1527 /* RCSILoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSILoader.h; path = dylib/RCSILoader.h; sourceTree = SOURCE_ROOT; };
+		52FAE93C14FB8A24003D1527 /* RCSILoader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSILoader.mm; path = dylib/RCSILoader.mm; sourceTree = SOURCE_ROOT; };
+		8D1107310486CEB800E47090 /* RCSIphone-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "RCSIphone-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
+>>>>>>> 8ca82e43d99bd9c5dd20638b2386603847af4b07
 		C55C53CD14CECA240034B013 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/AVFoundation.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
@@ -933,8 +956,13 @@
 			isa = PBXGroup;
 			children = (
 				52FAE92B14FB89F0003D1527 /* Agents */,
+<<<<<<< HEAD
 				5264A9D915109CC200A4D90D /* RCSILoader.h */,
 				5264A9D715109CB000A4D90D /* RCSILoader.mm */,
+=======
+				52FAE93B14FB8A24003D1527 /* RCSILoader.h */,
+				52FAE93C14FB8A24003D1527 /* RCSILoader.mm */,
+>>>>>>> 8ca82e43d99bd9c5dd20638b2386603847af4b07
 			);
 			path = "ios-dylib";
 			sourceTree = "<group>";
@@ -942,6 +970,7 @@
 		52FAE92B14FB89F0003D1527 /* Agents */ = {
 			isa = PBXGroup;
 			children = (
+<<<<<<< HEAD
 				5264A9DA15109CE400A4D90D /* RCSIAgentApplication.h */,
 				5264A9DB15109CE400A4D90D /* RCSIAgentApplication.m */,
 				5264A9DC15109CE400A4D90D /* RCSIAgentInputLogger.h */,
@@ -952,6 +981,18 @@
 				5264A9E115109CE400A4D90D /* RCSIAgentScreenshot.m */,
 				5264A9E215109CE400A4D90D /* RCSIAgentURL.h */,
 				5264A9E315109CE400A4D90D /* RCSIAgentURL.m */,
+=======
+				52FAE92C14FB8A10003D1527 /* RCSIAgentApplication.h */,
+				52FAE92D14FB8A10003D1527 /* RCSIAgentApplication.m */,
+				52FAE92E14FB8A10003D1527 /* RCSIAgentInputLogger.h */,
+				52FAE92F14FB8A10003D1527 /* RCSIAgentInputLogger.mm */,
+				52FAE93014FB8A10003D1527 /* RCSIAgentPasteboard.h */,
+				52FAE93114FB8A10003D1527 /* RCSIAgentPasteboard.m */,
+				52FAE93214FB8A10003D1527 /* RCSIAgentScreenshot.h */,
+				52FAE93314FB8A10003D1527 /* RCSIAgentScreenshot.m */,
+				52FAE93414FB8A10003D1527 /* RCSIAgentURL.h */,
+				52FAE93514FB8A10003D1527 /* RCSIAgentURL.m */,
+>>>>>>> 8ca82e43d99bd9c5dd20638b2386603847af4b07
 			);
 			name = Agents;
 			sourceTree = "<group>";
@@ -1269,6 +1310,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+<<<<<<< HEAD
 				5264A9E915109CFE00A4D90D /* RCSISharedMemory.m in Sources */,
 				5264A9D815109CB000A4D90D /* RCSILoader.mm in Sources */,
 				5264A9E415109CE400A4D90D /* RCSIAgentApplication.m in Sources */,
@@ -1276,6 +1318,15 @@
 				5264A9E615109CE400A4D90D /* RCSIAgentPasteboard.m in Sources */,
 				5264A9E715109CE400A4D90D /* RCSIAgentScreenshot.m in Sources */,
 				5264A9E815109CE400A4D90D /* RCSIAgentURL.m in Sources */,
+=======
+				52F2B83614F67E7700AB51B2 /* RCSISharedMemory.m in Sources */,
+				52FAE93614FB8A10003D1527 /* RCSIAgentApplication.m in Sources */,
+				52FAE93714FB8A10003D1527 /* RCSIAgentInputLogger.mm in Sources */,
+				52FAE93814FB8A10003D1527 /* RCSIAgentPasteboard.m in Sources */,
+				52FAE93914FB8A10003D1527 /* RCSIAgentScreenshot.m in Sources */,
+				52FAE93A14FB8A10003D1527 /* RCSIAgentURL.m in Sources */,
+				52FAE93D14FB8A24003D1527 /* RCSILoader.mm in Sources */,
+>>>>>>> 8ca82e43d99bd9c5dd20638b2386603847af4b07
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1612,9 +1663,14 @@
 				SUPPORTED_PLATFORMS = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				USER_HEADER_SEARCH_PATHS = "./**";
+<<<<<<< HEAD
 				VALIDATE_PRODUCT = YES;
 				WRAPPER_EXTENSION = ios;
 
+=======
+				VALIDATE_PRODUCT = NO;
+				WRAPPER_EXTENSION = dylib;
+>>>>>>> 8ca82e43d99bd9c5dd20638b2386603847af4b07
 			};
 			name = Release;
 		};
