@@ -18,7 +18,6 @@
 #import "NSMutableData+AES128.h"
 
 //#define DEBUG
-#define DEBUG_TMP
 
 #pragma mark -
 #pragma mark Private Interface
@@ -108,9 +107,6 @@
 - (NSMutableData *)decryptWithKey:(NSData *)aKey
                            inData:(NSMutableData*)inData
 {
-#ifdef DEBUG_TMP
-  NSLog(@"self length: %d", [inData length]);
-#endif
   NSMutableData *clearData = nil;
   
   size_t numBytesDecrypted = 0;
@@ -129,10 +125,6 @@
     {
       clearData = [NSMutableData dataWithBytes:[inData bytes] length:numBytesDecrypted];
     }
-      
-#ifdef DEBUG_TMP
-  NSLog(@"%s: return %d dec %lu", __FUNCTION__, result, numBytesDecrypted);
-#endif
 
   return clearData;
 }
@@ -142,18 +134,14 @@
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
   NSData *clearConfig = nil;
-  
-   NSLog(@"%s: running decryption", __FUNCTION__);
    
   if ([[NSFileManager defaultManager] fileExistsAtPath: aConfigurationFile] == FALSE)
     {
-       NSLog(@"%s: no file found %@", __FUNCTION__, aConfigurationFile);
+      [pool release];
       return clearConfig;
     }
   
   NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath: aConfigurationFile];
-  
-  NSLog(@"%s: filehandle %@", __FUNCTION__, fileHandle);
   
   if (fileHandle != nil)
     {
@@ -173,12 +161,6 @@
 
           CC_SHA1(confBuffer, confLen, tmpSha1);
         
-#ifdef DEBUG_TMP
-        NSData *origSha = [NSData dataWithBytes: confSha1 length: CC_SHA1_DIGEST_LENGTH];
-        NSData *mySha = [NSData dataWithBytes: tmpSha1 length:CC_SHA1_DIGEST_LENGTH];
-        
-        NSLog(@"%s: the sha1s orig %@, my %@", __FUNCTION__, origSha, mySha);
-#endif          
           clearConfig = [[NSData dataWithBytes:confBuffer length:confLen] retain];
         
           for (int i=0; i < CC_SHA1_DIGEST_LENGTH; i++) 
