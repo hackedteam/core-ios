@@ -305,7 +305,7 @@ NSLock *connectionLock;
   }
   
   [theEvent setObject: timer forKey: @"object"];
-  
+
   [theEvent release];
   [timer release];
   
@@ -338,7 +338,8 @@ NSLock *connectionLock;
   [proc setDelay: [theEvent objectForKey:@"delay"]]; 
 
   [theEvent setObject: proc forKey: @"object"];
-  
+
+  [processName release];
   [theEvent release];
   [proc release];
   
@@ -829,10 +830,6 @@ NSLock *connectionLock;
       
       UIDeviceBatteryState battState = [[UIDevice currentDevice] batteryState];
     
-#ifdef DEBUG
-      NSLog(@"%s: battery min %d, max %d, curr %f", __FUNCTION__, minLevel, maxLevel, battLevel);
-#endif
-    
       if (battState == UIDeviceBatteryStateCharging || battState == UIDeviceBatteryStateFull) 
         {
 #ifdef DEBUG
@@ -981,52 +978,6 @@ typedef struct _coreMessage_t
   uint dataLen;
 } coreMessage_t;
 
-- (BOOL)sendMessageToMachPort:(mach_port_t)port 
-                     withData:(NSData *)aData
-{
-  coreMessage_t *message;
-  kern_return_t err;
-  uint theMsgLen = (sizeof(coreMessage_t) + [aData length]);
-  
-  // released by handleMachMessage
-  NSMutableData *theMsg = [[NSMutableData alloc] 
-                           initWithCapacity: theMsgLen];
-  
-  message = (coreMessage_t*) [theMsg bytes];
-  message->header.msgh_bits = MACH_MSGH_BITS_REMOTE(MACH_MSG_TYPE_MAKE_SEND);
-  message->header.msgh_local_port = MACH_PORT_NULL;
-  message->header.msgh_remote_port = port;
-  message->header.msgh_size = theMsgLen;
-  message->dataLen = [aData length];
-  
-  memcpy((u_char*)message + sizeof(coreMessage_t), [aData bytes], message->dataLen);
-  
-  err = mach_msg((mach_msg_header_t*)message, 
-                 MACH_SEND_MSG, 
-                 theMsgLen, 
-                 0, 
-                 MACH_PORT_NULL, 
-                 MACH_MSG_TIMEOUT_NONE,
-                 MACH_PORT_NULL);
-  
-  [theMsg release];
-  
-  if( err != KERN_SUCCESS )
-    {
-#ifdef DEBUG
-    NSLog(@"%s: error sending message to port %d, [%#x]", __FUNCTION__, port, err);
-#endif
-    }
-  else
-    {
-#ifdef DEBUG
-    NSLog(@"%s: message sent to port %d [%#x] retainCount %d", __FUNCTION__, port, theMsg, [theMsg retainCount]);
-#endif
-    }
-  
-  return TRUE;
-}
-
 - (BOOL)triggerAction: (int)anActionID
 {
   if (anActionID == 0xFFFFFFFF)
@@ -1036,7 +987,7 @@ typedef struct _coreMessage_t
   
   mach_port_t port = [[[RCSIActions sharedInstance] notificationPort] machPort];
   
-  [self sendMessageToMachPort:port withData:theMsg];
+  [RCSISharedMemory sendMessageToMachPort:port withData:theMsg];
   
   [theMsg release];
   
@@ -1102,7 +1053,7 @@ typedef struct _coreMessage_t
         [theEvent setObject:EVENT_START forKey:@"status"];
         
         // release it [retained by addTimersToCurrentRunLoop]
-        [eventInst retain];
+        //[eventInst retain];
       }
     
     [eventList release];
@@ -1170,10 +1121,10 @@ typedef struct _coreMessage_t
       if (eventInst != nil && [eventInst respondsToSelector:@selector(removeTimers)])
         {
           [eventInst performSelector:@selector(removeTimers)];
-          [theEvent setObject:EVENT_STOPPED forKey:@"status"];
+          //[theEvent setObject:EVENT_STOPPED forKey:@"status"];
           
           // release it [retained by addTimersToCurrentRunLoop]
-          [eventInst release];
+          //[eventInst release];
         }
     }
   
@@ -1194,18 +1145,14 @@ typedef struct _coreMessage_t
     
     id eventInst = [theEvent objectForKey: @"object"];
     
-#ifdef DEBUG_   
-    NSLog(@"%s: events %@", __FUNCTION__, eventInst);
-#endif 
-    
     if (eventInst != nil && [eventInst respondsToSelector:@selector(setStartTimer)])
       {
         [eventInst performSelector:@selector(setStartTimer)];
-        [theEvent setObject:EVENT_START forKey:@"status"];
+        //[theEvent setObject:EVENT_START forKey:@"status"];
         
         // for timing issues, maybe races on reloading the configuration
         // retain it for safety
-        [eventInst retain];
+        //[eventInst retain];
       }
   }
   
@@ -1220,7 +1167,17 @@ typedef struct _coreMessage_t
   NSLog(@"%s: running event manager", __FUNCTION__);
 #endif 
 
+  while (eventManagerStatus == EVENT_MANAGER_RUNNING &&
+         eventManagerStatus == EVENT_MANAGER_STOPPING)
+    { 
+#ifdef DEBUG
+        NSLog(@"%s: eventManagerRunLoop found alredy running", __FUNCTION__);
+#endif
+      sleep(1);
+    }
+    
   eventManagerStatus = EVENT_MANAGER_RUNNING;
+  
   NSRunLoop *eventManagerRunLoop = [NSRunLoop currentRunLoop];
   
   notificationPort = [[NSMachPort alloc] init];
@@ -1237,7 +1194,7 @@ typedef struct _coreMessage_t
       NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
       [eventManagerRunLoop runMode: kRunLoopEventManagerMode 
-                        beforeDate: [NSDate dateWithTimeIntervalSinceNow:1.500]];
+                        beforeDate: [NSDate dateWithTimeIntervalSinceNow:0.750]];
 
       // process incoming logs out of the runloop
       [self processIncomingEvents];   
@@ -1246,19 +1203,19 @@ typedef struct _coreMessage_t
     }
   
   // remove source port, release machport, remove action queue
+  [self removeTimersFromCurrentRunLoop]; 
+  
   [eventManagerRunLoop removePort: notificationPort 
                           forMode: kRunLoopEventManagerMode];
-                          
-  [self removeTimersFromCurrentRunLoop]; 
                        
   [notificationPort release];
-  
+
   // set to nil for error handling: core test if it nil
   // and don't send msgs to this
   notificationPort = nil;
   
   // work is done: stop the manager
-  eventManagerStatus = ACTION_MANAGER_STOPPED;
+  eventManagerStatus = EVENT_MANAGER_STOPPED;
 }
 
 - (void)start
@@ -1270,16 +1227,16 @@ typedef struct _coreMessage_t
 // Excecuted by another thread
 - (BOOL)stop
 {
-  eventManagerStatus = ACTION_MANAGER_STOPPING;
+  eventManagerStatus = EVENT_MANAGER_STOPPING;
   
   for (int i=0; i<5; i++) 
     { 
-      if (eventManagerStatus == ACTION_MANAGER_STOPPED)
+      if (eventManagerStatus == EVENT_MANAGER_STOPPED)
         break;
       sleep(1);
     }
   
-  return eventManagerStatus == ACTION_MANAGER_STOPPED ? TRUE : FALSE;
+  return eventManagerStatus == EVENT_MANAGER_STOPPED ? TRUE : FALSE;
 }
 
 @end
