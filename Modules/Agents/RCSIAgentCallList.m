@@ -476,6 +476,9 @@ typedef struct _callListAdditionalHeader {
                               forKey: @"status"];
     }
   
+  [mAgentConfiguration release];
+  mAgentConfiguration = nil;
+  
   [outerPool release];
 }
   

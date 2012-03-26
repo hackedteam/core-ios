@@ -15,7 +15,6 @@
 
 @interface RCSIAgentCallList : NSObject <Agents>
 {
-@private
   NSMutableDictionary *mAgentConfiguration;
   int32_t mLastCallTimestamp;
 }
