@@ -80,7 +80,9 @@
 
 - (int)createCoreRLSource;
 - (NSMutableArray*)fetchMessages;
-
++ (BOOL)sendMessageToMachPort:(mach_port_t)port 
+                     withData:(NSData *)aData;
+                     
 @end
 
 #endif

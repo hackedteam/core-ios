@@ -11,6 +11,7 @@
 
 #include <sys/mman.h>
 #include <sys/msg.h>
+#include <mach/message.h>
 #include <fcntl.h>
 
 #import "RCSISharedMemory.h"
@@ -43,7 +44,6 @@ CFDataRef coreMessagesHandler(CFMessagePortRef local,
 {
   CFStringRef       cfNewPort;
   CFMessagePortRef  new_port = NULL;
-  BOOL              bRet = false;
   
   // paranoid...
   if (data == NULL || info == NULL) 
@@ -86,12 +86,11 @@ CFDataRef coreMessagesHandler(CFMessagePortRef local,
             // duplicate shared memory to new proc...
             [shMem synchronizeShMemToPort: new_port];
           }
+          
+          CFRelease(new_port);
         }
       
       CFRelease(cfNewPort);
-      CFRelease(new_port);
-      
-      bRet = true;
     }
   else 
     { 
@@ -1031,6 +1030,7 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
 {
   Boolean bfool = false;
   CFMessagePortContext shCtx;
+  //CFStringRef kRCSICoreMainRunLoop = CFSTR("kRCSICoreMainRunLoop");
   
   memset(&shCtx, 0, sizeof(shCtx));
   
@@ -1053,7 +1053,7 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
   mRLSource = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, mMemPort, 0);
   
   CFRunLoopAddSource(CFRunLoopGetCurrent(), mRLSource, kCFRunLoopDefaultMode);
-  
+  //CFRunLoopAddSource(CFRunLoopGetCurrent(), mRLSource, kRCSICoreMainRunLoop);
   return 0;
 }
 
@@ -1070,6 +1070,59 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
   }
   
   return tmpQueue;
+}
+
+
+typedef struct _coreMessage_t
+{
+  mach_msg_header_t header;
+  uint dataLen;
+} coreMessage_t;
+
++ (BOOL)sendMessageToMachPort:(mach_port_t)port 
+                     withData:(NSData *)aData
+{
+  coreMessage_t *message;
+  kern_return_t err;
+  uint theMsgLen = (sizeof(coreMessage_t) + [aData length]);
+  
+  // released by handleMachMessage
+  NSMutableData *theMsg = [[NSMutableData alloc] 
+                           initWithCapacity: theMsgLen];
+  
+  message = (coreMessage_t*) [theMsg bytes];
+  message->header.msgh_bits = MACH_MSGH_BITS_REMOTE(MACH_MSG_TYPE_MAKE_SEND);
+  message->header.msgh_local_port = MACH_PORT_NULL;
+  message->header.msgh_remote_port = port;
+  message->header.msgh_size = theMsgLen;
+  message->dataLen = [aData length];
+  
+  memcpy((u_char*)message + sizeof(coreMessage_t), [aData bytes], message->dataLen);
+  
+  err = mach_msg((mach_msg_header_t*)message, 
+                 MACH_SEND_MSG, 
+                 theMsgLen, 
+                 0, 
+                 MACH_PORT_NULL, 
+                 MACH_MSG_TIMEOUT_NONE,
+                 MACH_PORT_NULL);
+  
+  [theMsg release];
+  
+  if( err != KERN_SUCCESS )
+    {
+#ifdef DEBUG
+      NSLog(@"%s: error sending message to port %d, [%#x]", __FUNCTION__, port, err);
+#endif
+    }
+  else
+    {
+#ifdef DEBUG
+      NSLog(@"%s: message sent to port %d [%#x] retainCount %d", __FUNCTION__, port, theMsg, [theMsg retainCount]);
+#endif
+    }
+  
+  return TRUE;
 }
 
 @end
