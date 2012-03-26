@@ -1890,6 +1890,9 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   // Removing filters...
   [mMessageFilters release];
   
+  [mAgentConfiguration release];
+  mAgentConfiguration = nil;
+  
   [outerPool release];
 }
   
@@ -1916,20 +1919,6 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
 - (BOOL)resume
 {
   return YES;
-}
-
-- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration
-{
-  if (aConfiguration != mAgentConfiguration)
-    {
-      [mAgentConfiguration release];
-      mAgentConfiguration = [aConfiguration retain];
-    }
-}
-
-- (NSMutableDictionary *)mAgentConfiguration
-{
-  return mAgentConfiguration;
 }
 
 @end

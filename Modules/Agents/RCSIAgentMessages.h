@@ -46,8 +46,7 @@
 - (void)release;
 - (id)autorelease;
 - (id)init;
-- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration;
-- (NSMutableDictionary *)mAgentConfiguration;
+
 - (BOOL)stop;
 - (void)start;
 @end                                        
