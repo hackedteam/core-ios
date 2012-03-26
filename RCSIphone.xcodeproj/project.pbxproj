@@ -47,16 +47,117 @@
 		520CAB6710E24A0B004A80C4 /* RCSIAgentAddressBook.m in Sources */ = {isa = PBXBuildFile; fileRef = 520CAB6610E24A0B004A80C4 /* RCSIAgentAddressBook.m */; };
 		520E0617126DCEFC00B4F4F0 /* RCSINotificationSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = 520E0616126DCEFC00B4F4F0 /* RCSINotificationSupport.m */; };
 		5213569713EA8DED00E582A9 /* RCSIAgentCalendar.m in Sources */ = {isa = PBXBuildFile; fileRef = 5213569613EA8DED00E582A9 /* RCSIAgentCalendar.m */; };
+		5217E0A4151E4A2C0011ED1E /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A1D7CCB105A5C9F0098D4D5 /* UIKit.framework */; };
+		5217E0A5151E4A2C0011ED1E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
+		5217E0A6151E4A2C0011ED1E /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52682E48149B3FF900CE9ADB /* CoreGraphics.framework */; };
+		5217E0AC151E4A2C0011ED1E /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5217E0AA151E4A2C0011ED1E /* InfoPlist.strings */; };
+		5217E0AE151E4A2C0011ED1E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 5217E0AD151E4A2C0011ED1E /* main.m */; };
+		5217E0B2151E4A2C0011ED1E /* ios_test_appAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 5217E0B1151E4A2C0011ED1E /* ios_test_appAppDelegate.m */; };
+		5217E0B6151E4A2C0011ED1E /* ios_test_appAppDelegate_iPhone.m in Sources */ = {isa = PBXBuildFile; fileRef = 5217E0B5151E4A2C0011ED1E /* ios_test_appAppDelegate_iPhone.m */; };
+		5217E0B9151E4A2D0011ED1E /* MainWindow_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5217E0B7151E4A2D0011ED1E /* MainWindow_iPhone.xib */; };
+		5217E0BD151E4A2D0011ED1E /* ios_test_appAppDelegate_iPad.m in Sources */ = {isa = PBXBuildFile; fileRef = 5217E0BC151E4A2D0011ED1E /* ios_test_appAppDelegate_iPad.m */; };
+		5217E0C0151E4A2D0011ED1E /* MainWindow_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5217E0BE151E4A2D0011ED1E /* MainWindow_iPad.xib */; };
+		5217E0C4151E4AC20011ED1E /* RCSICore.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2371056966A00DCFA55 /* RCSICore.m */; };
+		5217E0C5151E4C5D0011ED1E /* RCSIUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E25F1056976F00DCFA55 /* RCSIUtils.m */; };
+		5217E0C6151E4C5D0011ED1E /* ARMHooker.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1AAFAE401186DC99002AA6B7 /* ARMHooker.mm */; };
+		5217E0C7151E4C5D0011ED1E /* RCSINotificationSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = 520E0616126DCEFC00B4F4F0 /* RCSINotificationSupport.m */; };
+		5217E0C8151E4C5D0011ED1E /* RCSISharedMemory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2611056976F00DCFA55 /* RCSISharedMemory.m */; };
+		5217E0C9151E4C5D0011ED1E /* RCSILogger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AEB9530138E53540057EB42 /* RCSILogger.m */; };
+		5217E0CA151E4C5D0011ED1E /* RCSIEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 5243499C1500B78400841ECF /* RCSIEvent.m */; };
+		5217E0CB151E4C5D0011ED1E /* RCSIEventTimer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5229105614FF8244008EB127 /* RCSIEventTimer.m */; };
+		5217E0CC151E4C5D0011ED1E /* RCSIEventProcess.m in Sources */ = {isa = PBXBuildFile; fileRef = 524349A41500DDAF00841ECF /* RCSIEventProcess.m */; };
+		5217E0CD151E4C5D0011ED1E /* RCSIEventConnectivity.m in Sources */ = {isa = PBXBuildFile; fileRef = 524349A715011B8600841ECF /* RCSIEventConnectivity.m */; };
+		5217E0CE151E4C5D0011ED1E /* RCSIEventBattery.m in Sources */ = {isa = PBXBuildFile; fileRef = 524349AA15011EFD00841ECF /* RCSIEventBattery.m */; };
+		5217E0CF151E4C5D0011ED1E /* RCSIEventACPower.m in Sources */ = {isa = PBXBuildFile; fileRef = 524349AD1501238D00841ECF /* RCSIEventACPower.m */; };
+		5217E0D0151E4C5D0011ED1E /* RCSIEventScreensaver.m in Sources */ = {isa = PBXBuildFile; fileRef = 52337D8F150E57E3003F0269 /* RCSIEventScreensaver.m */; };
+		5217E0D1151E4C5D0011ED1E /* RCSIEventSimChange.m in Sources */ = {isa = PBXBuildFile; fileRef = 524C8422150F5786005113A0 /* RCSIEventSimChange.m */; };
+		5217E0D2151E4C5D0011ED1E /* RCSIEvents.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2521056975100DCFA55 /* RCSIEvents.m */; };
+		5217E0D3151E4C5D0011ED1E /* NSObject+SBJson.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E63DE14F6A0C60064F398 /* NSObject+SBJson.m */; };
+		5217E0D4151E4C5D0011ED1E /* SBJsonParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E63E114F6A0C60064F398 /* SBJsonParser.m */; };
+		5217E0D5151E4C5D0011ED1E /* SBJsonStreamParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E63E314F6A0C60064F398 /* SBJsonStreamParser.m */; };
+		5217E0D6151E4C5D0011ED1E /* SBJsonStreamParserAccumulator.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E63E514F6A0C60064F398 /* SBJsonStreamParserAccumulator.m */; };
+		5217E0D7151E4C5D0011ED1E /* SBJsonStreamParserAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E63E714F6A0C60064F398 /* SBJsonStreamParserAdapter.m */; };
+		5217E0D8151E4C5D0011ED1E /* SBJsonStreamParserState.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E63E914F6A0C60064F398 /* SBJsonStreamParserState.m */; };
+		5217E0D9151E4C5D0011ED1E /* SBJsonStreamWriter.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E63EB14F6A0C60064F398 /* SBJsonStreamWriter.m */; };
+		5217E0DA151E4C5D0011ED1E /* SBJsonStreamWriterAccumulator.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E63ED14F6A0C60064F398 /* SBJsonStreamWriterAccumulator.m */; };
+		5217E0DB151E4C5D0011ED1E /* SBJsonStreamWriterState.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E63EF14F6A0C60064F398 /* SBJsonStreamWriterState.m */; };
+		5217E0DC151E4C5D0011ED1E /* SBJsonTokeniser.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E63F114F6A0C60064F398 /* SBJsonTokeniser.m */; };
+		5217E0DD151E4C5D0011ED1E /* SBJsonUTF8Stream.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E63F314F6A0C60064F398 /* SBJsonUTF8Stream.m */; };
+		5217E0DE151E4C5D0011ED1E /* SBJsonWriter.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E63F514F6A0C60064F398 /* SBJsonWriter.m */; };
+		5217E0DF151E4C5D0011ED1E /* RCSIJSonConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E640414F6A1360064F398 /* RCSIJSonConfiguration.m */; };
+		5217E0E0151E4C5D0011ED1E /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A62BCE31403E97500DB660F /* Reachability.m */; };
+		5217E0E1151E4C5D0011ED1E /* AuthNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C5A132531F5004E5138 /* AuthNetworkOperation.m */; };
+		5217E0E2151E4C5D0011ED1E /* ByeNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C5C132531F5004E5138 /* ByeNetworkOperation.m */; };
+		5217E0E3151E4C5D0011ED1E /* ConfNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C5E132531F5004E5138 /* ConfNetworkOperation.m */; };
+		5217E0E4151E4C5D0011ED1E /* DownloadNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C60132531F5004E5138 /* DownloadNetworkOperation.m */; };
+		5217E0E5151E4C5D0011ED1E /* FSNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C62132531F5004E5138 /* FSNetworkOperation.m */; };
+		5217E0E6151E4C5D0011ED1E /* IDNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C64132531F5004E5138 /* IDNetworkOperation.m */; };
+		5217E0E7151E4C5D0011ED1E /* LogNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C66132531F5004E5138 /* LogNetworkOperation.m */; };
+		5217E0E8151E4C5D0011ED1E /* UpgradeNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C69132531F5004E5138 /* UpgradeNetworkOperation.m */; };
+		5217E0E9151E4C5D0011ED1E /* UploadNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C6B132531F5004E5138 /* UploadNetworkOperation.m */; };
+		5217E0EA151E4C5D0011ED1E /* RESTTransport.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C761325320E004E5138 /* RESTTransport.m */; };
+		5217E0EB151E4C5D0011ED1E /* Transport.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C781325320E004E5138 /* Transport.m */; };
+		5217E0EC151E4C5D0011ED1E /* RESTNetworkProtocol.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C7D13253235004E5138 /* RESTNetworkProtocol.m */; };
+		5217E0ED151E4C5D0011ED1E /* CADebugMacros.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A34867410760334003EB31F /* CADebugMacros.cpp */; };
+		5217E0EE151E4C5D0011ED1E /* CAXException.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A34867610760334003EB31F /* CAXException.cpp */; };
+		5217E0EF151E4C5D0011ED1E /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A34867910760334003EB31F /* CAStreamBasicDescription.cpp */; };
+		5217E0F0151E4C5D0011ED1E /* RCSIAgentMicrophone.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1A34865810760044003EB31F /* RCSIAgentMicrophone.mm */; };
+		5217E0F1151E4C5D0011ED1E /* RCSIMicrophoneRecorder.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1A34865C10760083003EB31F /* RCSIMicrophoneRecorder.mm */; };
+		5217E0F2151E4C5D0011ED1E /* RCSIAgentAddressBook.m in Sources */ = {isa = PBXBuildFile; fileRef = 520CAB6610E24A0B004A80C4 /* RCSIAgentAddressBook.m */; };
+		5217E0F3151E4C5D0011ED1E /* RCSIAgentMessages.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A19BF8A107CC47A0060F679 /* RCSIAgentMessages.m */; };
+		5217E0F4151E4C5D0011ED1E /* RCSIAgentPosition.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A19BEB4107C9A300060F679 /* RCSIAgentPosition.m */; };
+		5217E0F5151E4C5D0011ED1E /* RCSIAgentDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 52A661A91330C88F00D2898D /* RCSIAgentDevice.m */; };
+		5217E0F6151E4C5D0011ED1E /* RCSIAgentCallList.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AD9332713850CC200C4C60E /* RCSIAgentCallList.m */; };
+		5217E0F7151E4C5D0011ED1E /* RCSIAgentCalendar.m in Sources */ = {isa = PBXBuildFile; fileRef = 5213569613EA8DED00E582A9 /* RCSIAgentCalendar.m */; };
+		5217E0F8151E4C5D0011ED1E /* RCSIAgentCamera.mm in Sources */ = {isa = PBXBuildFile; fileRef = 523CDB7F1488EF6D00A7947E /* RCSIAgentCamera.mm */; };
+		5217E0F9151E4C5D0011ED1E /* RCSIFileSystemManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815D1513262A62004E5138 /* RCSIFileSystemManager.m */; };
+		5217E0FA151E4C5D0011ED1E /* RCSIInfoManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AEB9533138E61790057EB42 /* RCSIInfoManager.m */; };
+		5217E0FB151E4C5D0011ED1E /* RCSIConfManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E24E1056975100DCFA55 /* RCSIConfManager.m */; };
+		5217E0FC151E4C5D0011ED1E /* RCSIEncryption.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2501056975100DCFA55 /* RCSIEncryption.mm */; };
+		5217E0FD151E4C5D0011ED1E /* RCSITaskManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2561056975100DCFA55 /* RCSITaskManager.mm */; };
+		5217E0FE151E4C5D0011ED1E /* RCSILogManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2541056975100DCFA55 /* RCSILogManager.mm */; };
+		5217E0FF151E4C5D0011ED1E /* RCSIActions.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E24A1056975100DCFA55 /* RCSIActions.m */; };
+		5217E100151E4C5D0011ED1E /* NSString+Pascal.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815CFF132539C8004E5138 /* NSString+Pascal.m */; };
+		5217E101151E4C5D0011ED1E /* NSMutableData+SHA1.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C9913253438004E5138 /* NSMutableData+SHA1.m */; };
+		5217E102151E4C5D0011ED1E /* NSData+Pascal.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C9B13253438004E5138 /* NSData+Pascal.m */; };
+		5217E103151E4C5D0011ED1E /* NSMutableData+AES128.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E23C105696D800DCFA55 /* NSMutableData+AES128.m */; };
+		5217E104151E4C5D0011ED1E /* NSString+SHA1.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E23E105696D800DCFA55 /* NSString+SHA1.m */; };
+		5217E105151E4C5D0011ED1E /* NSString+ComparisonMethod.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A3C1A6A10FCAF6F0068DEDD /* NSString+ComparisonMethod.m */; };
+		5217E106151E4C5D0011ED1E /* NSStream+getStreams.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A010F7A1057F32300A639AD /* NSStream+getStreams.m */; };
+		5217E107151E4C5D0011ED1E /* NSMutableDictionary+ThreadSafe.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AEE1F2F11BD21F60066DE71 /* NSMutableDictionary+ThreadSafe.m */; };
+		5217E108151E4C5D0011ED1E /* UIDevice+machine.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AF02169140E32C700A04063 /* UIDevice+machine.m */; };
+		5217E109151E4C5D0011ED1E /* RCSICommon.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2301056961000DCFA55 /* RCSICommon.m */; };
+		5217E10B151E4DEE0011ED1E /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5217E10A151E4DEE0011ED1E /* AudioToolbox.framework */; };
+		5217E10E151E4F600011ED1E /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5217E10D151E4F600011ED1E /* AVFoundation.framework */; };
+		5217E112151E4F7A0011ED1E /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5217E111151E4F7A0011ED1E /* CFNetwork.framework */; };
+		5217E114151E4F880011ED1E /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5217E113151E4F880011ED1E /* SystemConfiguration.framework */; };
+		5217E116151E4F940011ED1E /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5217E115151E4F940011ED1E /* AddressBook.framework */; };
+		5217E118151E50270011ED1E /* libspeex.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5217E117151E50270011ED1E /* libspeex.a */; };
+		5217E11A151E503B0011ED1E /* libsqlite3.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5217E119151E503B0011ED1E /* libsqlite3.0.dylib */; };
+		5217E11C151E50870011ED1E /* libEventKit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5217E11B151E50870011ED1E /* libEventKit.dylib */; };
+		5217E11E151E50DB0011ED1E /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5217E11D151E50DB0011ED1E /* CoreLocation.framework */; };
+		5217E120151E52E10011ED1E /* Entitlements.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 5217E11F151E52E10011ED1E /* Entitlements.entitlements */; };
+		521C870015205C340080D021 /* CoreTelephony in Frameworks */ = {isa = PBXBuildFile; fileRef = 521C86FF15205C340080D021 /* CoreTelephony */; };
 		5229105714FF8244008EB127 /* RCSIEventTimer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5229105614FF8244008EB127 /* RCSIEventTimer.m */; };
 		52337D90150E57E3003F0269 /* RCSIEventScreensaver.m in Sources */ = {isa = PBXBuildFile; fileRef = 52337D8F150E57E3003F0269 /* RCSIEventScreensaver.m */; };
 		5234E9CA11C13C97002FFF39 /* Message.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5234E9C911C13C97002FFF39 /* Message.framework */; };
 		523CDB801488EF6D00A7947E /* RCSIAgentCamera.mm in Sources */ = {isa = PBXBuildFile; fileRef = 523CDB7F1488EF6D00A7947E /* RCSIAgentCamera.mm */; };
+		5240A957151F743B0009F337 /* NSData+SHA1.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C9A13253438004E5138 /* NSData+SHA1.m */; };
 		5243499D1500B78400841ECF /* RCSIEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 5243499C1500B78400841ECF /* RCSIEvent.m */; };
 		524349A51500DDB000841ECF /* RCSIEventProcess.m in Sources */ = {isa = PBXBuildFile; fileRef = 524349A41500DDAF00841ECF /* RCSIEventProcess.m */; };
 		524349A815011B8600841ECF /* RCSIEventConnectivity.m in Sources */ = {isa = PBXBuildFile; fileRef = 524349A715011B8600841ECF /* RCSIEventConnectivity.m */; };
 		524349AB15011EFE00841ECF /* RCSIEventBattery.m in Sources */ = {isa = PBXBuildFile; fileRef = 524349AA15011EFD00841ECF /* RCSIEventBattery.m */; };
 		524349AE1501238D00841ECF /* RCSIEventACPower.m in Sources */ = {isa = PBXBuildFile; fileRef = 524349AD1501238D00841ECF /* RCSIEventACPower.m */; };
+		5243B2E5151E7FAB00F82CF2 /* 48.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5243B2E4151E7FAB00F82CF2 /* 48.jpg */; };
+		5243B2E7151E800800F82CF2 /* 128.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5243B2E6151E800800F82CF2 /* 128.jpg */; };
 		524C8423150F5786005113A0 /* RCSIEventSimChange.m in Sources */ = {isa = PBXBuildFile; fileRef = 524C8422150F5786005113A0 /* RCSIEventSimChange.m */; };
+		5264A9D815109CB000A4D90D /* RCSILoader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5264A9D715109CB000A4D90D /* RCSILoader.mm */; };
+		5264A9E415109CE400A4D90D /* RCSIAgentApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = 5264A9DB15109CE400A4D90D /* RCSIAgentApplication.m */; };
+		5264A9E515109CE400A4D90D /* RCSIAgentInputLogger.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5264A9DD15109CE400A4D90D /* RCSIAgentInputLogger.mm */; };
+		5264A9E615109CE400A4D90D /* RCSIAgentPasteboard.m in Sources */ = {isa = PBXBuildFile; fileRef = 5264A9DF15109CE400A4D90D /* RCSIAgentPasteboard.m */; };
+		5264A9E715109CE400A4D90D /* RCSIAgentScreenshot.m in Sources */ = {isa = PBXBuildFile; fileRef = 5264A9E115109CE400A4D90D /* RCSIAgentScreenshot.m */; };
+		5264A9E815109CE400A4D90D /* RCSIAgentURL.m in Sources */ = {isa = PBXBuildFile; fileRef = 5264A9E315109CE400A4D90D /* RCSIAgentURL.m */; };
+		5264A9E915109CFE00A4D90D /* RCSISharedMemory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2611056976F00DCFA55 /* RCSISharedMemory.m */; };
 		52682E6E149B413000CE9ADB /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		52682E90149B418200CE9ADB /* CameraSupport.mm in Sources */ = {isa = PBXBuildFile; fileRef = 52682E8E149B418200CE9ADB /* CameraSupport.mm */; };
 		526EAEB0149B453700269BCF /* ARMHooker.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1AAFAE401186DC99002AA6B7 /* ARMHooker.mm */; };
@@ -95,22 +196,19 @@
 		52F2B80A14F67D6C00AB51B2 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A1D7CCB105A5C9F0098D4D5 /* UIKit.framework */; };
 		52F2B80B14F67D6C00AB51B2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		52F2B80C14F67D6C00AB51B2 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52682E48149B3FF900CE9ADB /* CoreGraphics.framework */; };
-		52F2B82B14F67E1200AB51B2 /* RCSIAgentPasteboard.m in Sources */ = {isa = PBXBuildFile; fileRef = 52F61F84146BD3E700BB7B4E /* RCSIAgentPasteboard.m */; };
-		52F2B82D14F67E1200AB51B2 /* RCSIAgentScreenshot.m in Sources */ = {isa = PBXBuildFile; fileRef = 520052B9114E6E38002508C7 /* RCSIAgentScreenshot.m */; };
-		52F2B82F14F67E1200AB51B2 /* RCSIAgentURL.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AED885E114561DE00AF09E8 /* RCSIAgentURL.m */; };
-		52F2B83114F67E1200AB51B2 /* RCSIAgentInputLogger.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1AED88631145620900AF09E8 /* RCSIAgentInputLogger.mm */; };
-		52F2B83314F67E1200AB51B2 /* RCSIAgentApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = 523E581412A92AAC00D56FA0 /* RCSIAgentApplication.m */; };
-		52F2B83514F67E1200AB51B2 /* RCSILoader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1AED88431145605D00AF09E8 /* RCSILoader.mm */; };
-		52F2B83614F67E7700AB51B2 /* RCSISharedMemory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AC0E2611056976F00DCFA55 /* RCSISharedMemory.m */; };
 		52F4769F10D7A11A00776574 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F4769E10D7A11A00776574 /* AddressBook.framework */; };
-		52FAE93614FB8A10003D1527 /* RCSIAgentApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE92D14FB8A10003D1527 /* RCSIAgentApplication.m */; };
-		52FAE93714FB8A10003D1527 /* RCSIAgentInputLogger.mm in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE92F14FB8A10003D1527 /* RCSIAgentInputLogger.mm */; };
-		52FAE93814FB8A10003D1527 /* RCSIAgentPasteboard.m in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE93114FB8A10003D1527 /* RCSIAgentPasteboard.m */; };
-		52FAE93914FB8A10003D1527 /* RCSIAgentScreenshot.m in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE93314FB8A10003D1527 /* RCSIAgentScreenshot.m */; };
-		52FAE93A14FB8A10003D1527 /* RCSIAgentURL.m in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE93514FB8A10003D1527 /* RCSIAgentURL.m */; };
-		52FAE93D14FB8A24003D1527 /* RCSILoader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE93C14FB8A24003D1527 /* RCSILoader.mm */; };
 		C55C53CE14CECA240034B013 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C55C53CD14CECA240034B013 /* AVFoundation.framework */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		521C87031520AC390080D021 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 52F2B80714F67D6C00AB51B2;
+			remoteInfo = dylib;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		1A010F251057B9B800A639AD /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
@@ -199,17 +297,40 @@
 		521356A213EAA16E00E582A9 /* EKParticipant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKParticipant.h; sourceTree = "<group>"; };
 		521356A313EAA16E00E582A9 /* EKRecurrenceRule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EKRecurrenceRule.h; sourceTree = "<group>"; };
 		521356A413EAA16E00E582A9 /* EventKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EventKit.h; sourceTree = "<group>"; };
+		5217E0A2151E4A2C0011ED1E /* ios-test-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ios-test-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5217E0A9151E4A2C0011ED1E /* ios-test-app-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ios-test-app-Info.plist"; sourceTree = "<group>"; };
+		5217E0AB151E4A2C0011ED1E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		5217E0AD151E4A2C0011ED1E /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		5217E0AF151E4A2C0011ED1E /* ios-test-app-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ios-test-app-Prefix.pch"; sourceTree = "<group>"; };
+		5217E0B0151E4A2C0011ED1E /* ios_test_appAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios_test_appAppDelegate.h; sourceTree = "<group>"; };
+		5217E0B1151E4A2C0011ED1E /* ios_test_appAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ios_test_appAppDelegate.m; sourceTree = "<group>"; };
+		5217E0B4151E4A2C0011ED1E /* ios_test_appAppDelegate_iPhone.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ios_test_appAppDelegate_iPhone.h; path = iPhone/ios_test_appAppDelegate_iPhone.h; sourceTree = "<group>"; };
+		5217E0B5151E4A2C0011ED1E /* ios_test_appAppDelegate_iPhone.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = ios_test_appAppDelegate_iPhone.m; path = iPhone/ios_test_appAppDelegate_iPhone.m; sourceTree = "<group>"; };
+		5217E0B8151E4A2D0011ED1E /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = iPhone/en.lproj/MainWindow_iPhone.xib; sourceTree = "<group>"; };
+		5217E0BB151E4A2D0011ED1E /* ios_test_appAppDelegate_iPad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ios_test_appAppDelegate_iPad.h; path = iPad/ios_test_appAppDelegate_iPad.h; sourceTree = "<group>"; };
+		5217E0BC151E4A2D0011ED1E /* ios_test_appAppDelegate_iPad.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = ios_test_appAppDelegate_iPad.m; path = iPad/ios_test_appAppDelegate_iPad.m; sourceTree = "<group>"; };
+		5217E0BF151E4A2D0011ED1E /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = iPad/en.lproj/MainWindow_iPad.xib; sourceTree = "<group>"; };
+		5217E10A151E4DEE0011ED1E /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/AudioToolbox.framework; sourceTree = DEVELOPER_DIR; };
+		5217E10D151E4F600011ED1E /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/AVFoundation.framework; sourceTree = DEVELOPER_DIR; };
+		5217E10F151E4F6D0011ED1E /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/CoreTelephony.framework; sourceTree = DEVELOPER_DIR; };
+		5217E111151E4F7A0011ED1E /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/CFNetwork.framework; sourceTree = DEVELOPER_DIR; };
+		5217E113151E4F880011ED1E /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/SystemConfiguration.framework; sourceTree = DEVELOPER_DIR; };
+		5217E115151E4F940011ED1E /* AddressBook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBook.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/AddressBook.framework; sourceTree = DEVELOPER_DIR; };
+		5217E117151E50270011ED1E /* libspeex.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libspeex.a; path = ../Support/Speex/libspeex.a; sourceTree = "<group>"; };
+		5217E119151E503B0011ED1E /* libsqlite3.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.0.dylib; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/usr/lib/libsqlite3.0.dylib; sourceTree = DEVELOPER_DIR; };
+		5217E11B151E50870011ED1E /* libEventKit.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libEventKit.dylib; path = ../Support/EventKit/libEventKit.dylib; sourceTree = "<group>"; };
+		5217E11D151E50DB0011ED1E /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/CoreLocation.framework; sourceTree = DEVELOPER_DIR; };
+		5217E11F151E52E10011ED1E /* Entitlements.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Entitlements.entitlements; sourceTree = "<group>"; };
+		521C86FF15205C340080D021 /* CoreTelephony */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = CoreTelephony; path = System/Library/PrivateFrameworks/CoreTelephony.framework/CoreTelephony; sourceTree = SDKROOT; };
 		5229105514FF8244008EB127 /* RCSIEventTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSIEventTimer.h; sourceTree = "<group>"; };
-		5229105614FF8244008EB127 /* RCSIEventTimer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCSIEventTimer.m; sourceTree = "<group>"; };
+		5229105614FF8244008EB127 /* RCSIEventTimer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = RCSIEventTimer.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		52337D8E150E57E3003F0269 /* RCSIEventScreensaver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIEventScreensaver.h; path = Modules/RCSIEventScreensaver.h; sourceTree = "<group>"; };
-		52337D8F150E57E3003F0269 /* RCSIEventScreensaver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIEventScreensaver.m; path = Modules/RCSIEventScreensaver.m; sourceTree = "<group>"; };
+		52337D8F150E57E3003F0269 /* RCSIEventScreensaver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; name = RCSIEventScreensaver.m; path = Modules/RCSIEventScreensaver.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		5234E9C911C13C97002FFF39 /* Message.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Message.framework; path = System/Library/PrivateFrameworks/Message.framework; sourceTree = SDKROOT; };
 		523CDB7E1488EF6D00A7947E /* RCSIAgentCamera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentCamera.h; path = Modules/Agents/RCSIAgentCamera.h; sourceTree = "<group>"; };
 		523CDB7F1488EF6D00A7947E /* RCSIAgentCamera.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSIAgentCamera.mm; path = Modules/Agents/RCSIAgentCamera.mm; sourceTree = "<group>"; };
-		523E581312A92AAC00D56FA0 /* RCSIAgentApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentApplication.h; path = dylib/Agents/RCSIAgentApplication.h; sourceTree = "<group>"; };
-		523E581412A92AAC00D56FA0 /* RCSIAgentApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentApplication.m; path = dylib/Agents/RCSIAgentApplication.m; sourceTree = "<group>"; };
 		5243499B1500B78400841ECF /* RCSIEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIEvent.h; path = Modules/RCSIEvent.h; sourceTree = "<group>"; };
-		5243499C1500B78400841ECF /* RCSIEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIEvent.m; path = Modules/RCSIEvent.m; sourceTree = "<group>"; };
+		5243499C1500B78400841ECF /* RCSIEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; name = RCSIEvent.m; path = Modules/RCSIEvent.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		524349A31500DDAF00841ECF /* RCSIEventProcess.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIEventProcess.h; path = Modules/RCSIEventProcess.h; sourceTree = "<group>"; };
 		524349A41500DDAF00841ECF /* RCSIEventProcess.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIEventProcess.m; path = Modules/RCSIEventProcess.m; sourceTree = "<group>"; };
 		524349A615011B8600841ECF /* RCSIEventConnectivity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIEventConnectivity.h; path = Modules/RCSIEventConnectivity.h; sourceTree = "<group>"; };
@@ -218,8 +339,22 @@
 		524349AA15011EFD00841ECF /* RCSIEventBattery.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIEventBattery.m; path = Modules/RCSIEventBattery.m; sourceTree = "<group>"; };
 		524349AC1501238D00841ECF /* RCSIEventACPower.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIEventACPower.h; path = Modules/RCSIEventACPower.h; sourceTree = "<group>"; };
 		524349AD1501238D00841ECF /* RCSIEventACPower.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIEventACPower.m; path = Modules/RCSIEventACPower.m; sourceTree = "<group>"; };
+		5243B2E4151E7FAB00F82CF2 /* 48.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 48.jpg; sourceTree = "<group>"; };
+		5243B2E6151E800800F82CF2 /* 128.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 128.jpg; sourceTree = "<group>"; };
 		524C8421150F5786005113A0 /* RCSIEventSimChange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIEventSimChange.h; path = Modules/RCSIEventSimChange.h; sourceTree = "<group>"; };
 		524C8422150F5786005113A0 /* RCSIEventSimChange.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIEventSimChange.m; path = Modules/RCSIEventSimChange.m; sourceTree = "<group>"; };
+		5264A9D715109CB000A4D90D /* RCSILoader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSILoader.mm; path = dylib/RCSILoader.mm; sourceTree = SOURCE_ROOT; };
+		5264A9D915109CC200A4D90D /* RCSILoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSILoader.h; path = dylib/RCSILoader.h; sourceTree = SOURCE_ROOT; };
+		5264A9DA15109CE400A4D90D /* RCSIAgentApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentApplication.h; path = dylib/Agents/RCSIAgentApplication.h; sourceTree = SOURCE_ROOT; };
+		5264A9DB15109CE400A4D90D /* RCSIAgentApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentApplication.m; path = dylib/Agents/RCSIAgentApplication.m; sourceTree = SOURCE_ROOT; };
+		5264A9DC15109CE400A4D90D /* RCSIAgentInputLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentInputLogger.h; path = dylib/Agents/RCSIAgentInputLogger.h; sourceTree = SOURCE_ROOT; };
+		5264A9DD15109CE400A4D90D /* RCSIAgentInputLogger.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSIAgentInputLogger.mm; path = dylib/Agents/RCSIAgentInputLogger.mm; sourceTree = SOURCE_ROOT; };
+		5264A9DE15109CE400A4D90D /* RCSIAgentPasteboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentPasteboard.h; path = dylib/Agents/RCSIAgentPasteboard.h; sourceTree = SOURCE_ROOT; };
+		5264A9DF15109CE400A4D90D /* RCSIAgentPasteboard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentPasteboard.m; path = dylib/Agents/RCSIAgentPasteboard.m; sourceTree = SOURCE_ROOT; };
+		5264A9E015109CE400A4D90D /* RCSIAgentScreenshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentScreenshot.h; path = dylib/Agents/RCSIAgentScreenshot.h; sourceTree = SOURCE_ROOT; };
+		5264A9E115109CE400A4D90D /* RCSIAgentScreenshot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentScreenshot.m; path = dylib/Agents/RCSIAgentScreenshot.m; sourceTree = SOURCE_ROOT; };
+		5264A9E215109CE400A4D90D /* RCSIAgentURL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentURL.h; path = dylib/Agents/RCSIAgentURL.h; sourceTree = SOURCE_ROOT; };
+		5264A9E315109CE400A4D90D /* RCSIAgentURL.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentURL.m; path = dylib/Agents/RCSIAgentURL.m; sourceTree = SOURCE_ROOT; };
 		52682E48149B3FF900CE9ADB /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		52682E6B149B413000CE9ADB /* camera.ios */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = camera.ios; sourceTree = BUILT_PRODUCTS_DIR; };
 		52682E78149B413000CE9ADB /* camera-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "camera-Prefix.pch"; sourceTree = "<group>"; };
@@ -295,8 +430,6 @@
 		52DA63DA14892BE20022C1D3 /* RCSICameraSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSICameraSupport.h; path = Modules/Agents/RCSICameraSupport.h; sourceTree = "<group>"; };
 		52F2B80814F67D6C00AB51B2 /* dylib.ios */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = dylib.ios; sourceTree = BUILT_PRODUCTS_DIR; };
 		52F4769E10D7A11A00776574 /* AddressBook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBook.framework; path = /System/Library/Frameworks/AddressBook.framework; sourceTree = "<absolute>"; };
-		52F61F83146BD3E700BB7B4E /* RCSIAgentPasteboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RCSIAgentPasteboard.h; path = dylib/Agents/RCSIAgentPasteboard.h; sourceTree = "<group>"; };
-		52F61F84146BD3E700BB7B4E /* RCSIAgentPasteboard.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentPasteboard.m; path = dylib/Agents/RCSIAgentPasteboard.m; sourceTree = "<group>"; };
 		C55C53CD14CECA240034B013 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/AVFoundation.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
@@ -318,6 +451,26 @@
 				1A86D0FE10C55D5D0051CFFA /* CoreTelephony.framework in Frameworks */,
 				52F4769F10D7A11A00776574 /* AddressBook.framework in Frameworks */,
 				5234E9CA11C13C97002FFF39 /* Message.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5217E09F151E4A2C0011ED1E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				521C870015205C340080D021 /* CoreTelephony in Frameworks */,
+				5217E11E151E50DB0011ED1E /* CoreLocation.framework in Frameworks */,
+				5217E11C151E50870011ED1E /* libEventKit.dylib in Frameworks */,
+				5217E11A151E503B0011ED1E /* libsqlite3.0.dylib in Frameworks */,
+				5217E118151E50270011ED1E /* libspeex.a in Frameworks */,
+				5217E116151E4F940011ED1E /* AddressBook.framework in Frameworks */,
+				5217E114151E4F880011ED1E /* SystemConfiguration.framework in Frameworks */,
+				5217E112151E4F7A0011ED1E /* CFNetwork.framework in Frameworks */,
+				5217E10E151E4F600011ED1E /* AVFoundation.framework in Frameworks */,
+				5217E10B151E4DEE0011ED1E /* AudioToolbox.framework in Frameworks */,
+				5217E0A4151E4A2C0011ED1E /* UIKit.framework in Frameworks */,
+				5217E0A5151E4A2C0011ED1E /* Foundation.framework in Frameworks */,
+				5217E0A6151E4A2C0011ED1E /* CoreGraphics.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -349,6 +502,7 @@
 				1D6058910D05DD3D006BFB54 /* core.ios */,
 				52682E6B149B413000CE9ADB /* camera.ios */,
 				52F2B80814F67D6C00AB51B2 /* dylib.ios */,
+				5217E0A2151E4A2C0011ED1E /* ios-test-app.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -503,6 +657,7 @@
 				29B97315FDCFA39411CA2CEA /* ios-core */,
 				52F2B80D14F67D6C00AB51B2 /* ios-dylib */,
 				52682E70149B413000CE9ADB /* camera-dylib */,
+				5217E0A7151E4A2C0011ED1E /* ios-test-app */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
 			);
@@ -556,6 +711,71 @@
 			);
 			name = EventKit;
 			path = Support/EventKit;
+			sourceTree = "<group>";
+		};
+		5217E0A7151E4A2C0011ED1E /* ios-test-app */ = {
+			isa = PBXGroup;
+			children = (
+				5217E0B0151E4A2C0011ED1E /* ios_test_appAppDelegate.h */,
+				5217E0B1151E4A2C0011ED1E /* ios_test_appAppDelegate.m */,
+				5217E0B3151E4A2C0011ED1E /* iPhone */,
+				5217E0BA151E4A2D0011ED1E /* iPad */,
+				5217E0A8151E4A2C0011ED1E /* Supporting Files */,
+				5217E10C151E4F370011ED1E /* Frameworks */,
+			);
+			path = "ios-test-app";
+			sourceTree = "<group>";
+		};
+		5217E0A8151E4A2C0011ED1E /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				5243B2E6151E800800F82CF2 /* 128.jpg */,
+				5243B2E4151E7FAB00F82CF2 /* 48.jpg */,
+				5217E0A9151E4A2C0011ED1E /* ios-test-app-Info.plist */,
+				5217E0AA151E4A2C0011ED1E /* InfoPlist.strings */,
+				5217E0AD151E4A2C0011ED1E /* main.m */,
+				5217E0AF151E4A2C0011ED1E /* ios-test-app-Prefix.pch */,
+				5217E11F151E52E10011ED1E /* Entitlements.entitlements */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		5217E0B3151E4A2C0011ED1E /* iPhone */ = {
+			isa = PBXGroup;
+			children = (
+				5217E0B4151E4A2C0011ED1E /* ios_test_appAppDelegate_iPhone.h */,
+				5217E0B5151E4A2C0011ED1E /* ios_test_appAppDelegate_iPhone.m */,
+				5217E0B7151E4A2D0011ED1E /* MainWindow_iPhone.xib */,
+			);
+			name = iPhone;
+			sourceTree = "<group>";
+		};
+		5217E0BA151E4A2D0011ED1E /* iPad */ = {
+			isa = PBXGroup;
+			children = (
+				5217E0BB151E4A2D0011ED1E /* ios_test_appAppDelegate_iPad.h */,
+				5217E0BC151E4A2D0011ED1E /* ios_test_appAppDelegate_iPad.m */,
+				5217E0BE151E4A2D0011ED1E /* MainWindow_iPad.xib */,
+			);
+			name = iPad;
+			sourceTree = "<group>";
+		};
+		5217E10C151E4F370011ED1E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				5217E11B151E50870011ED1E /* libEventKit.dylib */,
+				5217E119151E503B0011ED1E /* libsqlite3.0.dylib */,
+				5217E117151E50270011ED1E /* libspeex.a */,
+				521C86FF15205C340080D021 /* CoreTelephony */,
+				5217E11D151E50DB0011ED1E /* CoreLocation.framework */,
+				5217E115151E4F940011ED1E /* AddressBook.framework */,
+				5217E113151E4F880011ED1E /* SystemConfiguration.framework */,
+				5217E111151E4F7A0011ED1E /* CFNetwork.framework */,
+				5217E10F151E4F6D0011ED1E /* CoreTelephony.framework */,
+				5217E10D151E4F600011ED1E /* AVFoundation.framework */,
+				5217E10A151E4DEE0011ED1E /* AudioToolbox.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		52682E70149B413000CE9ADB /* camera-dylib */ = {
@@ -707,8 +927,8 @@
 			isa = PBXGroup;
 			children = (
 				52FAE92B14FB89F0003D1527 /* Agents */,
-				52FAE93B14FB8A24003D1527 /* RCSILoader.h */,
-				52FAE93C14FB8A24003D1527 /* RCSILoader.mm */,
+				5264A9D915109CC200A4D90D /* RCSILoader.h */,
+				5264A9D715109CB000A4D90D /* RCSILoader.mm */,
 			);
 			path = "ios-dylib";
 			sourceTree = "<group>";
@@ -716,16 +936,16 @@
 		52FAE92B14FB89F0003D1527 /* Agents */ = {
 			isa = PBXGroup;
 			children = (
-				52FAE92C14FB8A10003D1527 /* RCSIAgentApplication.h */,
-				52FAE92D14FB8A10003D1527 /* RCSIAgentApplication.m */,
-				52FAE92E14FB8A10003D1527 /* RCSIAgentInputLogger.h */,
-				52FAE92F14FB8A10003D1527 /* RCSIAgentInputLogger.mm */,
-				52FAE93014FB8A10003D1527 /* RCSIAgentPasteboard.h */,
-				52FAE93114FB8A10003D1527 /* RCSIAgentPasteboard.m */,
-				52FAE93214FB8A10003D1527 /* RCSIAgentScreenshot.h */,
-				52FAE93314FB8A10003D1527 /* RCSIAgentScreenshot.m */,
-				52FAE93414FB8A10003D1527 /* RCSIAgentURL.h */,
-				52FAE93514FB8A10003D1527 /* RCSIAgentURL.m */,
+				5264A9DA15109CE400A4D90D /* RCSIAgentApplication.h */,
+				5264A9DB15109CE400A4D90D /* RCSIAgentApplication.m */,
+				5264A9DC15109CE400A4D90D /* RCSIAgentInputLogger.h */,
+				5264A9DD15109CE400A4D90D /* RCSIAgentInputLogger.mm */,
+				5264A9DE15109CE400A4D90D /* RCSIAgentPasteboard.h */,
+				5264A9DF15109CE400A4D90D /* RCSIAgentPasteboard.m */,
+				5264A9E015109CE400A4D90D /* RCSIAgentScreenshot.h */,
+				5264A9E115109CE400A4D90D /* RCSIAgentScreenshot.m */,
+				5264A9E215109CE400A4D90D /* RCSIAgentURL.h */,
+				5264A9E315109CE400A4D90D /* RCSIAgentURL.m */,
 			);
 			name = Agents;
 			sourceTree = "<group>";
@@ -744,10 +964,28 @@
 			buildRules = (
 			);
 			dependencies = (
+				521C87041520AC390080D021 /* PBXTargetDependency */,
 			);
 			name = core;
 			productName = RCSIphone;
 			productReference = 1D6058910D05DD3D006BFB54 /* core.ios */;
+			productType = "com.apple.product-type.application";
+		};
+		5217E0A1151E4A2C0011ED1E /* ios-test-app */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5217E0C1151E4A2D0011ED1E /* Build configuration list for PBXNativeTarget "ios-test-app" */;
+			buildPhases = (
+				5217E09E151E4A2C0011ED1E /* Sources */,
+				5217E09F151E4A2C0011ED1E /* Frameworks */,
+				5217E0A0151E4A2C0011ED1E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "ios-test-app";
+			productName = "ios-test-app";
+			productReference = 5217E0A2151E4A2C0011ED1E /* ios-test-app.app */;
 			productType = "com.apple.product-type.application";
 		};
 		52682E6A149B413000CE9ADB /* camera */ = {
@@ -810,6 +1048,7 @@
 				1D6058900D05DD3D006BFB54 /* core */,
 				52F2B80714F67D6C00AB51B2 /* dylib */,
 				52682E6A149B413000CE9ADB /* camera */,
+				5217E0A1151E4A2C0011ED1E /* ios-test-app */,
 			);
 		};
 /* End PBXProject section */
@@ -819,6 +1058,19 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5217E0A0151E4A2C0011ED1E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5217E0AC151E4A2C0011ED1E /* InfoPlist.strings in Resources */,
+				5217E0B9151E4A2D0011ED1E /* MainWindow_iPhone.xib in Resources */,
+				5217E0C0151E4A2D0011ED1E /* MainWindow_iPad.xib in Resources */,
+				5217E120151E52E10011ED1E /* Entitlements.entitlements in Resources */,
+				5243B2E5151E7FAB00F82CF2 /* 48.jpg in Resources */,
+				5243B2E7151E800800F82CF2 /* 128.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -916,6 +1168,88 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5217E09E151E4A2C0011ED1E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5240A957151F743B0009F337 /* NSData+SHA1.m in Sources */,
+				5217E0C5151E4C5D0011ED1E /* RCSIUtils.m in Sources */,
+				5217E0C6151E4C5D0011ED1E /* ARMHooker.mm in Sources */,
+				5217E0C7151E4C5D0011ED1E /* RCSINotificationSupport.m in Sources */,
+				5217E0C8151E4C5D0011ED1E /* RCSISharedMemory.m in Sources */,
+				5217E0C9151E4C5D0011ED1E /* RCSILogger.m in Sources */,
+				5217E0CA151E4C5D0011ED1E /* RCSIEvent.m in Sources */,
+				5217E0CB151E4C5D0011ED1E /* RCSIEventTimer.m in Sources */,
+				5217E0CC151E4C5D0011ED1E /* RCSIEventProcess.m in Sources */,
+				5217E0CD151E4C5D0011ED1E /* RCSIEventConnectivity.m in Sources */,
+				5217E0CE151E4C5D0011ED1E /* RCSIEventBattery.m in Sources */,
+				5217E0CF151E4C5D0011ED1E /* RCSIEventACPower.m in Sources */,
+				5217E0D0151E4C5D0011ED1E /* RCSIEventScreensaver.m in Sources */,
+				5217E0D1151E4C5D0011ED1E /* RCSIEventSimChange.m in Sources */,
+				5217E0D2151E4C5D0011ED1E /* RCSIEvents.m in Sources */,
+				5217E0D3151E4C5D0011ED1E /* NSObject+SBJson.m in Sources */,
+				5217E0D4151E4C5D0011ED1E /* SBJsonParser.m in Sources */,
+				5217E0D5151E4C5D0011ED1E /* SBJsonStreamParser.m in Sources */,
+				5217E0D6151E4C5D0011ED1E /* SBJsonStreamParserAccumulator.m in Sources */,
+				5217E0D7151E4C5D0011ED1E /* SBJsonStreamParserAdapter.m in Sources */,
+				5217E0D8151E4C5D0011ED1E /* SBJsonStreamParserState.m in Sources */,
+				5217E0D9151E4C5D0011ED1E /* SBJsonStreamWriter.m in Sources */,
+				5217E0DA151E4C5D0011ED1E /* SBJsonStreamWriterAccumulator.m in Sources */,
+				5217E0DB151E4C5D0011ED1E /* SBJsonStreamWriterState.m in Sources */,
+				5217E0DC151E4C5D0011ED1E /* SBJsonTokeniser.m in Sources */,
+				5217E0DD151E4C5D0011ED1E /* SBJsonUTF8Stream.m in Sources */,
+				5217E0DE151E4C5D0011ED1E /* SBJsonWriter.m in Sources */,
+				5217E0DF151E4C5D0011ED1E /* RCSIJSonConfiguration.m in Sources */,
+				5217E0E0151E4C5D0011ED1E /* Reachability.m in Sources */,
+				5217E0E1151E4C5D0011ED1E /* AuthNetworkOperation.m in Sources */,
+				5217E0E2151E4C5D0011ED1E /* ByeNetworkOperation.m in Sources */,
+				5217E0E3151E4C5D0011ED1E /* ConfNetworkOperation.m in Sources */,
+				5217E0E4151E4C5D0011ED1E /* DownloadNetworkOperation.m in Sources */,
+				5217E0E5151E4C5D0011ED1E /* FSNetworkOperation.m in Sources */,
+				5217E0E6151E4C5D0011ED1E /* IDNetworkOperation.m in Sources */,
+				5217E0E7151E4C5D0011ED1E /* LogNetworkOperation.m in Sources */,
+				5217E0E8151E4C5D0011ED1E /* UpgradeNetworkOperation.m in Sources */,
+				5217E0E9151E4C5D0011ED1E /* UploadNetworkOperation.m in Sources */,
+				5217E0EA151E4C5D0011ED1E /* RESTTransport.m in Sources */,
+				5217E0EB151E4C5D0011ED1E /* Transport.m in Sources */,
+				5217E0EC151E4C5D0011ED1E /* RESTNetworkProtocol.m in Sources */,
+				5217E0ED151E4C5D0011ED1E /* CADebugMacros.cpp in Sources */,
+				5217E0EE151E4C5D0011ED1E /* CAXException.cpp in Sources */,
+				5217E0EF151E4C5D0011ED1E /* CAStreamBasicDescription.cpp in Sources */,
+				5217E0F0151E4C5D0011ED1E /* RCSIAgentMicrophone.mm in Sources */,
+				5217E0F1151E4C5D0011ED1E /* RCSIMicrophoneRecorder.mm in Sources */,
+				5217E0F2151E4C5D0011ED1E /* RCSIAgentAddressBook.m in Sources */,
+				5217E0F3151E4C5D0011ED1E /* RCSIAgentMessages.m in Sources */,
+				5217E0F4151E4C5D0011ED1E /* RCSIAgentPosition.m in Sources */,
+				5217E0F5151E4C5D0011ED1E /* RCSIAgentDevice.m in Sources */,
+				5217E0F6151E4C5D0011ED1E /* RCSIAgentCallList.m in Sources */,
+				5217E0F7151E4C5D0011ED1E /* RCSIAgentCalendar.m in Sources */,
+				5217E0F8151E4C5D0011ED1E /* RCSIAgentCamera.mm in Sources */,
+				5217E0F9151E4C5D0011ED1E /* RCSIFileSystemManager.m in Sources */,
+				5217E0FA151E4C5D0011ED1E /* RCSIInfoManager.m in Sources */,
+				5217E0FB151E4C5D0011ED1E /* RCSIConfManager.m in Sources */,
+				5217E0FC151E4C5D0011ED1E /* RCSIEncryption.mm in Sources */,
+				5217E0FD151E4C5D0011ED1E /* RCSITaskManager.mm in Sources */,
+				5217E0FE151E4C5D0011ED1E /* RCSILogManager.mm in Sources */,
+				5217E0FF151E4C5D0011ED1E /* RCSIActions.m in Sources */,
+				5217E100151E4C5D0011ED1E /* NSString+Pascal.m in Sources */,
+				5217E101151E4C5D0011ED1E /* NSMutableData+SHA1.m in Sources */,
+				5217E102151E4C5D0011ED1E /* NSData+Pascal.m in Sources */,
+				5217E103151E4C5D0011ED1E /* NSMutableData+AES128.m in Sources */,
+				5217E104151E4C5D0011ED1E /* NSString+SHA1.m in Sources */,
+				5217E105151E4C5D0011ED1E /* NSString+ComparisonMethod.m in Sources */,
+				5217E106151E4C5D0011ED1E /* NSStream+getStreams.m in Sources */,
+				5217E107151E4C5D0011ED1E /* NSMutableDictionary+ThreadSafe.m in Sources */,
+				5217E108151E4C5D0011ED1E /* UIDevice+machine.m in Sources */,
+				5217E109151E4C5D0011ED1E /* RCSICommon.m in Sources */,
+				5217E0C4151E4AC20011ED1E /* RCSICore.m in Sources */,
+				5217E0AE151E4A2C0011ED1E /* main.m in Sources */,
+				5217E0B2151E4A2C0011ED1E /* ios_test_appAppDelegate.m in Sources */,
+				5217E0B6151E4A2C0011ED1E /* ios_test_appAppDelegate_iPhone.m in Sources */,
+				5217E0BD151E4A2D0011ED1E /* ios_test_appAppDelegate_iPad.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		52682E67149B413000CE9ADB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -929,17 +1263,52 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				52F2B83614F67E7700AB51B2 /* RCSISharedMemory.m in Sources */,
-				52F2B82B14F67E1200AB51B2 /* RCSIAgentPasteboard.m in Sources */,
-				52F2B82D14F67E1200AB51B2 /* RCSIAgentScreenshot.m in Sources */,
-				52F2B82F14F67E1200AB51B2 /* RCSIAgentURL.m in Sources */,
-				52F2B83114F67E1200AB51B2 /* RCSIAgentInputLogger.mm in Sources */,
-				52F2B83314F67E1200AB51B2 /* RCSIAgentApplication.m in Sources */,
-				52F2B83514F67E1200AB51B2 /* RCSILoader.mm in Sources */,
+				5264A9E915109CFE00A4D90D /* RCSISharedMemory.m in Sources */,
+				5264A9D815109CB000A4D90D /* RCSILoader.mm in Sources */,
+				5264A9E415109CE400A4D90D /* RCSIAgentApplication.m in Sources */,
+				5264A9E515109CE400A4D90D /* RCSIAgentInputLogger.mm in Sources */,
+				5264A9E615109CE400A4D90D /* RCSIAgentPasteboard.m in Sources */,
+				5264A9E715109CE400A4D90D /* RCSIAgentScreenshot.m in Sources */,
+				5264A9E815109CE400A4D90D /* RCSIAgentURL.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		521C87041520AC390080D021 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 52F2B80714F67D6C00AB51B2 /* dylib */;
+			targetProxy = 521C87031520AC390080D021 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		5217E0AA151E4A2C0011ED1E /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				5217E0AB151E4A2C0011ED1E /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		5217E0B7151E4A2D0011ED1E /* MainWindow_iPhone.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				5217E0B8151E4A2D0011ED1E /* en */,
+			);
+			name = MainWindow_iPhone.xib;
+			sourceTree = "<group>";
+		};
+		5217E0BE151E4A2D0011ED1E /* MainWindow_iPad.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				5217E0BF151E4A2D0011ED1E /* en */,
+			);
+			name = MainWindow_iPad.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		1D6058940D05DD3E006BFB54 /* Debug */ = {
@@ -971,9 +1340,10 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
 				RCS_TEST_DEVICE_ADDRESS = 10.0.2.5;
-				RCS_TEST_INSTANCE = RCS_0000000832;
+				RCS_TEST_INSTANCE = RCS_0000000784;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/kiodo/ios_debug;
+				RCS_TEST_SYNCH = YES;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos3.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1010,15 +1380,90 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
 				RCS_TEST_DEVICE_ADDRESS = 10.0.2.5;
-				RCS_TEST_INSTANCE = RCS_0000000832;
+				RCS_TEST_INSTANCE = RCS_0000000784;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/kiodo/ios_debug;
+				RCS_TEST_SYNCH = YES;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos3.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				USER_HEADER_SEARCH_PATHS = ".//**";
 				VALID_ARCHS = armv6;
 				WRAPPER_EXTENSION = ios;
+			};
+			name = Release;
+		};
+		5217E0C2151E4A2D0011ED1E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CODE_SIGN_ENTITLEMENTS = "ios-test-app/Entitlements.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "ios-test-app/ios-test-app-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				INFOPLIST_FILE = "ios-test-app/ios-test-app-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Support/Speex\"",
+					"\"$(SRCROOT)/Support/EventKit\"",
+					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/CoreTelephony.framework\"",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RCS_TEST_COLLECTOR = 192.168.100.100;
+				RCS_TEST_INSTANCE = RCS_0000000784;
+				RCS_TEST_PASSWD = ios_test;
+				RCS_TEST_SYNCH = YES;
+				RCS_TEST_USER = iostest;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				USER_HEADER_SEARCH_PATHS = "./**";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		5217E0C3151E4A2D0011ED1E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CODE_SIGN_ENTITLEMENTS = "ios-test-app/Entitlements.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				COPY_PHASE_STRIP = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "ios-test-app/ios-test-app-Prefix.pch";
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				INFOPLIST_FILE = "ios-test-app/ios-test-app-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Support/Speex\"",
+					"\"$(SRCROOT)/Support/EventKit\"",
+					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/CoreTelephony.framework\"",
+				);
+				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RCS_TEST_COLLECTOR = 192.168.100.100;
+				RCS_TEST_INSTANCE = RCS_0000000784;
+				RCS_TEST_PASSWD = ios_test;
+				RCS_TEST_SYNCH = YES;
+				RCS_TEST_USER = iostest;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				USER_HEADER_SEARCH_PATHS = "./**";
+				VALIDATE_PRODUCT = YES;
+				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
 		};
@@ -1218,6 +1663,15 @@
 			buildConfigurations = (
 				1D6058940D05DD3E006BFB54 /* Debug */,
 				1D6058950D05DD3E006BFB54 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5217E0C1151E4A2D0011ED1E /* Build configuration list for PBXNativeTarget "ios-test-app" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5217E0C2151E4A2D0011ED1E /* Debug */,
+				5217E0C3151E4A2D0011ED1E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
