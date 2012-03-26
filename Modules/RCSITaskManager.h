@@ -15,7 +15,6 @@
 
 //#import "RCSIMicrophoneRecorder.h"
 
-
 @class RCSIAgentMicrophone;
 @class RCSIConfManager;
 @class RCSIEvents;
@@ -96,7 +95,7 @@
 - (BOOL)registerParameter: (NSData *)confData;
 - (BOOL)unregisterParameter: (NSData *)confData;
 
-- (NSArray *)getConfigForAction: (u_int)anActionID;
+- (NSArray *)getConfigForAction: (u_int)anActionID withFlag:(BOOL*)concurrent;
 - (NSMutableDictionary *)getConfigForAgent: (u_int)anAgentID;
 
 - (NSMutableArray*)getCopyOfEvents;
