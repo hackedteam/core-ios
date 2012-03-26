@@ -30,7 +30,7 @@
 - (void)release;
 - (id)autorelease;
 
-- (BOOL)isAlreadyRunning;
+- (BOOL)testAndSetIsAlreadyRunning;
 
 - (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration;
 - (NSMutableDictionary *)mAgentConfiguration;
