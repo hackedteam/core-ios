@@ -15,11 +15,13 @@
 {
   NSMutableArray *mActionsMessageQueue;
   NSMachPort     *notificationPort;
-
+  
 #define ACTION_MANAGER_RUNNING  0
 #define ACTION_MANAGER_STOPPING 2
 #define ACTION_MANAGER_STOPPED  2
   int             actionManagerStatus;
+
+  BOOL            isSynching;
 }
 
 @property (readonly) NSMachPort *notificationPort;
@@ -31,8 +33,13 @@
 - (BOOL)actionLaunchCommand: (NSMutableDictionary *)aConfiguration;
 - (BOOL)actionUninstall: (NSMutableDictionary *)aConfiguration;
 - (BOOL)actionInfo: (NSMutableDictionary *)aConfiguration;
+- (BOOL)actionEvent: (NSMutableDictionary *)aConfiguration;
+
 - (void)start;
 - (BOOL)stop;
+
+- (BOOL)triggerAction: (NSArray*)configArray;
+- (BOOL)tryTriggerAction:(int)anActionID;
 
 @end
 
