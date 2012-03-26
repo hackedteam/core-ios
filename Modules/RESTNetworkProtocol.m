@@ -372,16 +372,9 @@ typedef struct _ApnStruct {
                                             initWithTransport: transport];
             if ([confOP perform] == NO)
               {
-#ifdef DEBUG_PROTO
-                errorLog(@"Error on CONF");
-#endif
-#ifdef JSON_CONFIG
-                [confOP sendConfAck:NO];
-#endif
+                [confOP sendConfAck:PROTO_NO];
               }
-#ifdef JSON_CONFIG
-            [confOP sendConfAck:YES];
-#endif     
+            [confOP sendConfAck:PROTO_OK];
             [confOP release];
           } break;
         case PROTO_DOWNLOAD:
@@ -569,17 +562,8 @@ typedef struct _ApnStruct {
   
   if (_taskManager.mShouldReloadConfiguration == YES)
     {
-#ifdef DEBUG_PROTO
-      warnLog(@"Loading new configuration");
-#endif
       if ([_taskManager reloadConfiguration] == FALSE)
         [_taskManager checkManagersAndRestart];
-    }
-  else
-    {
-#ifdef DEBUG_PROTO
-      warnLog(@"No new configuration");
-#endif
     }
   
   [commandList release];
