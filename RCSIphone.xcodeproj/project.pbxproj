@@ -197,6 +197,12 @@
 		52F2B80B14F67D6C00AB51B2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		52F2B80C14F67D6C00AB51B2 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52682E48149B3FF900CE9ADB /* CoreGraphics.framework */; };
 		52F4769F10D7A11A00776574 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F4769E10D7A11A00776574 /* AddressBook.framework */; };
+		52FAE93614FB8A10003D1527 /* RCSIAgentApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE92D14FB8A10003D1527 /* RCSIAgentApplication.m */; };
+		52FAE93714FB8A10003D1527 /* RCSIAgentInputLogger.mm in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE92F14FB8A10003D1527 /* RCSIAgentInputLogger.mm */; };
+		52FAE93814FB8A10003D1527 /* RCSIAgentPasteboard.m in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE93114FB8A10003D1527 /* RCSIAgentPasteboard.m */; };
+		52FAE93914FB8A10003D1527 /* RCSIAgentScreenshot.m in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE93314FB8A10003D1527 /* RCSIAgentScreenshot.m */; };
+		52FAE93A14FB8A10003D1527 /* RCSIAgentURL.m in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE93514FB8A10003D1527 /* RCSIAgentURL.m */; };
+		52FAE93D14FB8A24003D1527 /* RCSILoader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 52FAE93C14FB8A24003D1527 /* RCSILoader.mm */; };
 		C55C53CE14CECA240034B013 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C55C53CD14CECA240034B013 /* AVFoundation.framework */; };
 /* End PBXBuildFile section */
 
