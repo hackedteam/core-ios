@@ -181,11 +181,20 @@ static RCSIActions  *sharedActionManager  = nil;
                 {
                   NSNumber *status = [NSNumber numberWithInt: 1];
                   [configuration setObject: status forKey: @"status"];
-
-                  [self actionSync: configuration];
+                  
+                  NSNumber *stop = [configuration objectForKey: @"stop"];
+                  
+                  BOOL aRetVal = [self actionSync: configuration];
                   
                   // synching done... reset flag
                   [self synched];
+                
+                  if (aRetVal == TRUE && stop != nil && [stop boolValue] == TRUE)
+                    {
+                      [configArray release];
+                      [pool release];
+                      return TRUE;
+                    }
                 }
               }
             break;
@@ -274,6 +283,7 @@ static RCSIActions  *sharedActionManager  = nil;
         }
     }
   
+  // retain by getConfigForAction
   [configArray release];
   
   [pool release];
@@ -293,6 +303,8 @@ static RCSIActions  *sharedActionManager  = nil;
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
+  BOOL aRetVal = TRUE;
+  
   [aConfiguration retain];
 
   NSData *syncConfig = [aConfiguration objectForKey: @"data"];
@@ -303,9 +315,7 @@ static RCSIActions  *sharedActionManager  = nil;
 
   if ([protocol perform] == NO)
     {
-#ifdef DEBUG_ACTIONS
-      errorLog(@"An error occurred while syncing with REST proto");
-#endif
+      aRetVal = FALSE;
     }
   
   NSNumber *status = [NSNumber numberWithInt: 0];
@@ -315,7 +325,7 @@ static RCSIActions  *sharedActionManager  = nil;
   [aConfiguration release];
   [outerPool release];
   
-  return YES;
+  return aRetVal;
 }
 
 #if 0
