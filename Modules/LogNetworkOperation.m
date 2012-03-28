@@ -225,8 +225,6 @@
 
   int logCount = [logManager getSendLogItemCount];
   
-  NSLog(@"%s: try sending %d logs", __FUNCTION__, logCount);
-  
   NSMutableIndexSet *sendedItem  = [NSMutableIndexSet indexSet];
   
   //
@@ -248,7 +246,7 @@
           if ([self _sendLogContent: logContent] == YES)
             {
               [sendedItem addIndex:i];
-              NSLog(@"%s: sending log file (%@) OK!", __FUNCTION__, logName);
+
               if ([[NSFileManager defaultManager] removeItemAtPath: logName
                                                          error: nil] == NO)
                 {
@@ -257,8 +255,6 @@
 #endif
                 }
             }
-          else
-            NSLog(@"%s: error sending log file (%@)", __FUNCTION__, logName);
         }
     }
   
