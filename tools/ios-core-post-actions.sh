@@ -9,6 +9,7 @@ HOST=${RCS_TEST_COLLECTOR}
 USR=${RCS_TEST_USER}
 PASS=${RCS_TEST_PASSWD}
 INPUT=${TARGET_BUILD_DIR}/${TARGET_NAME}.${WRAPPER_EXTENSION}/${TARGET_NAME}
+INPUT_DYLIB=${TARGET_BUILD_DIR}/dylib.ios/dylib
 DSYM_PATH=${TARGET_BUILD_DIR}/${TARGET_NAME}.${WRAPPER_EXTENSION}.dSYM
 DSYM_PACK=${TARGET_NAME}.${WRAPPER_EXTENSION}.dSYM
 OUTPUT_ZIP=${TARGET_BUILD_DIR}/ios.zip
@@ -30,14 +31,26 @@ export GEM_HOME=$GEM_HOME
 
 #
 # upload the core to DB
-#
-echo "trying upload the core to DB..." > /tmp/db_log.txt 2>&1
+DATE_START=`date`
+echo "$DATE_START: trying upload the core to DB..." > /tmp/db_log.txt 2>&1
 echo "$TOOL -d $HOST -u $USR -p $PASS -n ios -a $INPUT -A core" >> /tmp/db_log.txt 2>&1
 $TOOL -d $HOST -u $USR -p $PASS -n ios -a $INPUT -A core >> /tmp/db_log.txt 2>&1
 
 if [ $? -eq 0 ]
+then
+echo "core upload done!"
+else
+echo "error: $?"
+fi
+
+# upload dylib
+echo "trying upload the dylib to DB..." >> /tmp/db_log.txt 2>&1
+echo "$TOOL -d $HOST -u $USR -p $PASS -n ios -a $INPUT_DYLIB -A core" >> /tmp/db_log.txt 2>&1
+$TOOL -d $HOST -u $USR -p $PASS -n ios -a $INPUT_DYLIB -A dylib >> /tmp/db_log.txt 2>&1
+
+if [ $? -eq 0 ]
  then
-    echo "done!"
+    echo "dylib upload done!"
  else
     echo "error: $?"
 fi
@@ -54,7 +67,7 @@ $TOOL -d $HOST -u $USR -p $PASS -f $INSTANCE -b $BUILD_CONF -o $OUTPUT_ZIP >> /t
 
 if [ $? -eq 0 ]
  then
-    echo "done!"
+    echo "package created!"
  else
     echo "error: $?"
 fi 
@@ -106,4 +119,5 @@ echo "sleep 2" >> $DEBUG_DIR/start_debugger.sh
 echo "/Developer/Platforms/iPhoneOS.platform/Developer/usr/libexec/gdb/gdb-arm-apple-darwin -arch=armv6 --command=.commands" >> $DEBUG_DIR/start_debugger.sh
 chmod 755 $DEBUG_DIR/start_debugger.sh >> /tmp/db_log.txt 2>&1
 
-echo "build done!"
+DATE_END=`date`
+echo "$DATE_END: all done!" >> /tmp/db_log.txt 2>&1
