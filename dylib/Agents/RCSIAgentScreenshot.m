@@ -14,7 +14,7 @@
 #import "RCSISharedMemory.h"
 #import "RCSICommon.h"
 
-#define DEBUG
+//#define DEBUG
 
 extern RCSISharedMemory *mSharedMemoryCommand;
 
