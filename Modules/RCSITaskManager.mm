@@ -697,23 +697,11 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             [agentConfiguration objectForKey: @"status"] != AGENT_SUSPENDED)
           {
             [agentConfiguration setObject: AGENT_START forKey: @"status"];
-#ifdef  JSON_CONFIG
+
             [agentCalendar setMAgentConfiguration: agentConfiguration];
             [NSThread detachNewThreadSelector: @selector(start)
                                      toTarget: agentCalendar
                                    withObject: nil];
-#else      
-            RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
-            agentAddress.mAgentConfiguration  = agentConfiguration;
-            agentCalendar.mAgentConfiguration = agentConfiguration;
-            [NSThread detachNewThreadSelector: @selector(start)
-                                     toTarget: agentAddress
-                                   withObject: nil];
-            
-            [NSThread detachNewThreadSelector: @selector(start)
-                                     toTarget: agentCalendar
-                                   withObject: nil];
-#endif
           }
 
         [agentConfiguration release];
@@ -1084,27 +1072,14 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       }
     case AGENT_ORGANIZER:
       {
-#ifdef JSON_CONFIG
-      RCSIAgentCalendar *agentCalendar = [RCSIAgentCalendar sharedInstance];
+        RCSIAgentCalendar *agentCalendar = [RCSIAgentCalendar sharedInstance];
       
-      if ([agentCalendar stop] == FALSE)
-        {
-#ifdef DEBUG
-          NSLog(@"Error while stopping agent AddressBook/Calendar");
-#endif
-        }
-#else
-        RCSIAgentAddressBook *agentAddress = [RCSIAgentAddressBook sharedInstance];
-        RCSIAgentCalendar    *agentCalendar = [RCSIAgentCalendar sharedInstance];
-        
-        if ([agentAddress stop]  == FALSE ||
-            [agentCalendar stop] == FALSE)
+        if ([agentCalendar stop] == FALSE)
           {
 #ifdef DEBUG
             NSLog(@"Error while stopping agent AddressBook/Calendar");
 #endif
-          }
-#endif    
+          }    
         break;
       }
     case AGENT_ADDRESSBOOK:
@@ -1144,9 +1119,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       }
     case AGENT_CALL_LIST:
       {
-#ifdef DEBUG
-        NSLog(@"Stopping Agent Call List");
-#endif
         RCSIAgentCallList *agentCallList = [RCSIAgentCallList sharedInstance];
 
         if ([agentCallList stop] == FALSE)
