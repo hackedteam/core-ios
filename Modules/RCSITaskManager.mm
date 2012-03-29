@@ -34,7 +34,7 @@
 #import "RCSIEventTimer.h"
 
 #define JSON_CONFIG
-#define DEBUG_
+//#define DEBUG_
 
 //#define NO_START_AT_LAUNCH
 
@@ -792,7 +792,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
       {
         RCSIAgentCamera *agentCamera = [RCSIAgentCamera sharedInstance];
         
-        //XXX-
         agentConfiguration = [[self getConfigForAgent: agentID] retain];
       
         if ([agentConfiguration objectForKey: @"status"] != AGENT_RUNNING &&
