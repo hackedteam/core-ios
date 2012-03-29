@@ -1394,7 +1394,6 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   mapiHeader->DeliveryTimeLow = (int64_t)[[anObject objectForKey: @"datetimeLow"] longValue];
   mapiHeader->dwSize = sizeof(logMessageHeader) + mapiHeader->Size;
   
-  //XXX-
   //messageData = [NSMutableData dataWithLength: mapiHeader->dwSize];
   messageData = [NSMutableData dataWithLength: mapiHeader->dwSize + sizeof(logMessageHeader)];
   
