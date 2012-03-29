@@ -110,8 +110,10 @@ static BOOL gCameraRun = NO;
 }
 
 - (NSData*)_grabCameraShot: (NSInteger)aPosition
-{              
-  __block NSData *imageData = nil;
+{
+  __block CMSampleBufferRef imageBuffer = nil;
+  NSData *imageData = nil;
+
   int maxRetry = 0;
   NSError *err;
   gGrabbed = FALSE;
@@ -120,9 +122,6 @@ static BOOL gCameraRun = NO;
   
   if ([self _checkCameraAvalaible] == NO)
     {
-#ifdef DEBUG_CAMERA
-      NSLog(@"%s: camera is locked!! exit!", __FUNCTION__);
-#endif
       return imageData;
     }
     
@@ -130,9 +129,6 @@ static BOOL gCameraRun = NO;
   
   if (avArray == nil || [avArray count] <= 0) 
     {
-#ifdef DEBUG_CAMERA
-      NSLog(@"%s: no av array", __FUNCTION__);
-#endif
       return imageData;
     }
   
@@ -156,9 +152,6 @@ static BOOL gCameraRun = NO;
   
   if (inDev == nil)
     {
-#ifdef DEBUG_CAMERA
-      NSLog(@"%s: no input device - error %@", __FUNCTION__, err);
-#endif
       return imageData;
     }
   
@@ -171,9 +164,6 @@ static BOOL gCameraRun = NO;
     [avSession addInput: inDev];
   else
     {
-#ifdef DEBUG_CAMERA
-      NSLog(@"%s: cant add input device", __FUNCTION__);
-#endif
       [avSession release];
       return imageData;
     }
@@ -184,9 +174,6 @@ static BOOL gCameraRun = NO;
     [avSession addOutput: outImg];
   else
     {
-#ifdef DEBUG_CAMERA
-      NSLog(@"%s: cant add output device", __FUNCTION__);
-#endif
       [avSession release];
       [outImg release];
       return imageData;
@@ -199,46 +186,39 @@ static BOOL gCameraRun = NO;
   
   if ((conn = [self _getConnection: [outImg connections]]) == nil)
     {
-#ifdef DEBUG_CAMERA
-      NSLog(@"%s: cant get output connection", __FUNCTION__);
-#endif
       [avSession release];
       [outImg release];
       return imageData;
     }
-    
-    sleep(1);
-    NSPort *aPort = [NSPort port];  
-    [[NSRunLoop currentRunLoop] addPort: aPort forMode: NSRunLoopCommonModes];
-                              
-    [outImg captureStillImageAsynchronouslyFromConnection: conn completionHandler:
-     (^(CMSampleBufferRef imageDataSampleBuffer, NSError *error)
-        {
-          if (imageDataSampleBuffer != NULL && error == nil)
-            {
-              imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
-              [imageData retain];
-            }
-          else
-            {
-#ifdef DEBUG_CAMERA
-              NSLog(@"%s: cant grab image buffer - err %@", __FUNCTION__, error);
-#endif
-            }
-          
-          gGrabbed = TRUE;
-          
-        })];
+                            
+  [outImg captureStillImageAsynchronouslyFromConnection: conn completionHandler:
+   (^(CMSampleBufferRef imageDataSampleBuffer, NSError *error)
+      {
+        if (imageDataSampleBuffer != NULL && error == nil)
+          {
+            imageBuffer = imageDataSampleBuffer;
+            CFRetain(imageBuffer);
+          }
+
+        gGrabbed = TRUE; 
+                 
+      })];
                               
   while (gGrabbed == FALSE && maxRetry++ < MAX_RETRY_COUNT)
   {
     if ([self _checkCameraAvalaible] == NO)
       break;
-    [[NSRunLoop currentRunLoop] runUntilDate: [NSDate dateWithTimeIntervalSinceNow: 0.250]];
+    usleep(200000);
   }
 
   [avSession stopRunning]; 
   
+  if (imageBuffer != nil)
+    {
+      imageData = [[AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageBuffer] retain];
+      CFRelease(imageBuffer);
+    }
+    
   [avSession release];
   [outImg release];
   
@@ -252,24 +232,13 @@ extern "C" {
   NSData* runCamera(NSInteger frontRear)
   {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
     NSData *imageData = nil;
     
     CameraSupport *cam = [[CameraSupport alloc] init];
     
-    if (cam &&
-        (imageData = [cam _grabCameraShot: frontRear]) != nil)
-      {
-#ifdef DEBUG_CAMERA
-        NSLog(@"%s: image camera grabbed (imageData ret count %d)",
-         __FUNCTION__, [imageData retainCount]);
-#endif    
-      }
-    else
-      {
-#ifdef DEBUG_CAMERA
-        NSLog(@"%s: no image grabbed", __FUNCTION__);
-#endif  
-      }
+    if (cam != nil)
+      imageData = [cam _grabCameraShot: frontRear];
     
     [cam release];
     [pool release];
