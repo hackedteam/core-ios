@@ -940,8 +940,7 @@ typedef struct _message_config_t {
     }
   else
     procStruct.lookForTitle = 0;
-  
-  //XXX- controllare che sia convertito in utf16
+
   if ([anEvent objectForKey: EVENT_PROC_NAME_KEY] != nil) 
     {
       u_int nameLength = (u_int)[[anEvent objectForKey: EVENT_PROC_NAME_KEY] 
@@ -1873,7 +1872,6 @@ typedef struct _message_config_t {
   NSNumber *gprsFlag = [subAction objectForKey: ACTION_SYNC_GPRS_KEY];
   NSString *hostname = [subAction objectForKey: ACTION_SYNC_HOST_KEY];
   
-  // incorrect sync action! XXX- todo verification
   if ( hostname == nil) 
     {
       //FIXED-
