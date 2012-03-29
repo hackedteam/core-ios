@@ -224,9 +224,11 @@ NSLock *connectionLock;
   
   // Current midnite
   NSDate *midnight = [outFormat dateFromString: dayStr];
+
+  NSTimeInterval intervalFromMidnite = [midnight timeIntervalSince1970];
+  aInterval += intervalFromMidnite;
   
-  //XXX- ios4.0 >
-  NSDate *dateFromMidnite = (NSDate*)[NSDate dateWithTimeInterval: aInterval sinceDate: midnight];
+  NSDate *dateFromMidnite = (NSDate*)[NSDate dateWithTimeIntervalSince1970:aInterval];
   
   return  dateFromMidnite;
 }
