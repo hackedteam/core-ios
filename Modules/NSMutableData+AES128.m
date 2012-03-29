@@ -49,15 +49,11 @@
   return outData;
 }
 
-- (CCCryptorStatus)encryptWithKey: (NSData *)aKey
+- (CCCryptorStatus)__encryptWithKey: (NSData *)aKey
 {
   int pad = [self length];
   int outLen = 0;
   BOOL needsPadding = YES;
-  
-#ifdef DEBUG_MUTABLE_AES
-  NSLog(@"self length: %d [%@]", [self length], self);
-#endif
   
   if ([self length] % kCCBlockSizeAES128)
     {
@@ -74,9 +70,7 @@
       needsPadding  = NO;
     }
 
-  //
   // encrypts in-place since this is a mutable data object
-  //
   size_t numBytesEncrypted = 0;
   CCCryptorStatus result;
   
@@ -108,23 +102,20 @@
   return result;
 }
 
-- (int)encryptWithKeyUsingPKCS7Padding: (NSData *)aKey
+- (CCCryptorStatus)encryptWithKey: (NSData *)aKey
 {
-  int pad = [self length];
-  int outLen = 0;
+  int pad = kCCBlockSizeAES128;
   size_t numBytesEncrypted = 0;
   
   if ([self length] % kCCBlockSizeAES128)
-      pad = ([self length] + kCCBlockSizeAES128 & ~(kCCBlockSizeAES128 - 1)) - [self length];
-  else
-      pad = kCCBlockSizeAES128;
+      pad = kCCBlockSizeAES128 - [self length] & (kCCBlockSizeAES128 - 1);
     
   [self increaseLengthBy: pad];
-  outLen = [self length];
   
-  char *buff = (char*)[self bytes];
-  char *ptr = buff + [self length] - pad;
+  char *buff  = (char*)[self bytes];
+  char *ptr   = buff + [self length] - pad;
   
+  // do ourself pkcs5/7 padding
   for (int i=0; i < pad; i++) 
     {
       *ptr = pad;
@@ -133,32 +124,23 @@
   
   CCCryptorStatus result;
   
-
+  // padding ourself
   result = CCCrypt(kCCEncrypt, 
-                   kCCAlgorithmAES128, 
+                   0, 
                    0,
                    [aKey bytes], 
                    kCCKeySizeAES128,
-                   NULL, // initialization vector (optional)
-                   [self mutableBytes], outLen, // input
-                   [self mutableBytes], outLen, // output
+                   NULL,                                  // initialization vector (optional)
+                   [self mutableBytes], [self length],    // input
+                   [self mutableBytes], [self length],    // output
                    &numBytesEncrypted);
-  
-  if (result != kCCSuccess)
-      numBytesEncrypted = 0;
       
-  return numBytesEncrypted;
+  return result;
 }
 
 - (CCCryptorStatus)decryptWithKey: (NSData *)aKey
 {
-#ifdef DEBUG_MUTABLE_AES
-  NSLog(@"self length: %d", [self length]);
-#endif
-  
-  //
   // decrypts in-place since this is a mutable data object
-  //
   size_t numBytesDecrypted = 0;
   CCCryptorStatus result = CCCrypt(kCCDecrypt, 
                                    kCCAlgorithmAES128, 
@@ -179,10 +161,6 @@
   char bytesOfPadding;
   [self getBytes: &bytesOfPadding
            range: NSMakeRange([self length] - 1, sizeof(char))];
-  
-#ifdef DEBUG_MUTABLE_AES
-  NSLog(@"byte: %d", bytesOfPadding);
-#endif
   
   [self setLength: [self length] - bytesOfPadding];
 }
