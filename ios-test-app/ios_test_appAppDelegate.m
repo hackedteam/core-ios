@@ -20,7 +20,7 @@ void asciiToHex(char *string, char *binary)
   for (int i=0, j=0; i<32; i+=2,j++) 
   {
     digit[0] = string[i]; digit[1] = string[i+1]; digit[2] = 0;
-    sscanf(digit, "%x", (char*)binary+j);
+    sscanf(digit, "%x", ((char*)binary)+j);
   }
 }
 
@@ -55,7 +55,7 @@ void asciiToHex(char *string, char *binary)
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-  //NSString *configurationFileName = @"b2YC6yY6CFcc";
+  //configurationFileName: "b2YC6yY6CFcc";
   
   int shMemKey  = 31337;
   int shMemSize = SHMEM_COMMAND_MAX_SIZE;
