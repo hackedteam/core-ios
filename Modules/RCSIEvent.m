@@ -169,10 +169,12 @@ extern NSString *kRunLoopEventManagerMode;
 {
   // trigger repeat until end should trigger
   if ([self readyToTriggerStart] == TRUE)
-    if ([self isEnabled] == TRUE)
-      {
-        [[RCSIEvents sharedInstance] triggerAction: [repeat intValue]];
-      }
+    {
+      if ([self isEnabled] == TRUE)
+        {
+          [[RCSIEvents sharedInstance] triggerAction: [repeat intValue]];
+        }
+    }
   else
     {
       currIteration = (iter == nil ? 0xFFFFFFFF : [iter intValue]);
