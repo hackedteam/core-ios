@@ -72,8 +72,6 @@ typedef struct _PoomCalendar {
 
 + (RCSIAgentCalendar *)sharedInstance;
 
-- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration;
-- (NSMutableDictionary *)mAgentConfiguration;
 - (void)start;
 - (BOOL)stop;
 
