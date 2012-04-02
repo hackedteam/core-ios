@@ -87,12 +87,10 @@ extern RCSISharedMemory           *mSharedMemoryLogging;
   NSString                    *processName;
   NSString                    *windowName;
   NSMutableData               *logData;
-  NSDictionary                *windowInfo;
   shMemoryLog                 *shMemoryHeader;
   screenshotAdditionalStruct  *agentAdditionalHeader;
   int chunck_id = 0;
    
-  NSString *execName = [[NSBundle mainBundle] bundleIdentifier];
 //
 //  if (mContextHasBeenSwitched == APP_IN_BACKGROUND)
 //    return FALSE;

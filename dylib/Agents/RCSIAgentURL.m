@@ -6,6 +6,7 @@
  * Copyright (C) HT srl 2010. All rights reserved
  *
  */
+#import <unistd.h>
 
 #import "RCSIAgentURL.h"
 #import "RCSILoader.h"

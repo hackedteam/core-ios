@@ -265,7 +265,7 @@
   
   objects = [NSArray arrayWithObjects: type, 
                                        enabled, 
-                                       (applist != nil ? applist : MODULE_EMPTY_CONF),
+                                       (applist != nil ? (id)applist : (id)MODULE_EMPTY_CONF),
                                        nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
@@ -543,7 +543,7 @@
   
   objects = [NSArray arrayWithObjects: type, 
                                        enabled, 
-                                       takeSnap != nil ? takeSnap : MODULE_EMPTY_CONF,
+                                       takeSnap != nil ? (id)takeSnap : (id)MODULE_EMPTY_CONF,
                                        nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
