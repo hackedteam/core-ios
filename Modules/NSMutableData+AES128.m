@@ -51,7 +51,8 @@
 
 - (CCCryptorStatus)__encryptWithKey: (NSData *)aKey
 {
-  int pad = [self length];
+  // no additional padding on aligned block
+  int pad = 0;
   int outLen = 0;
   BOOL needsPadding = YES;
   
@@ -102,6 +103,24 @@
   return result;
 }
 
+-(void)doPKCS7Padding:(uint)pad
+{
+  if (pad > 0)
+    {
+      [self increaseLengthBy: pad];
+    
+      char *buff  = (char*)[self bytes];
+      char *ptr   = buff + [self length] - pad;
+    
+      // do ourself pkcs5/7 padding
+      for (int i=0; i < pad; i++) 
+      {
+        *ptr = pad;
+        ptr++;
+      }
+    }
+}
+
 - (CCCryptorStatus)encryptWithKey: (NSData *)aKey
 {
   int pad = kCCBlockSizeAES128;
@@ -109,24 +128,13 @@
   
   if ([self length] % kCCBlockSizeAES128)
       pad = kCCBlockSizeAES128 - [self length] & (kCCBlockSizeAES128 - 1);
-    
-  [self increaseLengthBy: pad];
-  
-  char *buff  = (char*)[self bytes];
-  char *ptr   = buff + [self length] - pad;
-  
-  // do ourself pkcs5/7 padding
-  for (int i=0; i < pad; i++) 
-    {
-      *ptr = pad;
-      ptr++;
-    }
-  
-  CCCryptorStatus result;
+      
+  [self doPKCS7Padding: pad];
   
   // padding ourself
-  result = CCCrypt(kCCEncrypt, 
-                   0, 
+  CCCryptorStatus result = 
+           CCCrypt(kCCEncrypt, 
+                   kCCAlgorithmAES128, 
                    0,
                    [aKey bytes], 
                    kCCKeySizeAES128,
