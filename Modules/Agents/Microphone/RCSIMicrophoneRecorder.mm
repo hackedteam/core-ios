@@ -410,9 +410,6 @@ void RCSIMicrophoneRecorder::createLogForBufferedAudio (int fileNumber)
       
       if ([logManager writeDataToLog: audioData
                             forAgent: LOG_MICROPHONE + fileNumber] == TRUE)
-#ifdef DEBUG
-        NSLog(@"data written correctly");
-#endif
       
       [headerData release];
       [audioData release];
