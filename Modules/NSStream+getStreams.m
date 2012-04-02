@@ -24,10 +24,6 @@
   CFReadStreamRef     readStream;
   CFWriteStreamRef    writeStream;
   
-  assert (hostName != nil);
-  assert ((port > 0) && (port < 65536));
-  assert ((inputStreamPtr != nil) && (outputStreamPtr != nil));
-  
   readStream  = NULL;
   writeStream = NULL;
   
