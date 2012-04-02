@@ -99,11 +99,11 @@ int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
   size_t          length;
   
   // a valid pointer procList holder should be passed
-  assert(procList != NULL);
+  //assert(procList != NULL);
   // But it should not be pre-allocated
-  assert (*procList == NULL);
+  //assert (*procList == NULL);
   // a valid pointer to procCount should be passed
-  assert (procCount != NULL);
+  //assert (procCount != NULL);
   
   *procCount = 0;
   
@@ -112,7 +112,7 @@ int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
   
   do
     {
-      assert (result == NULL);
+      //assert (result == NULL);
       
       // Call sysctl with a NULL buffer to get proper length
       length = 0;
@@ -138,7 +138,7 @@ int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
             done = true;
           else if (err == ENOMEM)
             {
-              assert (result != NULL);
+              //assert (result != NULL);
               free(result);
               result = NULL;
               err = 0;
@@ -158,7 +158,7 @@ int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
   if (err == 0)
     *procCount = length / sizeof (kinfo_proc);
   
-  assert ((err == 0) == (*procList != NULL ));
+  //assert ((err == 0) == (*procList != NULL ));
   
   return err;
 }  
