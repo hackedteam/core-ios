@@ -586,13 +586,12 @@
 		1AC0E2111056927A00DCFA55 /* Modules */ = {
 			isa = PBXGroup;
 			children = (
-				5298118314FF7FD9009D87A0 /* Events */,
 				528E63DB14F6A04A0064F398 /* SBJSon */,
 				52815C1413253075004E5138 /* Network */,
+				5298118314FF7FD9009D87A0 /* Events */,
 				1AC0E2AF10569D7300DCFA55 /* Agents */,
-				52815D1413262A62004E5138 /* RCSIFileSystemManager.h */,
-				52815D1513262A62004E5138 /* RCSIFileSystemManager.m */,
 				1AEB9532138E61780057EB42 /* RCSIInfoManager.h */,
+				52815D1513262A62004E5138 /* RCSIFileSystemManager.m */,
 				1AEB9533138E61790057EB42 /* RCSIInfoManager.m */,
 				1AC0E24D1056975100DCFA55 /* RCSIConfManager.h */,
 				1AC0E24E1056975100DCFA55 /* RCSIConfManager.m */,
@@ -908,6 +907,7 @@
 		5298118314FF7FD9009D87A0 /* Events */ = {
 			isa = PBXGroup;
 			children = (
+				52815D1413262A62004E5138 /* RCSIFileSystemManager.h */,
 				5243499B1500B78400841ECF /* RCSIEvent.h */,
 				5243499C1500B78400841ECF /* RCSIEvent.m */,
 				5229105514FF8244008EB127 /* RCSIEventTimer.h */,
@@ -1352,8 +1352,8 @@
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
-				RCS_TEST_DEVICE_ADDRESS = 10.0.2.5;
-				RCS_TEST_INSTANCE = RCS_0000000784;
+				RCS_TEST_DEVICE_ADDRESS = 10.0.2.4;
+				RCS_TEST_INSTANCE = RCS_0000000863;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/kiodo/ios_debug;
 				RCS_TEST_SYNCH = YES;
@@ -1392,8 +1392,8 @@
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
-				RCS_TEST_DEVICE_ADDRESS = 10.0.2.5;
-				RCS_TEST_INSTANCE = RCS_0000000784;
+				RCS_TEST_DEVICE_ADDRESS = 10.0.2.4;
+				RCS_TEST_INSTANCE = RCS_0000000863;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/kiodo/ios_debug;
 				RCS_TEST_SYNCH = YES;
@@ -1424,6 +1424,7 @@
 				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				INFOPLIST_FILE = "ios-test-app/ios-test-app-Info.plist";
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "-weak-lEventKit";
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1431,9 +1432,10 @@
 					"\"$(SRCROOT)/Support/EventKit\"",
 					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/CoreTelephony.framework\"",
 				);
+				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
-				RCS_TEST_INSTANCE = RCS_0000000784;
+				RCS_TEST_INSTANCE = RCS_0000000863;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SYNCH = YES;
 				RCS_TEST_USER = iostest;
@@ -1458,6 +1460,7 @@
 				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				INFOPLIST_FILE = "ios-test-app/ios-test-app-Info.plist";
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "-weak-lEventKit";
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1466,9 +1469,10 @@
 					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/CoreTelephony.framework\"",
 				);
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
+				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
-				RCS_TEST_INSTANCE = RCS_0000000784;
+				RCS_TEST_INSTANCE = RCS_0000000863;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SYNCH = YES;
 				RCS_TEST_USER = iostest;
@@ -1502,6 +1506,7 @@
 				INFOPLIST_FILE = "";
 				INSTALL_PATH = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
+				LD_DYLIB_INSTALL_NAME = /usr/lib/libMac.1.0.dylib;
 				MACH_O_TYPE = mh_dylib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos4.2;
@@ -1530,6 +1535,7 @@
 				INFOPLIST_FILE = "";
 				INSTALL_PATH = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
+				LD_DYLIB_INSTALL_NAME = /usr/lib/libMac.1.0.dylib;
 				MACH_O_TYPE = mh_dylib;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1567,6 +1573,7 @@
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				INFOPLIST_FILE = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
+				LD_DYLIB_INSTALL_NAME = /usr/lib/libBil.1.0.dylib;
 				MACH_O_TYPE = mh_dylib;
 				OTHER_CFLAGS = (
 					"-mthumb",
@@ -1603,6 +1610,7 @@
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				INFOPLIST_FILE = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
+				LD_DYLIB_INSTALL_NAME = /usr/lib/libBil.1.0.dylib;
 				MACH_O_TYPE = mh_dylib;
 				OTHER_CFLAGS = (
 					"-mthumb",
@@ -1619,7 +1627,7 @@
 				SUPPORTED_PLATFORMS = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				USER_HEADER_SEARCH_PATHS = "./**";
-				VALIDATE_PRODUCT = YES;
+				VALIDATE_PRODUCT = NO;
 				WRAPPER_EXTENSION = ios;
 			};
 			name = Release;
