@@ -256,7 +256,8 @@ typedef struct _log {
   
   CCCryptorStatus result = 0;
   
-  result = [rawHeader encryptWithKey: temp];
+  // no padding on aligned block
+  result = [rawHeader __encryptWithKey: temp];
   
   [logHeader release];
   
@@ -442,8 +443,9 @@ typedef struct _log {
                                                                       
   NSData *temp = [NSData dataWithBytes: gLogAesKey
                                 length: CC_MD5_DIGEST_LENGTH];
-  
-  result = [encData encryptWithKey:temp];
+ 
+  // no padding on aligned blocks
+  result = [encData __encryptWithKey:temp];
   
   if (result != kCCSuccess)
     {
