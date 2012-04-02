@@ -1904,11 +1904,9 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 
 - (BOOL)triggerAction: (int)anActionID
 {
-#ifdef DEBUG
-  NSLog(@"Triggering Action: %d", anActionID);
-#endif
+  BOOL aBVal;
   
-  NSArray *configArray = [self getConfigForAction: anActionID];
+  NSArray *configArray = [self getConfigForAction: anActionID withFlag: &aBVal];
   NSMutableDictionary *configuration;
   
 #ifdef DEBUG
