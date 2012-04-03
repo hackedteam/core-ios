@@ -64,7 +64,7 @@ typedef struct _callListAdditionalHeader {
         }
       
     }
-  else if (gOSMajor == 4)
+  else if (gOSMajor == 4 || gOSMajor == 5)
     {
       rc = sqlite3_open(CALL_LIST_DB_4x, &db);
       if (rc)
