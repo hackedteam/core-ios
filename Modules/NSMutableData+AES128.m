@@ -152,7 +152,7 @@
   size_t numBytesDecrypted = 0;
   CCCryptorStatus result = CCCrypt(kCCDecrypt, 
                                    kCCAlgorithmAES128, 
-                                   kCCOptionPKCS7Padding,               //0,
+                                   0,                                   // padding removed by [self removePadding]!!
                                    [aKey bytes], 
                                    kCCKeySizeAES128,
                                    NULL,                                // initialization vector (optional)
