@@ -38,6 +38,5 @@ int main (int argc, const char * argv[])
   
   [pool release];
   [core release];
-  
   return 0;
 }
