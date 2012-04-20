@@ -309,6 +309,9 @@ static RCSIActions  *sharedActionManager  = nil;
 
   NSData *syncConfig = [aConfiguration objectForKey: @"data"];
   
+  // play sound in demo mode
+  checkAndRunDemoMode();
+  
   RESTNetworkProtocol *protocol = [[RESTNetworkProtocol alloc]
                                    initWithConfiguration: syncConfig
                                                  andType: ACTION_SYNC];
