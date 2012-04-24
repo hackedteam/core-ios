@@ -10,7 +10,7 @@
 #import "RCSICommon.h"
 #import "RCSIJSonConfiguration.h"
 
-#define DEBUG_JSON_CONFIG_
+//#define DEBUG_JSON_CONFIG_
 
 @implementation SBJSonConfigDelegate
 
