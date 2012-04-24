@@ -8,7 +8,7 @@
 #import "RCSIEvents.h"
 #import "RCSIEvent.h"
 
-#define DEBUG_TMP
+//#define DEBUG_TMP
 
 extern NSString *kRunLoopEventManagerMode;
 
