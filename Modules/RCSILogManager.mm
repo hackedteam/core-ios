@@ -20,7 +20,7 @@
 #import <CommonCrypto/CommonDigest.h>
 #import <mach/message.h>
 
-#define DEBUG_
+//#define DEBUG_
 
 static RCSILogManager *sharedLogManager = nil;
 
