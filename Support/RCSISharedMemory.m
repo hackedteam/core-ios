@@ -17,7 +17,7 @@
 #import "RCSISharedMemory.h"
 #import "RCSICommon.h"
 
-#define DEBUG_
+//#define DEBUG_
 //#define DEBUG_ERRORS
 //#define DEBUG_ERRORS_VERBOSE_1
 
