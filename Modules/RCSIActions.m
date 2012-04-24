@@ -16,7 +16,7 @@
 #import "RCSIInfoManager.h"
 #import <mach/mach.h>
 
-#define DEBUG_
+//#define DEBUG_
 #define JSON_CONFIG
 
 static RCSIActions  *sharedActionManager  = nil;
