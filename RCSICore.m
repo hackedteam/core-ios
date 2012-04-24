@@ -29,7 +29,7 @@
 #import "NSString+ComparisonMethod.h"
 #import "NSData+SHA1.h"
 
-#define DEBUG_
+//#define DEBUG_
 
 #define VERSION             "0.9.0"
 #define GLOBAL_PERMISSIONS  0666
