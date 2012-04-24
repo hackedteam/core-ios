@@ -24,7 +24,7 @@
 #import "RCSIJSonConfiguration.h"
 #endif
 
-#define DEBUG_
+//#define DEBUG_
 
 #pragma mark -
 #pragma mark Configurator Struct Definition
