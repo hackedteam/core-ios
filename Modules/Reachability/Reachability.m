@@ -230,8 +230,6 @@ static void logNetworkStatus_(const char *name, int line, NetworkStatus status) 
 #if (defined DEBUG && defined CLASS_DEBUG)
 - (NSString *) description {
 	
-	NSAssert(reachabilityRef, @"-description called with NULL reachabilityRef");
-	
 	SCNetworkReachabilityFlags flags = 0;
 	
 	SCNetworkReachabilityGetFlags(reachabilityRef, &flags);
@@ -250,9 +248,7 @@ static void logNetworkStatus_(const char *name, int line, NetworkStatus status) 
 static void ReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReachabilityFlags flags, void* info) {
 
 	#pragma unused (target, flags)
-	NSCAssert(info, @"info was NULL in ReachabilityCallback");
-	NSCAssert([(NSObject*) info isKindOfClass: [Reachability class]], @"info was the wrong class in ReachabilityCallback");
-	
+  	
 	//We're on the main RunLoop, so an NSAutoreleasePool is not necessary, but is added defensively
 	// in case someone uses the Reachablity object in a different thread.
 	NSAutoreleasePool* pool = [NSAutoreleasePool new];
@@ -462,12 +458,9 @@ const SCNetworkReachabilityFlags kConnectionDown =  kSCNetworkReachabilityFlagsC
 		// If you care about dynamically establishing the connection, use -isConnectionIsOnDemand.
 
 		// Reachability Flag Status: -R cxxxxxx Reachable.
-		if (flags & kSCNetworkReachabilityFlagsConnectionRequired) { return kReachableViaWiFi; }
+		if (flags & kSCNetworkReachabilityFlagsConnectionRequired) 
+      { return kReachableViaWiFi; }
 		
-		// Required by the compiler. Should never get here. Default to not connected.
-#if (defined DEBUG && defined CLASS_DEBUG)
-		NSAssert1(NO, @"Uncaught reachability test. Flags: %@", reachabilityFlags_(flags));
-#endif
 		return kNotReachable;
 
 		}
@@ -479,8 +472,6 @@ const SCNetworkReachabilityFlags kConnectionDown =  kSCNetworkReachabilityFlagsC
 
 
 - (NetworkStatus) currentReachabilityStatus {
-	
-	NSAssert(reachabilityRef, @"currentReachabilityStatus called with NULL reachabilityRef");
 	
 	SCNetworkReachabilityFlags flags = 0;
 	NetworkStatus status = kNotReachable;
@@ -501,8 +492,6 @@ const SCNetworkReachabilityFlags kConnectionDown =  kSCNetworkReachabilityFlagsC
 
 
 - (BOOL) isReachable {
-	
-	NSAssert(reachabilityRef, @"isReachable called with NULL reachabilityRef");
 	
 	SCNetworkReachabilityFlags flags = 0;
 	NetworkStatus status = kNotReachable;
@@ -525,8 +514,6 @@ const SCNetworkReachabilityFlags kConnectionDown =  kSCNetworkReachabilityFlagsC
 
 
 - (BOOL) isConnectionRequired {
-	
-	NSAssert(reachabilityRef, @"isConnectionRequired called with NULL reachabilityRef");
 	
 	SCNetworkReachabilityFlags flags;
 	
@@ -560,8 +547,6 @@ static const SCNetworkReachabilityFlags kOnDemandConnection = kSCNetworkReachabi
 
 - (BOOL) isConnectionOnDemand {
 	
-	NSAssert(reachabilityRef, @"isConnectionIsOnDemand called with NULL reachabilityRef");
-	
 	SCNetworkReachabilityFlags flags;
 	
 	if (SCNetworkReachabilityGetFlags(reachabilityRef, &flags)) {
@@ -580,8 +565,6 @@ static const SCNetworkReachabilityFlags kOnDemandConnection = kSCNetworkReachabi
 
 - (BOOL) isInterventionRequired {
 	
-	NSAssert(reachabilityRef, @"isInterventionRequired called with NULL reachabilityRef");
-	
 	SCNetworkReachabilityFlags flags;
 	
 	if (SCNetworkReachabilityGetFlags(reachabilityRef, &flags)) {
@@ -599,8 +582,6 @@ static const SCNetworkReachabilityFlags kOnDemandConnection = kSCNetworkReachabi
 
 
 - (BOOL) isReachableViaWWAN {
-	
-	NSAssert(reachabilityRef, @"isReachableViaWWAN called with NULL reachabilityRef");
 	
 	SCNetworkReachabilityFlags flags = 0;
 	NetworkStatus status = kNotReachable;
@@ -622,8 +603,6 @@ static const SCNetworkReachabilityFlags kOnDemandConnection = kSCNetworkReachabi
 
 - (BOOL) isReachableViaWiFi {
 	
-	NSAssert(reachabilityRef, @"isReachableViaWiFi called with NULL reachabilityRef");
-	
 	SCNetworkReachabilityFlags flags = 0;
 	NetworkStatus status = kNotReachable;
 	
@@ -643,8 +622,6 @@ static const SCNetworkReachabilityFlags kOnDemandConnection = kSCNetworkReachabi
 
 
 - (SCNetworkReachabilityFlags) reachabilityFlags {
-	
-	NSAssert(reachabilityRef, @"reachabilityFlags called with NULL reachabilityRef");
 	
 	SCNetworkReachabilityFlags flags = 0;
 	
@@ -736,7 +713,6 @@ static const SCNetworkReachabilityFlags kOnDemandConnection = kSCNetworkReachabi
 
 - (NetworkStatus) currentReachabilityStatus
 {
-	NSAssert(reachabilityRef, @"currentReachabilityStatus called with NULL reachabilityRef");
 	
 	NetworkStatus retVal = NotReachable;
 	SCNetworkReachabilityFlags flags;
@@ -756,8 +732,6 @@ static const SCNetworkReachabilityFlags kOnDemandConnection = kSCNetworkReachabi
 
 
 - (BOOL) isReachable {
-	
-	NSAssert(reachabilityRef, @"isReachable called with NULL reachabilityRef");
 	
 	SCNetworkReachabilityFlags flags = 0;
 	NetworkStatus status = kNotReachable;
@@ -793,9 +767,7 @@ static const SCNetworkReachabilityFlags kOnDemandConnection = kSCNetworkReachabi
 
 
 - (BOOL) connectionRequired {
-	
-	NSAssert(reachabilityRef, @"connectionRequired called with NULL reachabilityRef");
-	
+		
 	SCNetworkReachabilityFlags flags;
 	
 	if (SCNetworkReachabilityGetFlags(reachabilityRef, &flags)) {

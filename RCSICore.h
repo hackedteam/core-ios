@@ -14,6 +14,8 @@
 #import "RCSIUtils.h"
 #import "RCSISharedMemory.h"
 
+extern void checkAndRunDemoMode();
+
 @interface RCSICore : NSObject
 {
 @private

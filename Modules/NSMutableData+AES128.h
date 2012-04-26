@@ -15,9 +15,10 @@
 
 @interface NSMutableData (AES128) 
 
+- (CCCryptorStatus)__encryptWithKey: (NSData *)aKey;
 - (CCCryptorStatus)encryptWithKey: (NSData *)aKey;
 - (CCCryptorStatus)decryptWithKey: (NSData *)aKey;
-
+- (NSMutableData*)encryptPKCS7:(NSData*)aKey;
 - (void)removePadding;
 
 @end

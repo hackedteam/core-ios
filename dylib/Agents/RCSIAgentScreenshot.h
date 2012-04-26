@@ -17,6 +17,7 @@
 @private
   NSMutableDictionary *mAgentConfiguration;
   BOOL mContextHasBeenSwitched;
+  BOOL isAlreadyRunning;
 }
 
 @property (readwrite) BOOL mContextHasBeenSwitched;
@@ -28,6 +29,8 @@
 - (unsigned)retainCount;
 - (void)release;
 - (id)autorelease;
+
+- (BOOL)testAndSetIsAlreadyRunning;
 
 - (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration;
 - (NSMutableDictionary *)mAgentConfiguration;

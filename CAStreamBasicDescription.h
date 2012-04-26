@@ -126,7 +126,6 @@ public:
 	
 	bool	PackednessIsSignificant() const
 	{
-		Assert(IsPCM(), "PackednessIsSignificant only applies for PCM");
 		return (SampleWordSize() << 3) != mBitsPerChannel;
 	}
 	
@@ -150,7 +149,7 @@ public:
 
 	UInt32	FramesToBytes(UInt32 nframes) const	{ return nframes * mBytesPerFrame; }
 	UInt32	BytesToFrames(UInt32 nbytes) const	{
-		Assert(mBytesPerFrame > 0, "bytesPerFrame must be > 0 in BytesToFrames");
+		
 		return nbytes / mBytesPerFrame;
 	}
 	
@@ -233,7 +232,6 @@ public:
 	void	ChangeNumberChannels(UInt32 nChannels, bool interleaved)
 				// alter an existing format
 	{
-		Assert(IsPCM(), "ChangeNumberChannels only works for PCM formats");
 		UInt32 wordSize = SampleWordSize();	// get this before changing ANYTHING
 		if (wordSize == 0)
 			wordSize = (mBitsPerChannel + 7) / 8;
