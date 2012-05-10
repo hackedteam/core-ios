@@ -3,7 +3,7 @@
 //  RCSIphone
 //
 //  Created by kiodo on 13/03/12.
-//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//  Copyright 2012 HT srl. All rights reserved.
 //
 #import <dlfcn.h>
 #import "RCSIEventSimChange.h"

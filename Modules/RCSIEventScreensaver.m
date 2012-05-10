@@ -3,11 +3,11 @@
 //  RCSIphone
 //
 //  Created by kiodo on 12/03/12.
-//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//  Copyright 2012 HT srl. All rights reserved.
 //
 
 #import "RCSIEventScreensaver.h"
-#import "RCSIEvents.h"
+#import "RCSIEventManager.h"
 
 @implementation RCSIEventScreensaver
 
@@ -27,7 +27,7 @@
 
 - (void)setStartTimer
 {
-  // do notihing: the timer is inserted in runloop by RCSIEvents processNewEvent
+  // do notihing: the timer is inserted in runloop by RCSIEventManager processEvent
   //              by postSetStartTimer
 }
 
@@ -37,7 +37,7 @@
     {
       if ([self isEnabled] == TRUE)
         {
-          [[RCSIEvents sharedInstance] triggerAction: [repeat intValue]];
+          [self triggerAction: [repeat intValue]];
         }
       
       if (currIteration > 0)
