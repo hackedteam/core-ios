@@ -2,7 +2,7 @@
  * RCSMac - Authentication Network Operation
  *
  *
- * Created by revenge on 13/01/2011
+ * Created on 13/01/2011
  * Copyright (C) HT srl 2011. All rights reserved
  *
  */
