@@ -1,6 +1,6 @@
 /*
  *  RCSIAgentCallList.h
- *  RCSIpony
+ *  RCSiOS
  *
  *  Created by Alfredo Pesoli 'revenge' on 5/18/11.
  *  Copyright 2011 HT srl. All rights reserved.
@@ -11,24 +11,14 @@
 
 #import "RCSICommon.h"
 #import "RCSILogManager.h"
+#import "RCSIAgent.h"
 
-
-@interface RCSIAgentCallList : NSObject <Agents>
+@interface RCSIAgentCallList : RCSIAgent <Agents>
 {
-  NSMutableDictionary *mAgentConfiguration;
   int32_t mLastCallTimestamp;
 }
 
-@property (retain, readwrite) NSMutableDictionary *mAgentConfiguration;
-
-+ (RCSIAgentCallList *)sharedInstance;
-+ (id)allocWithZone: (NSZone *)aZone;
-- (id)copyWithZone: (NSZone *)aZone;
-- (id)retain;
-- (unsigned)retainCount;
-- (void)release;
-- (id)autorelease;
-- (id)init;
+- (id)initWithConfigData:(NSData*)aData;
 
 @end
 

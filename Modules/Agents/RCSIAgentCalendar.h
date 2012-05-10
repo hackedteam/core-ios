@@ -3,11 +3,12 @@
 //  RCSIphone
 //
 //  Created by kiodo on 04/08/11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//  Copyright 2011 HT srl. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
-
+#import "RCSICommon.h"
+#import "RCSIAgent.h"
 
 #define	POOM_V1_0_PROTO   0x01000000
 #define FLAG_REMINDER			0x00000001
@@ -61,18 +62,12 @@ typedef struct _PoomCalendar {
 	UInt32	_lMeetingStatus;
 } PoomCalendar;
 
-@interface RCSIAgentCalendar : NSObject
+@interface RCSIAgentCalendar : RCSIAgent <Agents>
 {
 @public
-  NSMutableDictionary *mAgentConfiguration;
-  double               mLastEvent;
+  double  mLastEvent;
 }
 
-@property (retain, readwrite) NSMutableDictionary *mAgentConfiguration;
-
-+ (RCSIAgentCalendar *)sharedInstance;
-
-- (void)start;
-- (BOOL)stop;
+- (id)initWithConfigData:(NSData*)aData;
 
 @end

