@@ -2,8 +2,8 @@
 //  NSData+Pascal.m
 //  RCSMac
 //
-//  Created by revenge on 1/25/11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//  Created on 1/25/11.
+//  Copyright 2011 HT srl. All rights reserved.
 //
 
 #import "NSData+Pascal.h"
