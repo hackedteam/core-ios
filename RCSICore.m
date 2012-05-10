@@ -30,7 +30,7 @@
 #import "NSString+ComparisonMethod.h"
 #import "NSData+SHA1.h"
 
-#define DEBUG_
+//#define DEBUG_
 
 #pragma mark -
 #pragma mark Private Interface

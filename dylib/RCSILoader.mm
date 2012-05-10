@@ -41,7 +41,7 @@
 #define CAMERA_APP_40 @"com.apple.mobileslideshow"
 
 #define VERSION       0.6
-#define DEBUG_TMP
+//#define DEBUG_TMP
 
 #define swizzleMethod(c1, m1, c2, m2) do { \
 method_exchangeImplementations(class_getInstanceMethod(c1, m1), \
