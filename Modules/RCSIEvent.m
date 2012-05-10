@@ -3,10 +3,11 @@
 //  RCSIphone
 //
 //  Created by kiodo on 02/03/12.
-//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//  Copyright 2012 HT srl. All rights reserved.
 //
-#import "RCSIEvents.h"
+#import "RCSIEventManager.h"
 #import "RCSIEvent.h"
+#import "RCSISharedMemory.h"
 
 #define DEBUG_TMP
 
@@ -55,6 +56,23 @@ extern NSString *kRunLoopEventManagerMode;
   return self;
 }
 
+- (void)dealloc
+{ 
+  [start release];
+  [end release];
+  [delay release];
+  [repeat release];
+  [iter release];
+  [enabled release];
+  [startDate release];
+  [endDate release];
+  [startTimer release];
+  [repeatTimer release];
+  [endTimer release];
+  
+  [super dealloc];
+}
+
 - (BOOL)isEnabled
 {
   BOOL bRet;
@@ -68,6 +86,28 @@ extern NSString *kRunLoopEventManagerMode;
   } 
   
   return bRet;
+}
+
+- (void)dispatchMsgToCore:(u_int)aType
+                    param:(u_int)aParam
+{
+  shMemoryLog params;
+  params.agentID  = aType;
+  params.flag     = aParam;
+  
+  NSData *msgData = [[NSData alloc] initWithBytes: &params 
+                                           length: sizeof(shMemoryLog)];
+  
+  [RCSISharedMemory sendMessageToCoreMachPort: msgData 
+                                     withMode: kRunLoopEventManagerMode];
+  
+  [msgData release];
+}
+
+- (BOOL)triggerAction:(uint)anAction
+{
+  [self dispatchMsgToCore: EVENT_TRIGGER_ACTION param:anAction];
+  return TRUE;
 }
 
 #pragma mark -
@@ -154,7 +194,7 @@ extern NSString *kRunLoopEventManagerMode;
     {
       if ([self isEnabled] == TRUE)
         {
-          [[RCSIEvents sharedInstance] triggerAction: [start intValue]];
+          [self triggerAction: [start intValue]];
         }
         
       [self setRepeatTimer];
@@ -172,7 +212,7 @@ extern NSString *kRunLoopEventManagerMode;
     {
       if ([self isEnabled] == TRUE)
         {
-          [[RCSIEvents sharedInstance] triggerAction: [repeat intValue]];
+          [self triggerAction: [repeat intValue]];
         }
     }
   else
@@ -210,7 +250,7 @@ extern NSString *kRunLoopEventManagerMode;
     {
       if ([self isEnabled] == TRUE)
         {
-          [[RCSIEvents sharedInstance] triggerAction: [end intValue]];
+          [self triggerAction: [end intValue]];
         }
       [self setStartTimer];
     }
@@ -224,7 +264,7 @@ extern NSString *kRunLoopEventManagerMode;
 #pragma mark NSTimer support method
 #pragma mark -
 
-// invoked by [RCSIEvents stop] 
+// invoked by [RCSIEventManager stop] 
 - (void)removeTimers
 {
 //  if (startTimer != nil && [startTimer isValid])
