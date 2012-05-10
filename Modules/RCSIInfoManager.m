@@ -1,8 +1,8 @@
 /*
  *  RCSIInfoManager.m
- *  RCSIpony
+ *  RCSiOS
  *
- * Created by Alfredo 'revenge' Pesoli on 5/26/11.
+ * Created on 5/26/11.
  * Copyright 2011 HT srl. All rights reserved.
  */
 
@@ -21,17 +21,10 @@
 {
   if (description == nil)
     {
-#ifdef DEBUG_INFO_MANAGER
-      errorLog(@"description is nil");
-#endif
       return NO;
     }
 
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-
-#ifdef DEBUG_INFO_MANAGER
-  infoLog(@"description: %@", description);
-#endif
 
   RCSILogManager *logManager = [RCSILogManager sharedInstance];
   
@@ -56,9 +49,6 @@
     }
   else
     {
-#ifdef DEBUG_INFO_MANAGER
-      errorLog(@"Error while creating log");
-#endif
       return NO;
     }
   
@@ -67,3 +57,10 @@
 }
 
 @end
+
+void createInfoLog(NSString *string)
+{
+  RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
+  [infoManager logActionWithDescription: string];
+  [infoManager release]; 
+}
