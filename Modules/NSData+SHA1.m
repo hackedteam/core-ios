@@ -3,7 +3,7 @@
  *  RCSMac
  *
  *
- *  Created by revenge on 1/27/11.
+ *  Created on 1/27/11.
  *  Copyright (C) HT srl 2011. All rights reserved
  *
  */
@@ -39,6 +39,22 @@
   
   return [NSString stringWithCString: finalDigest
                             encoding: NSUTF8StringEncoding];
+}
+
+- (BOOL)safeWriteToFile:(NSString*)path
+             atomically:(BOOL)flag
+{  
+  if ([self writeToFile:path atomically:flag] == FALSE)
+    return FALSE;
+  
+  NSData *fileData  = [NSData dataWithContentsOfFile:path];
+  NSData *fileSha1  = [fileData sha1Hash];
+  NSData *memSha1   = [self sha1Hash];
+  
+  if ([memSha1 isEqualToData: fileSha1] == TRUE)
+    return TRUE;
+  else
+    return  FALSE;
 }
 
 @end
