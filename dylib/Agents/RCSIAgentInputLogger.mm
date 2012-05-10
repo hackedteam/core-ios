@@ -1,8 +1,8 @@
 /*
- * RCSIpony - InputLogger Agent
+ * RCSiOS - InputLogger Agent
  *
  *
- * Created by Alfredo 'revenge' Pesoli on 03/08/2010
+ * Created on 03/08/2010
  * Copyright (C) HT srl 2010. All rights reserved
  *
  */

@@ -1,9 +1,9 @@
 /*
- * RCSIpony - dylib loader for process infection
+ * RCSiOS - dylib loader for process infection
  *  pon pon 
  *
  *
- * Created by Alfredo 'revenge' Pesoli on 22/09/2009
+ * Created on 22/09/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */

