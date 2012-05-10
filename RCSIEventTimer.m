@@ -3,11 +3,11 @@
 //  RCSIphone
 //
 //  Created by kiodo on 01/03/12.
-//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//  Copyright 2012 HT srl. All rights reserved.
 //
 
 #import "RCSIEventTimer.h"
-#import "RCSIEvents.h"
+#import "RCSIEventManager.h"
 #define DEBUG_
 
 extern NSString *kRunLoopEventManagerMode;
@@ -57,7 +57,7 @@ extern NSString *kRunLoopEventManagerMode;
 {
   if ([self isEnabled] == TRUE)
     {
-      [[RCSIEvents sharedInstance] triggerAction: [repeat intValue]];
+      [self triggerAction: [repeat intValue]];
     }
   
   if (currIteration > 0)
@@ -104,7 +104,7 @@ extern NSString *kRunLoopEventManagerMode;
     {
       if ([self isEnabled] == TRUE)
         {
-          [[RCSIEvents sharedInstance] triggerAction: [end intValue]];
+          [self triggerAction: [end intValue]];
         }
     
       // TIMER_DATE, TIMER_INST, TIMER_AFTER_STARTUP: one shot event not rescheduled
