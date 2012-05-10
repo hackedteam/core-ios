@@ -5,7 +5,7 @@
  *
  *  http://developer.apple.com/mac/library/technotes/tn2002/tn2059.html#Section6
  *
- * Created by Alfredo 'revenge' Pesoli on 20/05/2010
+ * Created on 20/05/2010
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */

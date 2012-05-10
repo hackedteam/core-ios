@@ -7,7 +7,7 @@
  * - Globally for all the categories, change the way how they're defined and
  *   implemented. (Use a single CryptoLibrary class file)?
  * 
- * Created by Alfredo 'revenge' Pesoli on 08/04/2009
+ * Created on 08/04/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
