@@ -1,10 +1,10 @@
 /*
- * RCSIpony - Encryption Class Header
+ * RCSiOS - Encryption Class Header
  *  This class will be responsible for all the Encryption/Decryption routines
  *  used by the Configurator
  * 
  * 
- * Created by Alfredo 'revenge' Pesoli on 20/05/2009
+ * Created on 20/05/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */

