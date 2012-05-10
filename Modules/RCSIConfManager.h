@@ -1,10 +1,10 @@
 /*
- * RCSIpony - ConfiguraTor(i)
+ * RCSiOS - ConfiguraTor(i)
  *  This class will be responsible for all the required operations on the 
  *  configuration file
  *
  *
- * Created by Alfredo 'revenge' Pesoli on 21/05/2009
+ * Created on 21/05/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
@@ -44,15 +44,19 @@
   // to be accessed
   //
   NSData *mGlobalConfiguration;
+@public
+  BOOL mShouldReloadConfiguration;
   
 @protected
   id mDelegate;
 }
 
-@property(readonly, copy) NSData *mGlobalConfiguration;
-@property(readonly, copy) NSString *mBackdoorName;
-@property(readonly, copy) NSString *mBackdoorUpdateName;
+@property(readonly, copy) NSData    *mGlobalConfiguration;
+@property(readonly, copy) NSString  *mBackdoorName;
+@property(readonly, copy) NSString  *mBackdoorUpdateName;
+@property(readwrite)      BOOL      mShouldReloadConfiguration;
 
++ (RCSIConfManager*)sharedInstance;
 
 - (id)initWithBackdoorName: (NSString *)aName;
 - (void)dealloc;
@@ -60,17 +64,12 @@
 - (id)delegate;
 - (void)setDelegate: (id)aDelegate;
 
-//
-// @author
-//  revenge
-// @abstract
-//  This function will parse and fill all the required objects with the
-//  configuration values.
-// @return
-//  FALSE if an error occurred otherwise TRUE.
-//
-- (BOOL)loadConfiguration;
-- (BOOL)checkConfigurationIntegrity: (NSString *)configurationFile;
+- (BOOL)updateConfiguration: (NSMutableData *)aConfigurationData;
+- (BOOL)checkConfiguration;
+- (NSMutableArray*)eventsArrayConfig;
+- (NSMutableArray*)actionsArrayConfig;
+- (NSMutableArray*)agentsArrayConfig;
+- (void)sendReloadNotification;
 
 - (RCSIEncryption *)encryption;
 
