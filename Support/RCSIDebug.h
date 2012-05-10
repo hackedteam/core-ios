@@ -1,8 +1,8 @@
 /*
  *  RCSIDebug.h
- *  RCSIpony
+ *  RCSiOS
  *
- *  Created by revenge on 2/2/11.
+ *  Created on 2/2/11.
  *  Copyright 2011 HT srl. All rights reserved.
  *
  */

