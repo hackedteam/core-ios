@@ -8,8 +8,20 @@
 
 #import "RCSIEventConnectivity.h"
 #import "Reachability.h"
+#import "RCSICommon.h"
 
 @implementation RCSIEventConnectivity
+
+- (id)init
+{
+  self = [super init];
+  if (self) 
+    {
+      eventType = EVENT_CONNECTION;
+    }
+  
+  return self;
+}
 
 - (BOOL)readyToTriggerStart
 {

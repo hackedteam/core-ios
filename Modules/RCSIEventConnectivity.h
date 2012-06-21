@@ -10,4 +10,6 @@
 
 @interface RCSIEventConnectivity : RCSIEvent
 
+- (id)init;
+
 @end

@@ -15,5 +15,7 @@
 
 @property (readwrite, retain) NSString *processName;
 
+- (id)init;
+
 @end
 

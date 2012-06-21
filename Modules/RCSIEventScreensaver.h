@@ -16,6 +16,7 @@
 
 @property (readwrite) int isDeviceLocked;
 
-- (void)setStandByTimer;
+//- (void)setStandByTimer;
+- (id)init;
 
 @end

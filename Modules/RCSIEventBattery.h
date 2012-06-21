@@ -17,4 +17,6 @@
 @property (readwrite) int minLevel;
 @property (readwrite) int maxLevel;
 
+- (id)init;
+
 @end

@@ -11,13 +11,24 @@
 
 @implementation RCSIEventProcess
 
+@synthesize processName;
+
+- (id)init
+{
+  self = [super init];
+  if (self) 
+    {
+      eventType = EVENT_PROCESS;
+    }
+  
+  return self;
+}
+
 - (void)dealloc
 {
   [processName release];
   [super dealloc];
 }
-
-@synthesize processName;
 
 - (BOOL)readyToTriggerStart
 {

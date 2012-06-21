@@ -7,8 +7,20 @@
 //
 
 #import "RCSIEventACPower.h"
+#import "RCSICommon.h"
 
 @implementation RCSIEventACPower
+
+- (id)init
+{
+  self = [super init];
+  if (self) 
+    {
+      eventType = EVENT_AC;
+    }
+  
+  return self;
+}
 
 - (BOOL)readyToTriggerStart
 {

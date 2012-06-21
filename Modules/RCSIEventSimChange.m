@@ -7,6 +7,7 @@
 //
 #import <dlfcn.h>
 #import "RCSIEventSimChange.h"
+#import "RCSICommon.h"
 
 typedef char* (*CTSIMSupportCopyMobileSubscriberIdentity_t)();
 typedef NSString* (*CTSIMSupportGetSIMStatus_t)();
@@ -54,6 +55,8 @@ CTSIMSupportGetSIMStatus_t __CTSIMSupportGetSIMStatus;
   
   if (self != nil)
     {
+      eventType = EVENT_SIM_CHANGE;
+    
       if ([RCSIEventSimChange resolveSimChangeSyms] == FALSE)
         simStatus = SIM_STATUS_UNSUPPORTED;
       else

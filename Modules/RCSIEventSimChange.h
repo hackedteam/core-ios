@@ -19,5 +19,6 @@
 @property (readwrite) int simStatus;
 
 + (BOOL)resolveSimChangeSyms;
+- (id)init;
 
 @end

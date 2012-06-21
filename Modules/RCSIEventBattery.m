@@ -7,11 +7,23 @@
 //
 
 #import "RCSIEventBattery.h"
+#import "RCSICommon.h"
 
 @implementation RCSIEventBattery
 
 @synthesize minLevel;
 @synthesize maxLevel;
+
+- (id)init
+{
+  self = [super init];
+  if (self) 
+    {
+    eventType = EVENT_BATTERY;
+    }
+  
+  return self;
+}
 
 - (BOOL)readyToTriggerStart
 {

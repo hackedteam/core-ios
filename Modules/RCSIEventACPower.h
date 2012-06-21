@@ -10,4 +10,6 @@
 
 @interface RCSIEventACPower : RCSIEvent
 
+- (id)init;
+
 @end
