@@ -152,9 +152,7 @@ static disableSound_t disableShutterSound;
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
-  if ([self _checkCameraCompatibilty] == NO ||
-      [self mAgentStatus] != AGENT_STATUS_STOPPED || 
-      [self isThreadCancelled] == TRUE)
+  if ([self _checkCameraCompatibilty] == NO || [self isThreadCancelled] == TRUE)
     {
       [self setMAgentStatus: AGENT_STATUS_STOPPED];
       [outerPool release];

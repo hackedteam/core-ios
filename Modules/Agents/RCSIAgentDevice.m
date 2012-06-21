@@ -191,24 +191,24 @@ NSString *kAppName = @"kAppName";
   
   if (apps == nil)
     {
-      systemInfoStr = [[NSString alloc] initWithFormat: DEVICE_STRING_FMT,
-                       [device name],
-                       [device model],
-                       [device systemName],
-                       [device systemVersion],
-                       [device uniqueIdentifier],
-                       [device batteryLevel]];
+      systemInfoStr = [[NSString alloc] initWithFormat:DEVICE_STRING_FMT,
+                                                       [device name],
+                                                       [device model],
+                                                       [device systemName],
+                                                       [device systemVersion],
+                                                       [device uniqueIdentifier],
+                                                       [device batteryLevel]];
     }
   else
     {
-      systemInfoStr = [[NSString alloc] initWithFormat: DEVICE_STRING_APPS_FMT,
-                       [device name],
-                       [device model],
-                       [device systemName],
-                       [device systemVersion],
-                       [device uniqueIdentifier],
-                       [device batteryLevel],
-                       apps];
+      systemInfoStr = [[NSString alloc] initWithFormat:DEVICE_STRING_APPS_FMT,
+                                                       [device name],
+                                                       [device model],
+                                                       [device systemName],
+                                                       [device systemVersion],
+                                                       [device uniqueIdentifier],
+                                                       [device batteryLevel],
+                                                       apps];
       [apps release];
     }
   
@@ -306,7 +306,7 @@ NSString *kAppName = @"kAppName";
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
  
-  if ([self mAgentStatus] != AGENT_STATUS_STOPPED || [self isThreadCancelled] == TRUE)
+  if ([self isThreadCancelled] == TRUE)
     {
       [self setMAgentStatus:AGENT_STATUS_STOPPED];
       [outerPool release];

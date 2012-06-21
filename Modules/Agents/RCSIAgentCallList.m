@@ -345,7 +345,7 @@ typedef struct _callListAdditionalHeader {
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
-  if ([self mAgentStatus] != AGENT_STATUS_STOPPED || [self isThreadCancelled] == TRUE)
+  if ([self isThreadCancelled] == TRUE)
     {
       [self setMAgentStatus: AGENT_STATUS_STOPPED];
       [outerPool release];
