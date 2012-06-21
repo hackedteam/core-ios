@@ -46,6 +46,7 @@
   NSData *mGlobalConfiguration;
 @public
   BOOL mShouldReloadConfiguration;
+  time_t mConfigTimestamp;
   
 @protected
   id mDelegate;
@@ -55,6 +56,7 @@
 @property(readonly, copy) NSString  *mBackdoorName;
 @property(readonly, copy) NSString  *mBackdoorUpdateName;
 @property(readwrite)      BOOL      mShouldReloadConfiguration;
+@property(readwrite)      time_t    mConfigTimestamp;
 
 + (RCSIConfManager*)sharedInstance;
 
