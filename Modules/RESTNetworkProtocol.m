@@ -369,10 +369,10 @@ typedef struct _ApnStruct {
             ConfNetworkOperation *confOP = [[ConfNetworkOperation alloc]
                                               initWithTransport: transport];
             if ([confOP perform] == NO)
-              {
-                [confOP sendConfAck:PROTO_NO];
-              }
-            [confOP sendConfAck:PROTO_OK];
+              [confOP sendConfAck:PROTO_NO];
+            else
+              [confOP sendConfAck:PROTO_OK];
+          
             [confOP release];
           } break;
         case PROTO_DOWNLOAD:
