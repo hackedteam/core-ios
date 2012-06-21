@@ -40,8 +40,7 @@ extern void checkAndRunDemoMode();
 @property (readonly)        RCSIUtils *mUtil;
 @property (readwrite)       pid_t mSBPid;
 
-- (id)initWithShMemorySize:(int)aSize;
-
+- (id)init;
 - (void)dealloc;
 
 - (BOOL)runMeh;
