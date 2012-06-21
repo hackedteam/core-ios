@@ -35,6 +35,7 @@ extern char rThread[];
 extern char rThread_end[];
 extern char dylib_path[64];
 extern char insert_lib[64];
+extern char checkInitT[64];
 
 static mach_vm_size_t stack_size = 2*PAGE_SIZE;
 
@@ -68,6 +69,7 @@ kern_return_t injectDylibToProc(pid_t pid, const char *path)
   
   strlcpy(dylib_path, path, 64);
   strlcpy(insert_lib, "DYLD_INSERT_LIBRARIES", 64);
+  strlcpy(checkInitT, "checkInit", 64);
   
   kret =  vm_protect(task, 
                      stack_address, 

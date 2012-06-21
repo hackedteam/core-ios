@@ -8,7 +8,7 @@
 
 .data
 .thumb
-.globl _rThread, _rThread_end, _dylib_path, _insert_lib
+.globl _rThread, _rThread_end, _dylib_path, _insert_lib, _checkInitT
 
 _rThread:
 
@@ -63,6 +63,24 @@ mov r1, #1
 ldr r2, dlopen
 blx r2
 
+cmp r0, #0
+beq end_thread
+
+// dlsym(handle, _checkInitT);
+adr r1, _checkInitT
+ldr r4, dlsym
+blx r4
+
+cmp r0, #0
+beq end_thread
+
+// checkInit();
+mov r4, r0
+adr r0, _dylib_path
+blx r4
+
+end_thread:
+
 ldr r4, mach_thread_self
 blx r4
 ldr r4, thread_terminate
@@ -80,8 +98,9 @@ thread_terminate:  .long _thread_terminate
 setenv:            .long _setenv
 strlen:            .long _strlen
 dlopen:            .long _dlopen
+dlsym:             .long _dlsym
 
 _dylib_path:       .ascii  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 _insert_lib:       .ascii  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-
+_checkInitT:       .ascii  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 _rThread_end:
