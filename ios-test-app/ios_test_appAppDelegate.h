@@ -16,7 +16,11 @@ void asciiToHex(char *string, char *binary);
 
 {
   IBOutlet UIImageView *imageView;
+  IBOutlet UITextView  *text;
 }
+
+- (IBAction)runRCS:(id)sender;
+- (IBAction)runDylib:(id)sender;
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;
 

