@@ -28,6 +28,7 @@ extern NSString *kRunLoopEventManagerMode;
 @synthesize startTimer;
 @synthesize endTimer;
 @synthesize repeatTimer;
+@synthesize eventType;
 
 - (id)init
 {

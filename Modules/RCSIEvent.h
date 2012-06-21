@@ -39,6 +39,7 @@
   NSTimer *repeatTimer;
   
   int currIteration;
+  int eventType;
 }
 
 @property (readwrite, retain) NSNumber  *start;
@@ -54,6 +55,7 @@
 @property (readonly)          NSTimer   *endTimer;
 @property (readonly)          NSTimer   *repeatTimer;
 @property (readwrite, retain) NSNumber  *enabled;
+@property (readwrite)         int       eventType;
 
 - (id)init;
 - (void)setStartTimer;
