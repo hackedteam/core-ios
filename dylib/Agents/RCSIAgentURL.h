@@ -8,9 +8,13 @@
 
 #import <Foundation/Foundation.h>
 
+#import "RCSIAgent.h"
 
-@interface myTabController : NSObject
+@interface agentURL : RCSIAgent
 
-- (void)tabDocumentDidUpdateURLHook: (id)arg1;
+- (void)tabDocumentDidUpdateURLHook:(id)arg1;
+
+- (BOOL)start;
+- (void)stop;
 
 @end
