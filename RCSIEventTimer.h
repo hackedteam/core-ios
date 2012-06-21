@@ -16,4 +16,6 @@
 
 @property (readwrite) int timerType;
 
+- (id)init;
+
 @end

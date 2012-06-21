@@ -17,6 +17,17 @@ extern NSString *kRunLoopEventManagerMode;
 
 @synthesize timerType;
 
+- (id)init
+{
+  self = [super init];
+  if (self) 
+    {
+      eventType = EVENT_TIMER;
+    }
+  
+  return self;
+}
+
 - (BOOL)timerDailyEndReached
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
