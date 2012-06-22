@@ -18,7 +18,7 @@
 #import "RCSISharedMemory.h"
 #import "RCSIThreadSupport.h"
 
-#define DEBUG_
+//#define DEBUG_
 
 NSString *kRunLoopActionManagerMode = @"kRunLoopActionManagerMode";
 

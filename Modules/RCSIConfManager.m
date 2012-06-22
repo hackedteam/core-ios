@@ -23,7 +23,7 @@
 
 static RCSIConfManager *sharedConfManager = nil;
 
-#define DEBUG_
+//#define DEBUG_
 
 #pragma mark -
 #pragma mark Public Implementation

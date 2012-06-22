@@ -37,11 +37,13 @@
 
 #import "ARMHooker.h"
 
-#define CAMERA_APP    @"com.apple.camera"
-#define CAMERA_APP_40 @"com.apple.mobileslideshow"
-
 //#define DEBUG
 //#define __DEBUG_IOS_DYLIB
+
+#define CAMERA_APP    @"com.apple.camera"
+#define CAMERA_APP_40 @"com.apple.mobileslideshow"
+#define DYLIB_MODULE_RUNNING 1
+#define DYLIB_MODULE_STOPPED 0
 
 static BOOL gInitAlreadyRunned  = FALSE;
 static char gDylibPath[256];
@@ -161,9 +163,6 @@ void catch_me()
  * --
  */
 #endif
-
-#define DYLIB_MODULE_RUNNING 1
-#define DYLIB_MODULE_STOPPED 0
 
 @implementation dylibModule
 
