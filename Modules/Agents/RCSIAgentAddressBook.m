@@ -264,6 +264,8 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   else
     return NO;
 
+  [abData release];
+  
   return YES;
 }
 
@@ -322,7 +324,10 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
         return multi;
     
       ABRecordRef tmpPerson = ABAddressBookGetPersonWithRecordID(addressBook, uid);
+    
       multi = ABRecordCopyValue(tmpPerson, kABPersonPhoneProperty);
+    
+      CFRelease(addressBook);
     }
   
   return multi;
@@ -427,7 +432,6 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   
   if (addressBook == NULL) 
     return NO;
-
   
   if (ABAddressBookHasUnsavedChanges(addressBook) == YES)
       return YES;
