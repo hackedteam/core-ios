@@ -1454,7 +1454,7 @@
 				RCS_TEST_INSTANCE = RCS_0000000978;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/kiodo/ios_debug;
-				RCS_TEST_SYNCH = NO;
+				RCS_TEST_SYNCH = YES;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos3.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1494,7 +1494,7 @@
 				RCS_TEST_INSTANCE = RCS_0000000978;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/kiodo/ios_debug;
-				RCS_TEST_SYNCH = NO;
+				RCS_TEST_SYNCH = YES;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos3.0;
 				TARGETED_DEVICE_FAMILY = 1;
