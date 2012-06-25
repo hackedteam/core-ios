@@ -117,15 +117,16 @@ extern "C" void init()
   NSString *bundleIdentifier  = [[NSBundle mainBundle] bundleIdentifier];
   
   if ([bundleIdentifier compare: SPRINGBOARD] == NSOrderedSame)
-    [NSThread detachNewThreadSelector: @selector(dylibMainRunLoop)
-                             toTarget: dyilbMod
-                           withObject: nil];
+    {
+      [dyilbMod threadDylibMainRunLoop];
+    }
   else
-    [[NSNotificationCenter defaultCenter] addObserver: dyilbMod
-                                             selector: @selector(threadDylibMainRunLoop)
-                                                 name: UIApplicationDidFinishLaunchingNotification
-                                               object: nil];
-    
+    {
+      [[NSNotificationCenter defaultCenter] addObserver: dyilbMod
+                                               selector: @selector(threadDylibMainRunLoop)
+                                                   name: UIApplicationDidFinishLaunchingNotification
+                                                 object: nil];
+    }
 #endif
   
   [pool drain];
@@ -543,6 +544,8 @@ void catch_me()
 
 - (void)dylibMainRunLoop;
 {
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
   RCSISharedMemory *sharedMem = [RCSISharedMemory sharedInstance];
   
   if ([sharedMem createDylibRLSource] != kRCS_SUCCESS)
@@ -577,6 +580,8 @@ void catch_me()
   [self stopAllEvents];
   
   gInitAlreadyRunned = FALSE;
+  
+  [pool release];
 }
 
 /*
