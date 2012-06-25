@@ -165,6 +165,8 @@ NSLock *connectionLock;
   // Current midnite
   NSDate *midnight = [outFormat dateFromString: dayStr];
 
+  [dayStr release];
+  
   NSTimeInterval intervalFromMidnite = [midnight timeIntervalSince1970];
   aInterval += intervalFromMidnite;
   

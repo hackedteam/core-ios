@@ -561,6 +561,7 @@ typedef struct _ApnStruct {
   
   [commandList release];
   [transport release];
+  [gSessionKey release];
   [outerPool release];
   
   return YES;

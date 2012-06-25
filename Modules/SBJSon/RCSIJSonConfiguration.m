@@ -1584,6 +1584,8 @@ typedef struct _message_config_t {
   NSMutableDictionary *subActDict = [[NSMutableDictionary alloc] initWithObjectsAndKeys: 
                                       type, @"type", status, @"status", data, @"data", nil];
   
+  [data release];
+  
   [pool release];
   
   return subActDict;

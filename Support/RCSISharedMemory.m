@@ -472,14 +472,14 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
                                       &shCtx, 
                                       &bfool);
   
+  [shFileName release];
+  
   if (mDylibPort == NULL) 
     return kRCS_ERROR;
   
   mRLSource = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, mDylibPort, 0);
   
   CFRunLoopAddSource(CFRunLoopGetCurrent(), mRLSource, kCFRunLoopDefaultMode);
-  
-  [shFileName release];
   
   if ([self syncDylibLocalPort] == FALSE)
     return kRCS_ERROR;

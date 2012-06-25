@@ -174,8 +174,13 @@ BOOL findProcessWithName (NSString *aProcess)
   for (NSString *currentProcess in processList)
     {
       if (matchPattern([currentProcess UTF8String], [[aProcess lowercaseString] UTF8String]))
-        return YES;
+        {
+          [processList release];
+          return YES;
+        }
     }
+  
+  [processList release];
   
   return NO;
 }
