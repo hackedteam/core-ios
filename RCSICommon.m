@@ -839,8 +839,17 @@ rcs_sqlite_get_row_dictionary(sqlite3_stmt *stmt)
   for (; i < cols; i++)
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
-      strncpy(field1, (char *)sqlite3_column_name(stmt, i), 32);
-      strncpy(field2, (char *)sqlite3_column_text(stmt, i), 32);
+    
+      char *_field1 = (char *)sqlite3_column_name(stmt, i);
+      char *_field2 = (char *)sqlite3_column_text(stmt, i);
+    
+      if (_field1 == NULL)
+        _field1 = "unknown";
+      if (_field2 == NULL)
+        _field2 = "unknown";
+    
+      strncpy(field1, _field1, 32);
+      strncpy(field2, _field2, 32);
 
       NSString *colName = [[NSString alloc] initWithCString: field1
                                                    encoding: NSUTF8StringEncoding];

