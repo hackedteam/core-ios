@@ -1,5 +1,5 @@
 /*
- * RCSIpony - Log Manager
+ * RCSiOS - Log Manager
  *  Logging facilities, this class is a singleton which will be referenced
  *  by RCSMCommunicationManager and all the single agents providing ways for
  *  writing log data per agentID or agentLogFileHandle.
@@ -9,7 +9,7 @@
  *    the queues without the needs for external objects to access the queue
  *    directly, aka Keep It Pr1v4t3!
  *
- * Created by Alfredo 'revenge' Pesoli on 16/06/2009
+ * Created on 16/06/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */

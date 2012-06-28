@@ -3,7 +3,7 @@
 //  RCSIphone
 //
 //  Created by kiodo on 10/19/10.
-//  Copyright 2010 __MyCompanyName__. All rights reserved.
+//  Copyright 2010 HT srl. All rights reserved.
 //
 #import <Foundation/Foundation.h>
 

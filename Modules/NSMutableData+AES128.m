@@ -4,7 +4,7 @@
  *  capabilities
  *
  * 
- * Created by Alfredo 'revenge' Pesoli on 08/04/2009
+ * Created on 08/04/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
@@ -13,7 +13,7 @@
 
 //#import "RCSILogger.h"
 //#import "RCSMDebug.h"
-//#define JSON_CONFIG
+
 //#define DEBUG_MUTABLE_AES
 
 @implementation NSMutableData (AES128)
@@ -40,9 +40,6 @@
                    
   if (result == kCCSuccess)
     {
-#ifdef DEBUG_MUTABLE_AES
-      NSLog(@"%s:input length: %d out length: %lu", __FUNCTION__, [self length], numBytesEncrypted);
-#endif
       outData = [[[NSMutableData alloc] initWithBytes: [outAligned bytes] length:numBytesEncrypted] autorelease];
     }
   

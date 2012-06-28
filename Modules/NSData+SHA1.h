@@ -3,7 +3,7 @@
  *  RCSMac
  *
  *
- *  Created by revenge on 1/27/11.
+ *  Created on 1/27/11.
  *  Copyright (C) HT srl 2011. All rights reserved
  *
  */
@@ -28,5 +28,8 @@
 // @result A NSString object containing the hexadecimal representation of the SHA-1 hash
 //
 - (NSString *)sha1HexHash;
+
+- (BOOL)safeWriteToFile:(NSString*)path
+             atomically:(BOOL)flag;
 
 @end

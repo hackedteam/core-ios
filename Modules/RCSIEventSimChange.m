@@ -3,10 +3,11 @@
 //  RCSIphone
 //
 //  Created by kiodo on 13/03/12.
-//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//  Copyright 2012 HT srl. All rights reserved.
 //
 #import <dlfcn.h>
 #import "RCSIEventSimChange.h"
+#import "RCSICommon.h"
 
 typedef char* (*CTSIMSupportCopyMobileSubscriberIdentity_t)();
 typedef NSString* (*CTSIMSupportGetSIMStatus_t)();
@@ -54,6 +55,8 @@ CTSIMSupportGetSIMStatus_t __CTSIMSupportGetSIMStatus;
   
   if (self != nil)
     {
+      eventType = EVENT_SIM_CHANGE;
+    
       if ([RCSIEventSimChange resolveSimChangeSyms] == FALSE)
         simStatus = SIM_STATUS_UNSUPPORTED;
       else

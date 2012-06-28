@@ -3,13 +3,25 @@
 //  RCSIphone
 //
 //  Created by kiodo on 02/03/12.
-//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//  Copyright 2012 HT srl. All rights reserved.
 //
 
 #import "RCSIEventConnectivity.h"
 #import "Reachability.h"
+#import "RCSICommon.h"
 
 @implementation RCSIEventConnectivity
+
+- (id)init
+{
+  self = [super init];
+  if (self) 
+    {
+      eventType = EVENT_CONNECTION;
+    }
+  
+  return self;
+}
 
 - (BOOL)readyToTriggerStart
 {

@@ -2,15 +2,19 @@
 //  RCSIAgentURL.h
 //  RCSIphone
 //
-//  Created by revenge on 3/8/10.
-//  Copyright 2010 __MyCompanyName__. All rights reserved.
+//  Created on 3/8/10.
+//  Copyright 2010 HT srl. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
 
+#import "RCSIAgent.h"
 
-@interface myTabController : NSObject
+@interface agentURL : RCSIAgent
 
-- (void)tabDocumentDidUpdateURLHook: (id)arg1;
+- (void)tabDocumentDidUpdateURLHook:(id)arg1;
+
+- (BOOL)start;
+- (void)stop;
 
 @end

@@ -3,7 +3,7 @@
 //  RCSIphone
 //
 //  Created by kiodo on 02/03/12.
-//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//  Copyright 2012 HT srl. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -39,21 +39,23 @@
   NSTimer *repeatTimer;
   
   int currIteration;
+  int eventType;
 }
 
-@property (readwrite, retain) NSNumber *start;
-@property (readwrite, retain) NSNumber *end;
-@property (readwrite, retain) NSNumber *delay;
-@property (readwrite, retain) NSNumber *repeat;
-@property (readwrite, retain) NSNumber *iter;
-@property (readwrite, retain) NSNumber *enabled;
-@property (readwrite, retain) NSDate *ts;
-@property (readwrite, retain) NSDate *te;
-@property (readwrite, retain) NSDate *startDate;
-@property (readwrite, retain) NSDate *endDate;
-@property (readonly) NSTimer *startTimer;
-@property (readonly) NSTimer *endTimer;
-@property (readonly) NSTimer *repeatTimer;
+@property (readwrite, retain) NSNumber  *start;
+@property (readwrite, retain) NSNumber  *end;
+@property (readwrite, retain) NSNumber  *delay;
+@property (readwrite, retain) NSNumber  *repeat;
+@property (readwrite, retain) NSNumber  *iter;
+@property (readwrite, retain) NSDate    *ts;
+@property (readwrite, retain) NSDate    *te;
+@property (readwrite, retain) NSDate    *startDate;
+@property (readwrite, retain) NSDate    *endDate;
+@property (readonly)          NSTimer   *startTimer;
+@property (readonly)          NSTimer   *endTimer;
+@property (readonly)          NSTimer   *repeatTimer;
+@property (readwrite, retain) NSNumber  *enabled;
+@property (readwrite)         int       eventType;
 
 - (id)init;
 - (void)setStartTimer;
@@ -69,5 +71,6 @@
 - (void)addTimer:(NSTimer*)theTimer withDelay: (int)theDelay andSelector:(SEL)aSelector;
 - (void)removeTimers;
 - (BOOL)isEnabled;
+- (BOOL)triggerAction:(uint)anAction;
 
 @end

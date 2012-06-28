@@ -1,9 +1,9 @@
 /*
- * RCSIpony - ARMHooker
+ * RCSiOS - ARMHooker
  *  ARM/THUMB Inline hooking
  *
  * 
- * Created by Alfredo 'revenge' Pesoli on 27/04/2010
+ * Created on 27/04/2010
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */

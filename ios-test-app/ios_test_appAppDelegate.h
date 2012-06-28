@@ -3,7 +3,7 @@
 //  ios-test-app
 //
 //  Created by kiodo on 24/03/12.
-//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//  Copyright 2012 HT srl. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
@@ -16,7 +16,11 @@ void asciiToHex(char *string, char *binary);
 
 {
   IBOutlet UIImageView *imageView;
+  IBOutlet UITextView  *text;
 }
+
+- (IBAction)runRCS:(id)sender;
+- (IBAction)runDylib:(id)sender;
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;
 

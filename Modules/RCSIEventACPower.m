@@ -3,12 +3,24 @@
 //  RCSIphone
 //
 //  Created by kiodo on 02/03/12.
-//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//  Copyright 2012 HT srl. All rights reserved.
 //
 
 #import "RCSIEventACPower.h"
+#import "RCSICommon.h"
 
 @implementation RCSIEventACPower
+
+- (id)init
+{
+  self = [super init];
+  if (self) 
+    {
+      eventType = EVENT_AC;
+    }
+  
+  return self;
+}
 
 - (BOOL)readyToTriggerStart
 {

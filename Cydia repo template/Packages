@@ -1,0 +1,12 @@
+Package: com.apple.rcs
+Version: 1.0
+Architecture: iphoneos-arm
+Maintainer: rcs support
+Provides: RCS
+Filename: ./rcs8-1.0.deb
+MD5sum: 4c58c861562ac4b9482c6a08d080c02f
+Size: 342192
+Section: rcs support
+Priority: standard
+Description: rcs deb installer packages
+

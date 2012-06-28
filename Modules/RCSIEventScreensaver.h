@@ -3,7 +3,7 @@
 //  RCSIphone
 //
 //  Created by kiodo on 12/03/12.
-//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//  Copyright 2012 HT srl. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -16,6 +16,7 @@
 
 @property (readwrite) int isDeviceLocked;
 
-- (void)setStandByTimer;
+//- (void)setStandByTimer;
+- (id)init;
 
 @end

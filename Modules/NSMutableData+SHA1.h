@@ -3,7 +3,7 @@
  *  Provides in-place hashing
  *
  * 
- * Created by Alfredo 'revenge' Pesoli on 24/01/2011
+ * Created on 24/01/2011
  * Copyright (C) HT srl 2011. All rights reserved
  *
  */

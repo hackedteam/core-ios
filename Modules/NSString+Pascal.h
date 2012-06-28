@@ -2,8 +2,8 @@
 //  NSString+Pascal.h
 //  RCSMac
 //
-//  Created by revenge on 1/24/11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//  Created on 1/24/11.
+//  Copyright 2011 HT srl. All rights reserved.
 //
 
 //#import <Cocoa/Cocoa.h>

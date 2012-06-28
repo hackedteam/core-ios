@@ -3,7 +3,7 @@
  *  Localizer Agent - through GPS or GSM cell
  *
  *
- * Created by Alfredo 'revenge' Pesoli on 07/10/2009
+ * Created on 07/10/2009
  * Copyright (C) HT srl 2009. All rights reserved
  *
  */
