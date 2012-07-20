@@ -1,6 +1,5 @@
 /*
- * RCSiOS
- *  pon pon
+ * RCSiOS version 2.1
  *
  * Created on 08/09/2009
  * Copyright (C) HT srl 2009. All rights reserved
@@ -28,7 +27,8 @@ int main (int argc, const char * argv[])
 
   [core runMeh];
   
-  [pool release];
   [core release];
+  [pool release];
+
   return 0;
 }

