@@ -114,8 +114,10 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
   RCSISharedMemory *self = (RCSISharedMemory *)info;
   
   blob_t *blob = (blob_t*) CFDataGetBytePtr(data);
+  NSData *blbData = nil;
   
-  NSData *blbData = [NSData dataWithBytes: blob->blob length: blob->size];
+  if (blob->size > 0)
+    blbData = [NSData dataWithBytes:(void*)blob->blob length:blob->size];
   
   RCSIDylibBlob *blb = [[RCSIDylibBlob alloc] initWithType: blob->type 
                                                     status: blob->status 
@@ -131,6 +133,10 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
   
   return NULL;
 }
+
+#pragma mark -
+#pragma mark SharedMemory implementation
+#pragma mark -
 
 @implementation RCSISharedMemory
 
