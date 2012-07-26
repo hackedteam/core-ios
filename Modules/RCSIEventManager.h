@@ -20,7 +20,7 @@
 #define WIN_TITLE 1
 
 
-@interface RCSIEventManager : NSObject
+@interface _i_EventManager : NSObject
 {
   NSMutableArray  *eventsList;
   NSMutableArray  *eventsMessageQueue;

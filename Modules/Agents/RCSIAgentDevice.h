@@ -11,7 +11,7 @@
 
 #import "RCSILogManager.h"
 
-@interface RCSIAgentDevice : RCSIAgent <Agents>
+@interface _i_AgentDevice : _i_Agent <Agents>
 {
   u_int mAppList;
 }

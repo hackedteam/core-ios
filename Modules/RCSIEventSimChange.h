@@ -11,7 +11,7 @@
 #define CT_FRAMEWORK_PUBLIC  "/System/Library/Frameworks/CoreTelephony.framework/CoreTelephony"
 #define CT_FRAMEWORK_PRIVATE "/System/Library/PrivateFrameworks/CoreTelephony.framework/CoreTelephony"
 
-@interface RCSIEventSimChange : RCSIEvent
+@interface _i_EventSimChange : _i_Event
 {
   int simStatus;
 }

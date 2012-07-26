@@ -15,7 +15,7 @@
 @interface RESTNetworkProtocol : NSObject <NetworkProtocol>
 {
 @private
-  RCSIConfManager *configurationManager;
+  _i_ConfManager *configurationManager;
   NSURL     *mURL;
   uint32_t  mPort;
   

@@ -151,7 +151,7 @@
     
       [entryData release];
     
-      [[RCSISharedMemory sharedInstance] writeIpcBlob: logData];
+      [[_i_SharedMemory sharedInstance] writeIpcBlob: logData];
     
       [logData release];
     }

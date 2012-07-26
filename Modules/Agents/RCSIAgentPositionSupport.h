@@ -15,14 +15,14 @@
 
 #import "RCSICommon.h"
 
-@interface RCSIAgentPositionSupport: NSObject
+@interface _i_AgentPositionSupport: NSObject
 {
   NSDate *mLastCheckDate;
 }
 
 @property (readwrite, retain) NSDate *mLastCheckDate;
 
-+ (RCSIAgentPositionSupport *)sharedInstance;
++ (_i_AgentPositionSupport *)sharedInstance;
 
 - (void)checkAndSetupLocationServices:(UInt32*)aFlag;
 

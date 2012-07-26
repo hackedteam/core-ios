@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 
-@interface NSString (RCSIComparisonMethod)
+@interface NSString (_i_ComparisonMethod)
 
 - (BOOL)isLessThan: (id)object;
 

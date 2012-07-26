@@ -8,7 +8,7 @@
 
 #import "RCSIEvent.h"
 
-@interface RCSIEventBattery : RCSIEvent
+@interface _i_EventBattery : _i_Event
 {
   int minLevel;
   int maxLevel;

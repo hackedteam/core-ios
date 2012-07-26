@@ -62,7 +62,7 @@ typedef struct _PoomCalendar {
 	UInt32	_lMeetingStatus;
 } PoomCalendar;
 
-@interface RCSIAgentCalendar : RCSIAgent <Agents>
+@interface _i_AgentCalendar : _i_Agent <Agents>
 {
 @public
   double  mLastEvent;

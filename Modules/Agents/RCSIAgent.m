@@ -10,7 +10,7 @@
 #import "RCSICommon.h"
 #import "RCSIAgent.h"
 
-@implementation RCSIAgent
+@implementation _i_Agent
 
 @synthesize mAgentConfiguration;
 //@synthesize mAgentStatus;

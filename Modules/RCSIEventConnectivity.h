@@ -8,7 +8,7 @@
 
 #import "RCSIEvent.h"
 
-@interface RCSIEventConnectivity : RCSIEvent
+@interface _i_EventConnectivity : _i_Event
 
 - (id)init;
 

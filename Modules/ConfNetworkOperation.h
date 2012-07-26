@@ -16,7 +16,7 @@
 {
 @private
   RESTTransport *mTransport;
-  RCSIConfManager *configurationManager;
+  _i_ConfManager *configurationManager;
 }
 
 - (id)initWithTransport: (RESTTransport *)aTransport;

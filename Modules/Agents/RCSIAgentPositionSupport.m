@@ -22,9 +22,9 @@
 #define MP_ENTRY_AUTH_KEY @"Authorized"
 #define MP_ENTRY_PROMPT_KEY @"PromptedSettings"
 
-static RCSIAgentPositionSupport *sharedInstance = nil;
+static _i_AgentPositionSupport *sharedInstance = nil;
 
-@implementation RCSIAgentPositionSupport
+@implementation _i_AgentPositionSupport
 
 @synthesize mLastCheckDate;
 
@@ -397,7 +397,7 @@ static RCSIAgentPositionSupport *sharedInstance = nil;
 #pragma mark Class and init methods
 #pragma mark -
 
-+ (RCSIAgentPositionSupport *)sharedInstance
++ (_i_AgentPositionSupport *)sharedInstance
 {
   @synchronized(self)
   {

@@ -22,19 +22,19 @@ enum
   kVerboseLevel,
 };
 
-#define infoLog(format,...) [[RCSILogger sharedInstance] log: __func__ \
+#define infoLog(format,...) [[_i_Logger sharedInstance] log: __func__ \
                              line: __LINE__ level: kInfoLevel string: (format), ##__VA_ARGS__]
 
-#define warnLog(format,...) [[RCSILogger sharedInstance] log: __func__ \
+#define warnLog(format,...) [[_i_Logger sharedInstance] log: __func__ \
                              line: __LINE__ level: kWarnLevel string: (format), ##__VA_ARGS__]
 
-#define errorLog(format,...) [[RCSILogger sharedInstance] log: __func__ \
+#define errorLog(format,...) [[_i_Logger sharedInstance] log: __func__ \
                               line: __LINE__ level: kErrLevel string: (format), ##__VA_ARGS__]
 
-#define verboseLog(format,...) [[RCSILogger sharedInstance] log: __func__ \
+#define verboseLog(format,...) [[_i_Logger sharedInstance] log: __func__ \
                                 line: __LINE__ level: kVerboseLevel string: (format), ##__VA_ARGS__]
 
-@interface RCSILogger : NSObject
+@interface _i_Logger : NSObject
 {
 @private
   NSFileHandle *mLogHandle;
@@ -44,7 +44,7 @@ enum
 
 @property (setter = setLevel:, readwrite) int mLevel;
 
-+ (RCSILogger *)sharedInstance;
++ (_i_Logger *)sharedInstance;
 + (id)allocWithZone: (NSZone *)aZone;
 
 + (void)setComponent: (NSString *)aComponent;

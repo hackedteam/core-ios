@@ -13,7 +13,7 @@
 
 extern NSString *kRunLoopEventManagerMode;
 
-@implementation RCSIEvent
+@implementation _i_Event
 
 @synthesize start;
 @synthesize end;
@@ -99,7 +99,7 @@ extern NSString *kRunLoopEventManagerMode;
   NSData *msgData = [[NSData alloc] initWithBytes: &params 
                                            length: sizeof(shMemoryLog)];
   
-  [RCSISharedMemory sendMessageToCoreMachPort: msgData 
+  [_i_SharedMemory sendMessageToCoreMachPort: msgData 
                                      withMode: kRunLoopEventManagerMode];
   
   [msgData release];
@@ -115,7 +115,7 @@ extern NSString *kRunLoopEventManagerMode;
 #pragma mark Add timers
 #pragma mark -
 
-// also invoked by [RCSIEvent eventManagerRunLoop]
+// also invoked by [_i_Event eventManagerRunLoop]
 - (void)setStartTimer
 {  
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -265,7 +265,7 @@ extern NSString *kRunLoopEventManagerMode;
 #pragma mark NSTimer support method
 #pragma mark -
 
-// invoked by [RCSIEventManager stop] 
+// invoked by [_i_EventManager stop] 
 - (void)removeTimers
 {
 //  if (startTimer != nil && [startTimer isValid])

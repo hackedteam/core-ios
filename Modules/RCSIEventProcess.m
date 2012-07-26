@@ -9,7 +9,7 @@
 #import "RCSIEventProcess.h"
 #import "RCSICommon.h"
 
-@implementation RCSIEventProcess
+@implementation _i_EventProcess
 
 @synthesize processName;
 

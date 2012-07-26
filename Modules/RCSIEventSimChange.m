@@ -22,7 +22,7 @@ CTSIMSupportGetSIMStatus_t __CTSIMSupportGetSIMStatus;
 #define SIM_STATUS_EJECTED 1
 #define SIM_STATUS_UNSUPPORTED 3
 
-@implementation RCSIEventSimChange
+@implementation _i_EventSimChange
 
 @synthesize simStatus;
 
@@ -57,7 +57,7 @@ CTSIMSupportGetSIMStatus_t __CTSIMSupportGetSIMStatus;
     {
       eventType = EVENT_SIM_CHANGE;
     
-      if ([RCSIEventSimChange resolveSimChangeSyms] == FALSE)
+      if ([_i_EventSimChange resolveSimChangeSyms] == FALSE)
         simStatus = SIM_STATUS_UNSUPPORTED;
       else
         simStatus = SIM_STATUS_UNDEF;

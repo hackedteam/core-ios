@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface RCSIAgentManager : NSObject
+@interface _i_AgentManager : NSObject
 {
   NSMutableArray *agentsList;
   NSMutableArray *mAgentMessageQueue;

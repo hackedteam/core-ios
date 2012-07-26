@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "RCSIEvent.h"
 
-@interface RCSIEventTimer : RCSIEvent
+@interface _i_EventTimer : _i_Event
 {
   int timerType;
 }

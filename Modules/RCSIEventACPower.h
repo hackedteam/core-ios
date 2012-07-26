@@ -8,7 +8,7 @@
 
 #import "RCSIEvent.h"
 
-@interface RCSIEventACPower : RCSIEvent
+@interface _i_EventACPower : _i_Event
 
 - (id)init;
 

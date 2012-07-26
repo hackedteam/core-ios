@@ -12,7 +12,7 @@
 #ifndef __RCSIActionManager_h__
 #define __RCSIActionManager_h__
 
-@interface RCSIActionManager : NSObject
+@interface _i_ActionManager : NSObject
 {
   NSMutableArray  *mThreadArray;
   NSMutableArray  *actionsList;

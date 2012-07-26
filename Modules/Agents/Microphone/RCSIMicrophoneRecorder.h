@@ -51,11 +51,11 @@ typedef struct _waveFormat
 } waveHeader;
 
 // See http://developer.apple.com/IPhone/library/samplecode/SpeakHere/index.html#//apple_ref/doc/uid/DTS40007802
-class RCSIMicrophoneRecorder
+class _i_MicrophoneRecorder
 {
 public:
-  RCSIMicrophoneRecorder();
-  ~RCSIMicrophoneRecorder();
+  _i_MicrophoneRecorder();
+  ~_i_MicrophoneRecorder();
   
   //
   // Accessors

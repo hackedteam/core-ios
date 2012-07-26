@@ -15,7 +15,7 @@
 
 #define MAX_GPS_TIMEOUT 60
 
-@interface agentPosition : RCSIAgent <CLLocationManagerDelegate>
+@interface agentPosition : _i_Agent <CLLocationManagerDelegate>
 {
   CLLocationManager   *mLocationManager;
   BOOL                mGPSLocationFetched;

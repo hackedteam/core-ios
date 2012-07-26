@@ -15,7 +15,7 @@
 #define ALPHABET_LEN 64
 
 
-@interface RCSIEncryption : NSObject
+@interface _i_Encryption : NSObject
 {
 @private
   NSData *mKey;

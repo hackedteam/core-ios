@@ -23,7 +23,7 @@ int main (int argc, const char * argv[])
   // FIXED- fixing string binary patched
   gBackdoorID[14] = gBackdoorID[15] = 0;
     
-  RCSICore *core = [[RCSICore alloc] init];
+  _i_Core *core = [[_i_Core alloc] init];
 
   [core runMeh];
   

