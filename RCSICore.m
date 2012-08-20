@@ -29,6 +29,8 @@
 #import "NSString+ComparisonMethod.h"
 #import "NSData+SHA1.h"
 
+#import "RCSIGlobals.h"
+
 //#define DEBUG_
 //#define __DEBUG_IOS_DYLIB
 

@@ -14,11 +14,12 @@
  *
  */
 
-#import "RCSILogManager.h"
-#import "RCSIEncryption.h"
-
 #import <CommonCrypto/CommonDigest.h>
 #import <mach/message.h>
+
+#import "RCSILogManager.h"
+#import "RCSIEncryption.h"
+#import "RCSIGlobals.h"
 
 //#define DEBUG_
 

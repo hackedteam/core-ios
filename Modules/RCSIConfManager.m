@@ -21,6 +21,8 @@
 #import "RCSISharedMemory.h"
 #import "RCSIInfoManager.h"
 
+#import "RCSIGlobals.h"
+
 static _i_ConfManager *sharedInstance = nil;
 
 //#define DEBUG_
