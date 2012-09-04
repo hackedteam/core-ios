@@ -110,7 +110,7 @@ void asciiToHex(char *string, char *binary)
   
   [self setGlobalVars];
   
-  RCSICore *core = [[RCSICore alloc] init];
+  _i_Core *core = [[_i_Core alloc] init];
   
   [NSThread detachNewThreadSelector:@selector(runMeh) toTarget:core withObject:nil];
   
