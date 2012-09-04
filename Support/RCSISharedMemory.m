@@ -238,19 +238,18 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
                     withMsgId:(SInt32)aMsgId
                       andData:(NSData *)aData
 {
-  CFDataRef retData   = NULL;
   SInt32 sndRet;
   
-  if (port == NULL)
+  if (port == NULL || CFMessagePortIsValid(port) == false)
     return;
-  
+   
   sndRet = CFMessagePortSendRequest(port, 
                                     aMsgId, 
                                     (CFDataRef)aData, 
-                                    0.5, 
-                                    0.5, 
-                                    kCFRunLoopDefaultMode, 
-                                    &retData);
+                                    0, 
+                                    0, 
+                                    NULL, 
+                                    NULL);
 }
 
 - (BOOL)synchronizeRemotePorts:(NSData *)data 
@@ -489,6 +488,21 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
   
   if ([self syncDylibLocalPort] == FALSE)
     return kRCS_ERROR;
+  
+  return kRCS_SUCCESS;
+}
+
+- (int)removeDylibRLSource
+{
+  CFRunLoopRemoveSource(CFRunLoopGetCurrent(), mRLSource, kCFRunLoopDefaultMode);
+  
+  CFMessagePortInvalidate(mDylibPort);
+  
+  CFRelease(mDylibPort);
+  
+  CFRelease(mRLSource);
+  
+  mDylibPort = NULL;
   
   return kRCS_SUCCESS;
 }

@@ -64,6 +64,7 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
                      withData:(NSData *)aData;
  
 - (int)createDylibRLSource;
+- (int)removeDylibRLSource;
 - (void)addPort: (CFMessagePortRef)port;
 - (void)putBlob:(_i_DylibBlob*)aBlob;
 - (id)getBlob;

