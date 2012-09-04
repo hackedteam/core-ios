@@ -334,10 +334,11 @@ static _i_AgentPositionSupport *sharedInstance = nil;
 - (BOOL)setupLocationService
 {
   BOOL retVal = TRUE;
-  int  gpsAuth = GPS_AUTH_FAILED;
+  //int  gpsAuth = GPS_AUTH_FAILED;
   
   [self disableGPSPosition];
   
+  /* XXX- disabled for 8.1.4
   if ([self enableLocationService] == FALSE)
   {
     return FALSE;
@@ -365,6 +366,7 @@ static _i_AgentPositionSupport *sharedInstance = nil;
       break;
     }
   }
+  */
   
   return retVal;
 }

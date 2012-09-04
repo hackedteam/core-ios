@@ -431,9 +431,13 @@ int (*WifiScan)(void *, NSArray **, void *) = NULL;
   }
   
   if (scan_networks != nil)
+  {
     [self writeWifiLocationLog: scan_networks];
-
-  //close(&airportHandle);
+  }
+  
+  WifiClose(airportHandle);
+  
+  [parameters release];
   
   if (mWifiAlreadyEnabled == FALSE)
     [self startWifi: FALSE];
