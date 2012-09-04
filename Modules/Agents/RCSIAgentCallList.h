@@ -13,7 +13,7 @@
 #import "RCSILogManager.h"
 #import "RCSIAgent.h"
 
-@interface RCSIAgentCallList : RCSIAgent <Agents>
+@interface _i_AgentCallList : _i_Agent <Agents>
 {
   int32_t mLastCallTimestamp;
 }

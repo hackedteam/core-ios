@@ -25,8 +25,9 @@
 #define MODULES_APP_KEY   @"application"
 #define MODULES_KEYL_KEY  @"keylog"
 #define MODULES_CLIP_KEY  @"clipboard"
-#define MODULES_CAMERA_KEY  @"camera"
-#define MODULES_STATUS_KEY  @"enabled"
+#define MODULES_CAMERA_KEY    @"camera"
+#define MODULES_POSITION_KEY  @"position"
+#define MODULES_STATUS_KEY    @"enabled"
 
 #define MODULE_DEVICE_APPLIST_KEY   @"list"
 #define MODULE_SCRSHOT_ONLYWIN_KEY  @"onlywindow"

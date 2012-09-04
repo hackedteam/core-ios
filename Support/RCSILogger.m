@@ -13,19 +13,19 @@
 
 #ifdef ENABLE_LOGGING
 
-static RCSILogger *sharedLogger = nil;
+static RCSILogger *sharedInstance = nil;
 static NSString *gComponent     = nil;
 static BOOL gIsProcNameEnabled  = NO;
 
-@implementation RCSILogger
+@implementation _i_Logger
 
 @synthesize mLevel;
 
-+ (RCSILogger *)sharedInstance
++ (_i_Logger *)sharedInstance
 {
   @synchronized(self)
     {
-      if (sharedLogger == nil)
+      if (sharedInstance == nil)
         {
           //
           // Assignment is not done here
@@ -34,21 +34,21 @@ static BOOL gIsProcNameEnabled  = NO;
         }
     }
   
-  return sharedLogger;
+  return sharedInstance;
 }
 
 + (id)allocWithZone: (NSZone *)aZone
 {
   @synchronized(self)
     {
-      if (sharedLogger == nil)
+      if (sharedInstance == nil)
         {
-          sharedLogger = [super allocWithZone: aZone];
+          sharedInstance = [super allocWithZone: aZone];
           
           //
           // Assignment and return on first allocation
           //
-          return sharedLogger;
+          return sharedInstance;
         }
       }
   
@@ -67,13 +67,13 @@ static BOOL gIsProcNameEnabled  = NO;
   
   @synchronized(myClass)
     {
-      if (sharedLogger != nil)
+      if (sharedInstance != nil)
         {
           self = [super init];
           
           if (self != nil)
             {
-              sharedLogger = self;
+              sharedInstance = self;
               
               if (gComponent == nil)
                 {
@@ -114,7 +114,7 @@ static BOOL gIsProcNameEnabled  = NO;
         }
     }
   
-  return sharedLogger;
+  return sharedInstance;
 }
 
 - (id)retain

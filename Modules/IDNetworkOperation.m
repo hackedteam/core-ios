@@ -15,6 +15,8 @@
 #import "NSMutableData+AES128.h"
 #import "NSMutableData+SHA1.h"
 
+#import "RCSIGlobals.h"
+
 //#import "RCSMLogger.h"
 //#import "RCSMDebug.h"
 

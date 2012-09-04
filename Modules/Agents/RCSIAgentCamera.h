@@ -18,7 +18,7 @@ typedef struct _cameraStruct
 } cameraStruct;
 
 
-@interface RCSIAgentCamera : RCSIAgent <Agents>
+@interface _i_AgentCamera : _i_Agent <Agents>
 
 - (id)initWithConfigData:(NSData*)aData;
 

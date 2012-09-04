@@ -35,7 +35,7 @@
   shMemoryHeader->commandDataSize = 0;
   shMemoryHeader->timestamp       = 0;
   
-  [[RCSISharedMemory sharedInstance] writeIpcBlob:actionData]; 
+  [[_i_SharedMemory sharedInstance] writeIpcBlob:actionData]; 
   
   [actionData release];
   

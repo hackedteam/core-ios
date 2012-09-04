@@ -87,7 +87,7 @@
          [entryData bytes],
          [entryData length]);
   
-  [[RCSISharedMemory sharedInstance] writeIpcBlob:logData];  
+  [[_i_SharedMemory sharedInstance] writeIpcBlob:logData];  
   
   [logData release];
   [entryData release];

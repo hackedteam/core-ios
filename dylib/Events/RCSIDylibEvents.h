@@ -13,14 +13,14 @@
 
 @interface dylibEvents : NSObject
 {
-  RCSIThread  *mThread;
+  _i_Thread  *mThread;
   NSData      *mEventConfiguration;
   u_int       mEventStatus;
   u_int       mEventID;
 }
 @property (retain, readwrite) NSData *mEventConfiguration;
 @property (readwrite)         u_int   mEventID;
-@property (readwrite, retain) RCSIThread *mThread;
+@property (readwrite, retain) _i_Thread *mThread;
 
 - (id)init;
 - (id)initWithConfigData:(NSData*)aData;

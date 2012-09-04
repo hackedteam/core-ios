@@ -9,7 +9,7 @@
 #import "RCSIEventBattery.h"
 #import "RCSICommon.h"
 
-@implementation RCSIEventBattery
+@implementation _i_EventBattery
 
 @synthesize minLevel;
 @synthesize maxLevel;

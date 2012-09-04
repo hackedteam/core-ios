@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "RCSIEvent.h"
 
-@interface RCSIEventScreensaver : RCSIEvent
+@interface _i_EventScreensaver : _i_Event
 {
   int isDeviceLocked;
 }

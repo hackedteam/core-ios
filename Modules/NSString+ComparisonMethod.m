@@ -9,7 +9,7 @@
 #import "NSString+ComparisonMethod.h"
 
 
-@implementation NSString (RCSIComparisonMethod)
+@implementation NSString (_i_ComparisonMethod)
 
 - (BOOL)isLessThan: (id)object
 {

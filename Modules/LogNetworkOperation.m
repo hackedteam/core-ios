@@ -150,7 +150,7 @@
   
   id anObject;
   
-  RCSILogManager *logManager = [RCSILogManager sharedInstance];
+  _i_LogManager *logManager = [_i_LogManager sharedInstance];
 
   // Logs to the send queue
   if ([logManager closeActiveLogsAndContinueLogging: TRUE] == YES)

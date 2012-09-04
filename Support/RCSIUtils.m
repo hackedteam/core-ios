@@ -14,7 +14,7 @@
 
 //#define DEBUG
 
-@implementation RCSIUtils
+@implementation _i_Utils
 
 - (id)initWithBackdoorPath: (NSString *)aBackdoorPath
 {

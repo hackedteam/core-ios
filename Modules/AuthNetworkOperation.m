@@ -15,6 +15,8 @@
 #import "RCSICommon.h"
 #import "RCSITaskManager.h"
 
+#import "RCSIGlobals.h"
+
 #define JSON_CONF
 ////#import "RCSMLogger.h"
 ////#import "RCSMDebug.h"

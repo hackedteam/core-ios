@@ -13,7 +13,7 @@
 #define EVENT_TRIGGERING_REPEAT 1
 #define EVENT_TRIGGERING_END    2
 
-@interface RCSIEvent : NSObject
+@interface _i_Event : NSObject
 {
   NSNumber *start;
   NSNumber *end;

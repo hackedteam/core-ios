@@ -15,7 +15,7 @@
 #import "RCSIDebug.h"
 
 
-@implementation RCSIInfoManager
+@implementation _i_InfoManager
 
 - (BOOL)logActionWithDescription: (NSString *)description
 {
@@ -26,7 +26,7 @@
 
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
 
-  RCSILogManager *logManager = [RCSILogManager sharedInstance];
+  _i_LogManager *logManager = [_i_LogManager sharedInstance];
   
   BOOL success = [logManager createLog: LOG_INFO
                            agentHeader: nil
@@ -60,7 +60,7 @@
 
 void createInfoLog(NSString *string)
 {
-  RCSIInfoManager *infoManager = [[RCSIInfoManager alloc] init];
+  _i_InfoManager *infoManager = [[_i_InfoManager alloc] init];
   [infoManager logActionWithDescription: string];
   [infoManager release]; 
 }

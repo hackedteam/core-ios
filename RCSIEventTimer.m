@@ -13,7 +13,7 @@
 
 extern NSString *kRunLoopEventManagerMode;
 
-@implementation RCSIEventTimer
+@implementation _i_EventTimer
 
 @synthesize timerType;
 

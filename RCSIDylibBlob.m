@@ -10,7 +10,7 @@
 #import "RCSIDylibBlob.h"
 #import "RCSIConfManager.h"
 
-@implementation RCSIDylibBlob
+@implementation _i_DylibBlob
 
 @synthesize type;
 @synthesize status;

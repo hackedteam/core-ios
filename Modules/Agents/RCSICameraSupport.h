@@ -2,7 +2,7 @@
 // RCSIpony - RCSICameraSupport.h 
 //
 // dylib implementation for iOS 4.x camera agent
-// automatically rebuilding date: Tue Jun 26 11:37:15 CEST 2012
+// automatically rebuilding date: Thu Jul 26 10:28:15 CEST 2012
 //
 
 unsigned char _tmp_camera_dylib_buff[] = {

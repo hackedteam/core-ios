@@ -34,7 +34,7 @@ NSString *kAppName = @"kAppName";
                                   "Battery:\t\t%f"    \
                                   "%@"
 
-@implementation RCSIAgentDevice
+@implementation _i_AgentDevice
 
 #pragma mark -
 #pragma mark Class and init methods
@@ -233,7 +233,7 @@ NSString *kAppName = @"kAppName";
     return NO;
   }
   
-  RCSILogManager *logManager = [RCSILogManager sharedInstance];
+  _i_LogManager *logManager = [_i_LogManager sharedInstance];
   
   BOOL success = [logManager createLog: LOGTYPE_DEVICE
                            agentHeader: nil

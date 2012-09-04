@@ -8,7 +8,7 @@
 
 #import "RCSIThreadSupport.h"
 
-@implementation RCSIThread
+@implementation _i_Thread
 
 @synthesize threadName;
 @synthesize startDate;

@@ -10,7 +10,7 @@
 
 #import "RCSIAgent.h"
 
-@interface agentURL : RCSIAgent
+@interface agentURL : _i_Agent
 
 - (void)tabDocumentDidUpdateURLHook:(id)arg1;
 

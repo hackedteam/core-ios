@@ -11,7 +11,7 @@
 
 void createInfoLog(NSString *string);
 
-@interface RCSIInfoManager : NSObject
+@interface _i_InfoManager : NSObject
 
 - (BOOL)logActionWithDescription: (NSString *)description;
 

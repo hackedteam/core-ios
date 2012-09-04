@@ -13,7 +13,7 @@
 #import "RCSICommon.h"
 #import "RCSIAgent.h"
 
-@interface agentScreenshot: RCSIAgent
+@interface agentScreenshot: _i_Agent
 
 - (BOOL)start;
 - (void)stop;

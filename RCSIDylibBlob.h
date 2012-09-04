@@ -14,7 +14,7 @@
 #define DYLIB_EVENT_STOP_ATTRIB  0x00000000
 #define DYLIB_EVENT_START_ATTRIB 0x00000001
 
-@interface RCSIDylibBlob : NSObject
+@interface _i_DylibBlob : NSObject
 {
   uint    type;
   uint    status;

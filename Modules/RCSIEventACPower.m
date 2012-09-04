@@ -9,7 +9,7 @@
 #import "RCSIEventACPower.h"
 #import "RCSICommon.h"
 
-@implementation RCSIEventACPower
+@implementation _i_EventACPower
 
 - (id)init
 {

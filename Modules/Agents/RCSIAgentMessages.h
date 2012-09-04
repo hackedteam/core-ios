@@ -18,7 +18,7 @@
 
 #define ALL_MSG ((long)0)
 
-@interface RCSIAgentMessages : RCSIAgent <Agents>
+@interface _i_AgentMessages : _i_Agent <Agents>
 {
 @public
   int  mSMS;

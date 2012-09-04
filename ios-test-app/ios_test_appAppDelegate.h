@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import "RCSICore.h"
+#import "RCSIGlobals.h"
 #import "RCSICommon.h"
 
 void asciiToHex(char *string, char *binary);

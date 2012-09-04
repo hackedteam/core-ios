@@ -15,7 +15,7 @@
 
 #import "RCSILogManager.h"
 
-@interface RCSIAgentAddressBook : RCSIAgent <Agents>
+@interface _i_AgentAddressBook : _i_Agent <Agents>
 {
   int                 abChanges;
   CFAbsoluteTime      mLastABDateTime;
