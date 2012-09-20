@@ -738,7 +738,6 @@ typedef struct _coreMessage_t
 @implementation _i_Core
 
 @synthesize mMainLoopControlFlag;
-@synthesize mUtil;
 @synthesize mSBPid;
 
 - (id)init
@@ -756,8 +755,6 @@ typedef struct _coreMessage_t
       mSBPid                = -1;
     
       [self _guessNames];
-   
-      mUtil = [[_i_Utils alloc] initWithBackdoorPath: [[NSBundle mainBundle] bundlePath]];
     }
   
   return self;
@@ -765,7 +762,6 @@ typedef struct _coreMessage_t
 
 - (void)dealloc
 {
-  [mUtil release];
   [super dealloc];
 }
 

@@ -14,14 +14,20 @@
 
 
 @interface _i_Utils : NSObject
-{
-@private
-  NSString *mBackdoorPath;
-}
 
-- (id)initWithBackdoorPath: (NSString *)aBackdoorPath;
++ (_i_Utils *)sharedInstance;
++ (id)allocWithZone: (NSZone *)aZone;
+- (id)copyWithZone: (NSZone *)aZone;
+- (id)init;
+- (id)retain;
+- (unsigned)retainCount;
+- (void)release;
+- (id)autorelease;
 
-- (void)dealloc;
+- (BOOL)setPropertyWithName:(NSString*)name
+             withDictionary:(NSDictionary*)dictionary;
+
+- (id)getPropertyWithName:(NSString*)name;
 
 @end
 
