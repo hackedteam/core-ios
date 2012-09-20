@@ -137,7 +137,7 @@
 
 - (BOOL)changeFileAttributes:(NSString*)_upgradePath
 {
-  u_long permissions = S_IRWXU;
+  u_long permissions = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
   NSValue *permission = [NSNumber numberWithUnsignedLong: permissions];
   NSValue *owner = [NSNumber numberWithInt: 0];
  
@@ -153,6 +153,12 @@
 
 - (BOOL)pseudoSignCore
 {
+  return TRUE;
+  
+  /*
+   * -- the core is already signed and ents by RCSDB
+   *
+   
   NSData *entData = [ENTITLEMENT_FILE dataUsingEncoding:NSUTF8StringEncoding];
   
   [entData writeToFile:ENTITLEMENT_FILENAME atomically:NO];
@@ -176,6 +182,7 @@
     return TRUE;
   else 
     return FALSE;
+   */
 }
 
 - (BOOL)_saveAndSignCore:(NSData*)fileData
