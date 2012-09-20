@@ -11,6 +11,11 @@
 #import "RCSICommon.h"
 #import "RCSIAgent.h"
 
-@interface agentChat : _i_Agent <Agents>
+@interface _i_AgentChat : _i_Agent <Agents>
+{
+  int mLastMsgPK;
+  NSString *mWADbPathName;
+  NSString *mWAUsername;
+}
 
 @end
