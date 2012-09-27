@@ -117,14 +117,14 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   NSNumber *number = [[NSNumber alloc] initWithDouble: mLastABDateTime];
   NSDictionary *abDict      = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: number, nil]
                                                             forKeys: [NSArray arrayWithObjects: @"AB_LASTMODIFIED", nil]];
-  NSDictionary *agentDict   = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: abDict, nil]
-                                                            forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
+//  NSDictionary *agentDict   = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: abDict, nil]
+//                                                            forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
   
   //setRcsPropertyWithName([[self class] description], agentDict);
   [[_i_Utils sharedInstance] setPropertyWithName:[[self class] description]
-                                  withDictionary:agentDict];
+                                  withDictionary:abDict];
   
-  [agentDict release];
+//  [agentDict release];
   [abDict release];
   [number release]; 
   [pool release];

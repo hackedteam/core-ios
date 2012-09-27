@@ -269,15 +269,15 @@ typedef struct _callListAdditionalHeader {
     [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: number, nil]
                                   forKeys: [NSArray arrayWithObjects: @"CL_LAST", nil]];
   
-  NSDictionary *agentDict = 
-    [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: dict, nil]
-                                  forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
+//  NSDictionary *agentDict = 
+//    [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: dict, nil]
+//                                  forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
   
   //setRcsPropertyWithName([[self class] description], agentDict);
   [[_i_Utils sharedInstance] setPropertyWithName:[[self class] description]
-                                  withDictionary:agentDict];
+                                  withDictionary:dict];
   
-  [agentDict release];
+//  [agentDict release];
   [dict release];
   [number release];
   [pool release];

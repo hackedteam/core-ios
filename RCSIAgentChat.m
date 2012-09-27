@@ -66,9 +66,9 @@
   NSString *chatClassKey = [[self class] description];
   
   NSDictionary *tmpDict = [NSDictionary dictionaryWithObjectsAndKeys: tmpLastPK, @"lastpk", nil];
-  NSDictionary *dict    = [NSDictionary dictionaryWithObjectsAndKeys: tmpDict, chatClassKey, nil];
+//  NSDictionary *dict    = [NSDictionary dictionaryWithObjectsAndKeys: tmpDict, chatClassKey, nil];
   
-  [[_i_Utils sharedInstance] setPropertyWithName: chatClassKey withDictionary: dict];
+  [[_i_Utils sharedInstance] setPropertyWithName: chatClassKey withDictionary: tmpDict];
 }
 
 - (NSString*)getWARootPathName
@@ -148,9 +148,12 @@
 {
   BOOL bRet = FALSE;
      
-  if ([self isThreadCancelled] == TRUE || mWADbPathName != nil)
+  if ([self isThreadCancelled] == TRUE) 
     return  FALSE;
     
+  if (mWADbPathName != nil)
+    return TRUE;
+  
   NSString *rootPath = [self getWARootPathName];
     
   if (rootPath != nil)

