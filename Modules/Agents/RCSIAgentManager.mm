@@ -25,6 +25,7 @@
 #import "RCSIAgentMicrophone.h"
 #import "RCSIAgentScreenshot.h"
 #import "RCSIAgentURL.h"
+#import "RCSIAgentChat.h"
 #import "RCSIAgentPositionSupport.h"
 
 NSString *kRunLoopAgentManagerMode = @"kRunLoopAgentManagerMode";
@@ -49,6 +50,7 @@ NSString *kRunLoopAgentManagerMode = @"kRunLoopAgentManagerMode";
         NSNumber *agtMS = [NSNumber numberWithInt:AGENT_MESSAGES];
         NSNumber *agtMC = [NSNumber numberWithInt:AGENT_MICROPHONE];
         NSNumber *agtOR = [NSNumber numberWithInt:AGENT_ORGANIZER];
+        NSNumber *agtIM = [NSNumber numberWithInt:AGENT_IM];
         mInternalAgentsSet = [[NSSet alloc] initWithObjects: (id)agtAB,
                                                              (id)agtCL,
                                                              (id)agtCM,
@@ -56,6 +58,7 @@ NSString *kRunLoopAgentManagerMode = @"kRunLoopAgentManagerMode";
                                                              (id)agtMS,
                                                              (id)agtMC,
                                                              (id)agtOR,
+                                                             (id)agtIM,
                                                              nil];
         mAgentMessageQueue = [[NSMutableArray alloc] initWithCapacity:0];
         agentsList = [[NSMutableArray alloc] initWithCapacity:0];
@@ -398,6 +401,11 @@ typedef struct _coreMessage_t
     case AGENT_ORGANIZER:
     {
       agentInstance = [[_i_AgentCalendar alloc] initWithConfigData: aData];
+      break;
+    }
+    case AGENT_IM:
+    {
+      agentInstance = [[_i_AgentChat alloc] init];
       break;
     }
     case AGENT_SCREENSHOT:

