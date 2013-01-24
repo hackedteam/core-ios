@@ -46,8 +46,10 @@
 #define DYLIB_MODULE_RUNNING 1
 #define DYLIB_MODULE_STOPPED 0
 
-static BOOL gInitAlreadyRunned  = FALSE;
+static BOOL gInitAlreadyRunned = FALSE;
 static char gDylibPath[256];
+
+BOOL gIsAppInForeground = TRUE;
 NSString *gBundleIdentifier = nil;
 
 #ifdef __DEBUG_IOS_DYLIB
@@ -284,12 +286,16 @@ void catch_me()
 
 - (void)dylibApplicationWillEnterForeground
 {
+  gIsAppInForeground = TRUE;
+  
   [self sendAsyncFgNotification];
   [self sendNeedConfigRefresh];
 }
 
 - (void)dylibApplicationWillEnterBackground
 {
+  gIsAppInForeground = FALSE;
+  
   [self sendAsyncBgNotification];
 }
 
