@@ -219,10 +219,11 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
       // New contact
       abFile.len   = 0;
       
+      // if log is Chat bogus contacts flag = 0x80000001
       if (isMyNumber == @"YES")
         abFile.flag = 0x80000000;
       else
-        abFile.flag = 0x0;
+        abFile.flag = 0x00000000;
       
       [abData appendBytes: (const void *) &abFile length: sizeof(abFile)];
       
