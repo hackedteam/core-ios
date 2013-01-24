@@ -29,6 +29,8 @@
 
 - (id)getPropertyWithName:(NSString*)name;
 
+- (NSString*)getPhoneNumber;
+
 @end
 
 #endif
