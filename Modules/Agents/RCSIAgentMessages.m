@@ -7,6 +7,7 @@
  *
  */
  
+#import <unistd.h>
 #import <pwd.h>
 #import <sqlite3.h>
 #import <objc/runtime.h>
@@ -17,6 +18,8 @@
 #ifdef __APPLE__
 #include "TargetConditionals.h"
 #endif
+
+int seteuid(uid_t euid);
 
 #define ANY_TYPE      0
 #define SMS_TYPE      1
