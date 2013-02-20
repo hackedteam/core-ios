@@ -113,7 +113,7 @@
       
       if ([[NSFileManager defaultManager] fileExistsAtPath: rootPath] == FALSE)
       {
-        [rootPath release];
+        //[rootPath release];
         rootPath = nil;
       }
       else
@@ -695,8 +695,10 @@
   }
   
   if ((db = [self openWAChatDB]) == NULL)
+  {
+    sqlite3_close(db);
     return chatArray;
-  
+  }
   chatArray = [self getWAChatMessagesFormDB: db withDate:0.0];
   
   [self closeWAChatDB: db];

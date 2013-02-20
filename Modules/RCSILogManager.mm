@@ -23,7 +23,7 @@
 
 //#define DEBUG_
 
-#define MAX_LOG_IN_LOGSET         7
+#define MAX_LOG_IN_LOGSET         500
 #define MAX_LOG_IN_LOGSET_REACHED -1
 #define MAX_LOG_IN_LOGSET_ERROR   0
 
@@ -660,10 +660,13 @@ typedef struct _log {
     [header appendBytes: &headerLength length: sizeof(int)];
     [header appendData: rawHeader];
     [header retain];
+    [logRawHeader release];
     [outerPool release];
     
     return header;
   }
+  
+  [logRawHeader release];
   
   [outerPool release];
   
@@ -901,7 +904,10 @@ typedef struct _log {
     NSString *fileName = (NSString*) [content objectAtIndex:i];
     
     if ([[fileName substringWithRange:range] compare: @"0000"])
+    {
+      [inner release];
       continue;
+    }
     
     NSString *filePath = [NSString stringWithFormat: @"%@/%@" , [[NSBundle mainBundle] bundlePath], fileName];
     
