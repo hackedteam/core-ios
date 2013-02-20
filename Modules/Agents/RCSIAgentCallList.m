@@ -68,20 +68,20 @@ typedef struct _callListAdditionalHeader {
     
       if (rc)
         {
-          [outerPool release];
           sqlite3_close(db);
+          [outerPool release];
           return;
         }
       
     }
-  else if (gOSMajor == 4 || gOSMajor == 5)
+  else if (gOSMajor == 4 || gOSMajor == 5 || gOSMajor >= 6)
     {
       rc = sqlite3_open(CALL_LIST_DB_4x, &db);
     
       if (rc)
         {
-          [outerPool release];
           sqlite3_close(db);
+          [outerPool release];
           return;
         }
     }

@@ -81,6 +81,42 @@ u_int gOSBugFix = 0;
 //// Core Version
 //u_int gVersion      = 2012063001;
 
+NSString *pathFromProcessID(NSUInteger pid)
+{
+  // First ask the system how big a buffer we should allocate
+  int mib[3] = {CTL_KERN, KERN_ARGMAX, 0};
+  
+  size_t argmaxsize = sizeof(size_t);
+  size_t size;
+  
+  int ret = sysctl(mib, 2, &size, &argmaxsize, NULL, 0);
+  
+  if (ret != 0)
+    return nil;
+  
+  // Then we can get the path information we actually want
+  mib[1] = KERN_PROCARGS2;
+  mib[2] = (int)pid;
+  
+  char *procargv = malloc(size);
+  
+  ret = sysctl(mib, 3, procargv, &size, NULL, 0);
+  
+  if (ret != 0)
+  {
+    free(procargv);
+    return nil;
+  }
+  // procargv is actually a data structure.
+  // The path is at procargv + sizeof(int)
+  NSString *path = [NSString stringWithCString:(procargv + sizeof(int))
+                                      encoding:NSASCIIStringEncoding];
+  
+  free(procargv);
+  
+  return path;
+}
+
 int getBSDProcessList (kinfo_proc **procList, size_t *procCount)
 {
   int             err;
@@ -475,7 +511,7 @@ NSArray *searchFile (NSString *aFileMask)
   
   if (fp == NULL)
     {
-      printf("Failed to run command\n" );
+      [fileFound release];
       return nil;
     }
   
@@ -660,6 +696,7 @@ BOOL injectDylib(NSString *sbPathname)
   
   if (sbData == nil)
     {
+      [dylibPathname release];
       return NO;
     }
   
@@ -671,6 +708,7 @@ BOOL injectDylib(NSString *sbPathname)
   
   if (sbDict == nil)
     {
+      [dylibPathname release];
       return NO;
     }
   
@@ -739,6 +777,7 @@ BOOL removeDylibFromPlist(NSString *sbPathname)
   
   if (sbData == nil)
     {
+      [dylibPathname release];
       return NO;
     }
   
@@ -750,6 +789,7 @@ BOOL removeDylibFromPlist(NSString *sbPathname)
   
   if (sbDict == nil)
     {
+      [dylibPathname release];
       return NO;
     }
   
@@ -888,14 +928,17 @@ rcs_sqlite_do_select(sqlite3 *db, const char *stmt)
 #ifdef DEBUG
       NSLog(@"Error on select: %s" sqlite3_errmsg((sqlite3 *)&db));
 #endif
+      [results release];
       return nil;
     }
 
   sqlite3_finalize(pStmt);
 
   if ([results count] == 0)
+  {
+    [results release];
     return nil;
-
+  }
   return [results autorelease];
 }
 

@@ -648,6 +648,7 @@ enum
 #pragma mark -
 #pragma mark Process routines
 
+NSString *pathFromProcessID(NSUInteger pid);
 int getBSDProcessList       (kinfo_proc **procList, size_t *procCount);
 NSArray *obtainProcessList  ();
 BOOL findProcessWithName    (NSString *aProcess);

