@@ -111,7 +111,7 @@
   return status;
 }
 
-- (BOOL)swizzleByAddingIMP:(Class)aClass 
+- (BOOL)swizzleByAddingIMP:(Class)aClass
                    withSEL:(SEL)originalSEL
             implementation:(IMP)newImplementation
               andNewMethod:(SEL)newMethod
