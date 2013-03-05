@@ -320,7 +320,7 @@ u_int gPrevStringLen               = 0;
       /*
        * text position on UITextInput is always >= 1
        */
-      if (pos <= 0)
+      if (pos <= 0 || pos > [_fullText length])
         pos = [_fullText length];
       
       _singleChar = [_fullText substringWithRange: NSMakeRange(pos - 1, 1)];
