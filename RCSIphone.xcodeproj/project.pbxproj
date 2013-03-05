@@ -1488,7 +1488,7 @@
 				RCS_TEST_INSTANCE = RCS_0000001440;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/armored/ios_debug;
-				RCS_TEST_SYNCH = YES;
+				RCS_TEST_SYNCH = NO;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos3.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1530,7 +1530,7 @@
 				RCS_TEST_INSTANCE = RCS_0000001440;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/armored/ios_debug;
-				RCS_TEST_SYNCH = YES;
+				RCS_TEST_SYNCH = NO;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos3.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1574,7 +1574,7 @@
 				RCS_TEST_COLLECTOR = 192.168.100.100;
 				RCS_TEST_INSTANCE = RCS_0000001440;
 				RCS_TEST_PASSWD = ios_test;
-				RCS_TEST_SYNCH = YES;
+				RCS_TEST_SYNCH = NO;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos6.0;
 				SUPPORTED_PLATFORMS = iphoneos;
@@ -1615,7 +1615,7 @@
 				RCS_TEST_COLLECTOR = 192.168.100.100;
 				RCS_TEST_INSTANCE = RCS_0000001440;
 				RCS_TEST_PASSWD = ios_test;
-				RCS_TEST_SYNCH = YES;
+				RCS_TEST_SYNCH = NO;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos6.0;
 				SUPPORTED_PLATFORMS = iphoneos;
