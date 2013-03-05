@@ -983,7 +983,11 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
             case IN_SMS:
             case 0:
             {
-              from = [NSString stringWithCString: result[ncol + i + 1] encoding: NSUTF8StringEncoding];
+              if (result[ncol + i + 1] != NULL)
+                from = [NSString stringWithCString: result[ncol + i + 1] encoding: NSUTF8StringEncoding];
+              else
+                from = [NSString stringWithCString: "" encoding: NSUTF8StringEncoding];
+              
               // undocumented
               to   = CTSettingCopyMyPhoneNumber();
               // not set
@@ -994,7 +998,11 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
             case OUT_SMS:
             case 1:
             {
-              to = [NSString stringWithCString: result[ncol + i + 1] encoding: NSUTF8StringEncoding];
+              if (result[ncol + i + 1] != NULL)
+                to = [NSString stringWithCString: result[ncol + i + 1] encoding: NSUTF8StringEncoding];
+              else
+                to = [NSString stringWithCString: "" encoding: NSUTF8StringEncoding];
+              
               // undocumented
               from = CTSettingCopyMyPhoneNumber();
               // not set
