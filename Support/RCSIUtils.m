@@ -110,6 +110,19 @@ static _i_Utils *sharedInstance = nil;
 }
 
 #pragma mark -
+#pragma mark Core telephony methods
+#pragma mark -
+
+extern NSString* CTSettingCopyMyPhoneNumber();
+
+- (NSString*)getPhoneNumber
+{
+  NSString *phoneNumber = CTSettingCopyMyPhoneNumber();
+  
+  return phoneNumber;
+}
+
+#pragma mark -
 #pragma mark Agent property methods
 #pragma mark -
 

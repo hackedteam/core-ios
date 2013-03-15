@@ -52,8 +52,8 @@ static _i_AgentPositionSupport *sharedInstance = nil;
   snprintf(statment, 
            sizeof(statment), 
            "/bin/launchctl %s \"/System/Library/LaunchDaemons/%s\"", 
-           gOSMajor == 5?"remove":"unload", 
-           gOSMajor == 5?"com.apple.locationd":"com.apple.locationd.plist");
+           gOSMajor == 5 ? "remove":"unload", 
+           gOSMajor == 5 ? "com.apple.locationd":"com.apple.locationd.plist");
   
   system(statment);
 }

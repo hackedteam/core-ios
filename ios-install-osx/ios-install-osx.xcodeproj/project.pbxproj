@@ -1,0 +1,393 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CC22E90E16E8E32500A687C7 /* iOSUsbSupport.c in Sources */ = {isa = PBXBuildFile; fileRef = CC22E90C16E8E32500A687C7 /* iOSUsbSupport.c */; };
+		CC22E91816E8FB9100A687C7 /* libplist.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = CC22E91516E8FAEC00A687C7 /* libplist.1.dylib */; };
+		CC22E91F16E8FCA500A687C7 /* libplist.1.dylib in Resources */ = {isa = PBXBuildFile; fileRef = CC22E91916E8FCA500A687C7 /* libplist.1.dylib */; };
+		CC22E92116E8FCA500A687C7 /* libz.1.dylib in Resources */ = {isa = PBXBuildFile; fileRef = CC22E91B16E8FCA500A687C7 /* libz.1.dylib */; };
+		CC22E92216E8FCA500A687C7 /* libxml2.2.dylib in Resources */ = {isa = PBXBuildFile; fileRef = CC22E91C16E8FCA500A687C7 /* libxml2.2.dylib */; };
+		CC22E92316E8FCA500A687C7 /* liblzma.5.dylib in Resources */ = {isa = PBXBuildFile; fileRef = CC22E91D16E8FCA500A687C7 /* liblzma.5.dylib */; };
+		CC22E92416E8FCA500A687C7 /* libiconv.2.dylib in Resources */ = {isa = PBXBuildFile; fileRef = CC22E91E16E8FCA500A687C7 /* libiconv.2.dylib */; };
+		CC22E92616E8FE1A00A687C7 /* libimobiledevice.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = CC22E92516E8FE1A00A687C7 /* libimobiledevice.3.dylib */; };
+		CC22E92816E8FE9000A687C7 /* libimobiledevice.3.dylib in Resources */ = {isa = PBXBuildFile; fileRef = CC22E92716E8FE9000A687C7 /* libimobiledevice.3.dylib */; };
+		CC263B9B16E9D3530071A9C5 /* libusbmuxd.2.dylib in Resources */ = {isa = PBXBuildFile; fileRef = CC263B9A16E9D3530071A9C5 /* libusbmuxd.2.dylib */; };
+		CC2AD38516C3FC7300260FC2 /* icon.icns in Resources */ = {isa = PBXBuildFile; fileRef = CC2AD38416C3FC7300260FC2 /* icon.icns */; };
+		CC4A0E8416C3977900008DA8 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CC4A0E8316C3977900008DA8 /* Cocoa.framework */; };
+		CC4A0E8E16C3977900008DA8 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = CC4A0E8C16C3977900008DA8 /* InfoPlist.strings */; };
+		CC4A0E9016C3977900008DA8 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CC4A0E8F16C3977900008DA8 /* main.m */; };
+		CC4A0E9416C3977900008DA8 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = CC4A0E9216C3977900008DA8 /* Credits.rtf */; };
+		CC4A0E9716C3977900008DA8 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CC4A0E9616C3977900008DA8 /* AppDelegate.m */; };
+		CC4A0E9A16C3977900008DA8 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = CC4A0E9816C3977900008DA8 /* MainMenu.xib */; };
+		CC4A0EA116C39CAC00008DA8 /* iphone.png in Resources */ = {isa = PBXBuildFile; fileRef = CC4A0E9F16C39CAC00008DA8 /* iphone.png */; };
+		CC4A0EA416C39D5D00008DA8 /* iphone grayed.png in Resources */ = {isa = PBXBuildFile; fileRef = CC4A0EA216C39D5D00008DA8 /* iphone grayed.png */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		CC22E90C16E8E32500A687C7 /* iOSUsbSupport.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = iOSUsbSupport.c; sourceTree = "<group>"; };
+		CC22E90D16E8E32500A687C7 /* iOSUsbSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iOSUsbSupport.h; sourceTree = "<group>"; };
+		CC22E91516E8FAEC00A687C7 /* libplist.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libplist.1.dylib; path = Install/libplist.1.dylib; sourceTree = "<group>"; };
+		CC22E91916E8FCA500A687C7 /* libplist.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libplist.1.dylib; sourceTree = "<group>"; };
+		CC22E91B16E8FCA500A687C7 /* libz.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libz.1.dylib; sourceTree = "<group>"; };
+		CC22E91C16E8FCA500A687C7 /* libxml2.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libxml2.2.dylib; sourceTree = "<group>"; };
+		CC22E91D16E8FCA500A687C7 /* liblzma.5.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = liblzma.5.dylib; sourceTree = "<group>"; };
+		CC22E91E16E8FCA500A687C7 /* libiconv.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libiconv.2.dylib; sourceTree = "<group>"; };
+		CC22E92516E8FE1A00A687C7 /* libimobiledevice.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libimobiledevice.3.dylib; path = Install/libimobiledevice.3.dylib; sourceTree = "<group>"; };
+		CC22E92716E8FE9000A687C7 /* libimobiledevice.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libimobiledevice.3.dylib; sourceTree = "<group>"; };
+		CC263B9A16E9D3530071A9C5 /* libusbmuxd.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libusbmuxd.2.dylib; sourceTree = "<group>"; };
+		CC2AD38416C3FC7300260FC2 /* icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = icon.icns; path = ../icon.icns; sourceTree = "<group>"; };
+		CC4A0E8016C3977800008DA8 /* Install.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Install.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC4A0E8316C3977900008DA8 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		CC4A0E8616C3977900008DA8 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		CC4A0E8716C3977900008DA8 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		CC4A0E8816C3977900008DA8 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		CC4A0E8B16C3977900008DA8 /* Install-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Install-Info.plist"; sourceTree = "<group>"; };
+		CC4A0E8D16C3977900008DA8 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		CC4A0E8F16C3977900008DA8 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		CC4A0E9116C3977900008DA8 /* Install-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Install-Prefix.pch"; sourceTree = "<group>"; };
+		CC4A0E9316C3977900008DA8 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
+		CC4A0E9516C3977900008DA8 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		CC4A0E9616C3977900008DA8 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		CC4A0E9916C3977900008DA8 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		CC4A0EA016C39CAC00008DA8 /* en */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = en; path = en.lproj/iphone.png; sourceTree = "<group>"; };
+		CC4A0EA316C39D5D00008DA8 /* en */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = en; path = "en.lproj/iphone grayed.png"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CC4A0E7D16C3977800008DA8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC22E92616E8FE1A00A687C7 /* libimobiledevice.3.dylib in Frameworks */,
+				CC22E91816E8FB9100A687C7 /* libplist.1.dylib in Frameworks */,
+				CC4A0E8416C3977900008DA8 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		CC3032FC16C24331009EAFEE = {
+			isa = PBXGroup;
+			children = (
+				CC4A0E8916C3977900008DA8 /* Install */,
+				CC4A0E8216C3977900008DA8 /* Frameworks */,
+				CC30330816C24331009EAFEE /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CC30330816C24331009EAFEE /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CC4A0E8016C3977800008DA8 /* Install.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CC4A0E8216C3977900008DA8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CC22E92516E8FE1A00A687C7 /* libimobiledevice.3.dylib */,
+				CC22E91516E8FAEC00A687C7 /* libplist.1.dylib */,
+				CC4A0E8316C3977900008DA8 /* Cocoa.framework */,
+				CC4A0E8516C3977900008DA8 /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		CC4A0E8516C3977900008DA8 /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CC4A0E8616C3977900008DA8 /* AppKit.framework */,
+				CC4A0E8716C3977900008DA8 /* CoreData.framework */,
+				CC4A0E8816C3977900008DA8 /* Foundation.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		CC4A0E8916C3977900008DA8 /* Install */ = {
+			isa = PBXGroup;
+			children = (
+				CC22E90C16E8E32500A687C7 /* iOSUsbSupport.c */,
+				CC22E90D16E8E32500A687C7 /* iOSUsbSupport.h */,
+				CC4A0E9516C3977900008DA8 /* AppDelegate.h */,
+				CC4A0E9616C3977900008DA8 /* AppDelegate.m */,
+				CC4A0E9816C3977900008DA8 /* MainMenu.xib */,
+				CC4A0E8A16C3977900008DA8 /* Supporting Files */,
+			);
+			path = Install;
+			sourceTree = "<group>";
+		};
+		CC4A0E8A16C3977900008DA8 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				CC263B9A16E9D3530071A9C5 /* libusbmuxd.2.dylib */,
+				CC22E92716E8FE9000A687C7 /* libimobiledevice.3.dylib */,
+				CC22E91916E8FCA500A687C7 /* libplist.1.dylib */,
+				CC22E91B16E8FCA500A687C7 /* libz.1.dylib */,
+				CC22E91C16E8FCA500A687C7 /* libxml2.2.dylib */,
+				CC22E91D16E8FCA500A687C7 /* liblzma.5.dylib */,
+				CC22E91E16E8FCA500A687C7 /* libiconv.2.dylib */,
+				CC2AD38416C3FC7300260FC2 /* icon.icns */,
+				CC4A0EA216C39D5D00008DA8 /* iphone grayed.png */,
+				CC4A0E9F16C39CAC00008DA8 /* iphone.png */,
+				CC4A0E8B16C3977900008DA8 /* Install-Info.plist */,
+				CC4A0E8C16C3977900008DA8 /* InfoPlist.strings */,
+				CC4A0E8F16C3977900008DA8 /* main.m */,
+				CC4A0E9116C3977900008DA8 /* Install-Prefix.pch */,
+				CC4A0E9216C3977900008DA8 /* Credits.rtf */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CC4A0E7F16C3977800008DA8 /* Install */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC4A0E9D16C3977900008DA8 /* Build configuration list for PBXNativeTarget "Install" */;
+			buildPhases = (
+				CC4A0E7C16C3977800008DA8 /* Sources */,
+				CC4A0E7D16C3977800008DA8 /* Frameworks */,
+				CC4A0E7E16C3977800008DA8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Install;
+			productName = Install;
+			productReference = CC4A0E8016C3977800008DA8 /* Install.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CC3032FE16C24331009EAFEE /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0440;
+				ORGANIZATIONNAME = armored;
+			};
+			buildConfigurationList = CC30330116C24331009EAFEE /* Build configuration list for PBXProject "ios-install-osx" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = CC3032FC16C24331009EAFEE;
+			productRefGroup = CC30330816C24331009EAFEE /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CC4A0E7F16C3977800008DA8 /* Install */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CC4A0E7E16C3977800008DA8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC263B9B16E9D3530071A9C5 /* libusbmuxd.2.dylib in Resources */,
+				CC22E92816E8FE9000A687C7 /* libimobiledevice.3.dylib in Resources */,
+				CC22E91F16E8FCA500A687C7 /* libplist.1.dylib in Resources */,
+				CC22E92116E8FCA500A687C7 /* libz.1.dylib in Resources */,
+				CC22E92216E8FCA500A687C7 /* libxml2.2.dylib in Resources */,
+				CC22E92316E8FCA500A687C7 /* liblzma.5.dylib in Resources */,
+				CC22E92416E8FCA500A687C7 /* libiconv.2.dylib in Resources */,
+				CC4A0E8E16C3977900008DA8 /* InfoPlist.strings in Resources */,
+				CC4A0E9416C3977900008DA8 /* Credits.rtf in Resources */,
+				CC4A0E9A16C3977900008DA8 /* MainMenu.xib in Resources */,
+				CC4A0EA116C39CAC00008DA8 /* iphone.png in Resources */,
+				CC4A0EA416C39D5D00008DA8 /* iphone grayed.png in Resources */,
+				CC2AD38516C3FC7300260FC2 /* icon.icns in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CC4A0E7C16C3977800008DA8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC4A0E9016C3977900008DA8 /* main.m in Sources */,
+				CC4A0E9716C3977900008DA8 /* AppDelegate.m in Sources */,
+				CC22E90E16E8E32500A687C7 /* iOSUsbSupport.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		CC4A0E8C16C3977900008DA8 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CC4A0E8D16C3977900008DA8 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		CC4A0E9216C3977900008DA8 /* Credits.rtf */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CC4A0E9316C3977900008DA8 /* en */,
+			);
+			name = Credits.rtf;
+			sourceTree = "<group>";
+		};
+		CC4A0E9816C3977900008DA8 /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CC4A0E9916C3977900008DA8 /* en */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+		CC4A0E9F16C39CAC00008DA8 /* iphone.png */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CC4A0EA016C39CAC00008DA8 /* en */,
+			);
+			name = iphone.png;
+			sourceTree = "<group>";
+		};
+		CC4A0EA216C39D5D00008DA8 /* iphone grayed.png */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CC4A0EA316C39D5D00008DA8 /* en */,
+			);
+			name = "iphone grayed.png";
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		CC30330F16C24331009EAFEE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		CC30331016C24331009EAFEE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		CC4A0E9B16C3977900008DA8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Install/Install-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					../../libimobiledevice/include,
+					/opt/local/include,
+					RCSUSBInstaller,
+				);
+				INFOPLIST_FILE = "Install/Install-Info.plist";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Install\"",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		CC4A0E9C16C3977900008DA8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Install/Install-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					../../libimobiledevice/include,
+					/opt/local/include,
+					RCSUSBInstaller,
+				);
+				INFOPLIST_FILE = "Install/Install-Info.plist";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Install\"",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CC30330116C24331009EAFEE /* Build configuration list for PBXProject "ios-install-osx" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC30330F16C24331009EAFEE /* Debug */,
+				CC30331016C24331009EAFEE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CC4A0E9D16C3977900008DA8 /* Build configuration list for PBXNativeTarget "Install" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC4A0E9B16C3977900008DA8 /* Debug */,
+				CC4A0E9C16C3977900008DA8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CC3032FE16C24331009EAFEE /* Project object */;
+}

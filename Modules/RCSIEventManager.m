@@ -164,6 +164,8 @@ NSLock *connectionLock;
   
   NSDate *dateFromMidnite = (NSDate*)[NSDate dateWithTimeIntervalSince1970:aInterval];
   
+  [outFormat release];
+  
   return  dateFromMidnite;
 }
 

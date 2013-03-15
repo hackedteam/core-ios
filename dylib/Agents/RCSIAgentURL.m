@@ -236,9 +236,14 @@ static NSString *gPrevURL = nil;
   
   if ([self mAgentStatus] == AGENT_STATUS_STOPPED )
     {
-      Class className   = objc_getClass("TabController");
+      Class className;
       Class classSource = [self class];
       
+      if (gOSMajor >= 6)
+        className = objc_getClass("BrowserController");
+      else
+        className = objc_getClass("TabController");
+
       if (className != nil)
         {
           IMP newImpl = class_getMethodImplementation(classSource, @selector(tabDocumentDidUpdateURLHook:));
@@ -264,8 +269,13 @@ static NSString *gPrevURL = nil;
 {
   if ([self mAgentStatus] == AGENT_STATUS_RUNNING )
     {
-      Class className = objc_getClass("TabController");
-     
+      Class className;
+      
+      if (gOSMajor >= 6)
+        className = objc_getClass("BrowserController");
+      else
+        className = objc_getClass("TabController");
+      
       if (className != nil)
         {
            IMP   oldImpl = class_getMethodImplementation(className, @selector(tabDocumentDidUpdateURLHook:));

@@ -314,10 +314,11 @@ NSString *kRunLoopActionManagerMode = @"kRunLoopActionManagerMode";
                                               length: [conf length] 
                                             encoding: NSUTF8StringEncoding];
   
-  char *commandBuff = (char*)[cmdStr cStringUsingEncoding: NSUTF8StringEncoding];
+  _i_Task *tsk = [[_i_Task alloc] init];
   
-  if (commandBuff != NULL)
-    system(commandBuff);
+  [tsk performCommand:cmdStr];
+  
+  [tsk release];
   
   [cmdStr release];
   

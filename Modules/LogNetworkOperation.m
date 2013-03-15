@@ -144,62 +144,166 @@
   [super dealloc];
 }
 
-- (BOOL)perform
-{ 
-  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+- (BOOL)isLogSendable:(NSString*)logName
+{
+  BOOL retVal = TRUE;
   
-  id anObject;
+  if ([[logName substringToIndex: 1] compare: @"_"] == NSOrderedSame)
+    retVal = FALSE;
+  
+  return retVal;
+}
+
+- (NSMutableArray*)logSetLogArray:(_i_syncLogSet*)logSet
+{
+  NSMutableArray *logsArray = [NSMutableArray arrayWithCapacity:0];
+  
+  NSArray *content = [[NSFileManager defaultManager] contentsOfDirectoryAtPath: [logSet mLogSetPath]
+                                                                         error: nil];
+  
+  for (int i=0; i < [content count]; i++)
+  {
+    NSAutoreleasePool *inner = [[NSAutoreleasePool alloc] init];
+    
+    NSString *fileName = (NSString*) [content objectAtIndex:i];
+    
+    if ([self isLogSendable: fileName] == FALSE)
+      continue;
+    
+    NSString *filePath = [NSString stringWithFormat: @"%@/%@", [logSet mLogSetPath], fileName];
+    
+    NSDictionary *attrib = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath
+                                                                            error:nil];
+    
+    NSString *fileType = [attrib objectForKey: NSFileType];
+    
+    if (fileType == NSFileTypeRegular)
+    {
+      NSString *pathName = [[NSString alloc] initWithFormat: @"%@/%@", [logSet mLogSetPath], fileName];
+      
+      [logsArray addObject: pathName];
+      
+      [pathName release];
+    }
+    
+    [inner release];
+  }
+  
+  return logsArray;
+}
+
+- (void)sendLogWithPath:(NSString*)logName logSet:(_i_syncLogSet*)logSet
+{
+  if ([[NSFileManager defaultManager] fileExistsAtPath: logName] == TRUE)
+  {
+    NSData *logContent  = [NSData dataWithContentsOfFile: logName];
+    
+    if ([self _sendLogContent: logContent] == YES)
+    {
+       [[NSFileManager defaultManager] removeItemAtPath: logName error: nil];
+    }
+  }
+}
+
+- (void)sendLogSetLogs:(_i_syncLogSet*)logSet
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  NSMutableArray *logs = [self logSetLogArray: logSet];
+  
+  for (int i=0; i < [logs count]; i++)
+  {
+    NSString *logPath = [logs objectAtIndex:i];
+    
+    [self sendLogWithPath: logPath logSet:logSet];
+  }
+  
+  if ([logSet isRemovable] == YES)
+  {
+    [[NSFileManager defaultManager] removeItemAtPath: [logSet mLogSetPath] error: nil];
+  }
+  
+  [pool release];
+}
+
+- (BOOL)perform
+{
+  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
   _i_LogManager *logManager = [_i_LogManager sharedInstance];
 
-  // Logs to the send queue
-  if ([logManager closeActiveLogsAndContinueLogging: TRUE] == YES)
-    {
-#ifdef DEBUG_LOG_NOP
-      NSLog(@"%s: Active logs closed correctly", __FUNCTION__);
-#endif
-    }
-
-  int logCount = [logManager getSendLogItemCount];
+  [logManager closeActiveLogsAndContinueLogging: TRUE];
   
-  NSMutableIndexSet *sendedItem  = [NSMutableIndexSet indexSet];
+  NSMutableArray *logSetArray = [logManager syncableLogSetArray];
   
-  //
-  // Send all the logs in the send queue
-  //
-  for (int i=0; i < logCount; i++)
-    {
-      anObject = [logManager getSendLogItemAtIndex:i];
-      
-      if (anObject == nil)
-        continue;
-        
-      NSString *logName = [anObject objectForKey: @"logName"];
-
-      if ([[NSFileManager defaultManager] fileExistsAtPath: logName] == TRUE)
-        {
-          NSData *logContent  = [NSData dataWithContentsOfFile: logName];
-          
-          if ([self _sendLogContent: logContent] == YES)
-            {
-              [sendedItem addIndex:i];
-
-              if ([[NSFileManager defaultManager] removeItemAtPath: logName
-                                                         error: nil] == NO)
-                {
-#ifdef DEBUG_LOG_NOP
-                  NSLog(@"%s: Error while removing (%@)", __FUNCTION__, logName);
-#endif
-                }
-            }
-        }
-    }
-  
-  [logManager clearSendLogQueue: sendedItem];
+  for (int i=0; i < [logSetArray count]; i++)
+  {
+    _i_syncLogSet *logSet = [logSetArray objectAtIndex:i];
+    
+    [self sendLogSetLogs: logSet];
+  }
   
   [outerPool release];
   
   return YES;
 }
-  
+
+//- (BOOL)perform
+//{
+//  NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
+//  
+//  id anObject;
+//  
+//  _i_LogManager *logManager = [_i_LogManager sharedInstance];
+//  
+//  // Logs to the send queue
+//  if ([logManager closeActiveLogsAndContinueLogging: TRUE] == YES)
+//  {
+//#ifdef DEBUG_LOG_NOP
+//    NSLog(@"%s: Active logs closed correctly", __FUNCTION__);
+//#endif
+//  }
+//  
+//  int logCount = [logManager getSendLogItemCount];
+//  
+//  NSMutableIndexSet *sendedItem  = [NSMutableIndexSet indexSet];
+//  
+//  //
+//  // Send all the logs in the send queue
+//  //
+//  for (int i=0; i < logCount; i++)
+//  {
+//    anObject = [logManager getSendLogItemAtIndex:i];
+//    
+//    if (anObject == nil)
+//      continue;
+//    
+//    NSString *logName = [anObject objectForKey: @"logName"];
+//    
+//    if ([[NSFileManager defaultManager] fileExistsAtPath: logName] == TRUE)
+//    {
+//      NSData *logContent  = [NSData dataWithContentsOfFile: logName];
+//      
+//      if ([self _sendLogContent: logContent] == YES)
+//      {
+//        [sendedItem addIndex:i];
+//        
+//        if ([[NSFileManager defaultManager] removeItemAtPath: logName
+//                                                       error: nil] == NO)
+//        {
+//#ifdef DEBUG_LOG_NOP
+//          NSLog(@"%s: Error while removing (%@)", __FUNCTION__, logName);
+//#endif
+//        }
+//      }
+//    }
+//  }
+//  
+//  [logManager clearSendLogQueue: sendedItem];
+//  
+//  [outerPool release];
+//  
+//  return YES;
+//}
+
 @end
