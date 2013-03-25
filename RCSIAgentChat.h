@@ -14,8 +14,12 @@
 @interface _i_AgentChat : _i_Agent <Agents>
 {
   int mLastMsgPK;
+  int mLastWAMsgPk;
+  int mLastSkMsgPk;
   NSString *mWADbPathName;
   NSString *mWAUsername;
+  NSString *mSkDbPathName;
+  NSString *mSkUsername;
 }
 
 @end

