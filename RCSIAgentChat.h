@@ -15,11 +15,17 @@
 {
   int mLastMsgPK;
   int mLastWAMsgPk;
-  int mLastSkMsgPk;
+  
   NSString *mWADbPathName;
   NSString *mWAUsername;
+  
+  int mLastSkMsgPk;
   NSString *mSkDbPathName;
   NSString *mSkUsername;
+  
+  int mLastVbMsgPk;
+  NSString *mVbUsername;
+  NSString *mVbDbPathName;
 }
 
 @end
