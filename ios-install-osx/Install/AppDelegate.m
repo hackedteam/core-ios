@@ -343,6 +343,8 @@ NSString *models_name[] =  {@"iPhone",
   
   [self tPrint: @"checking installation..."];
   
+  sleep(5);
+  
   if (check_installation(10, 10) == 1)
   {
     [self tPrint: @"installation done."];
