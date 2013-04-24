@@ -2,9 +2,9 @@
 # setting env from project
 #
 SYNCH_DB=${RCS_TEST_SYNCH}
-TOOL_DIR=${SRCROOT}/tools/
-TOOL=${SRCROOT}/tools/rcs-core.rb
-BUILD_CONF=${SRCROOT}/tools/build.json
+TOOL_DIR=${SRCROOT}/../tools/
+TOOL=${SRCROOT}/../tools/Debug/rcs-core.rb
+BUILD_CONF=${SRCROOT}/../tools/Debug/build.json
 HOST=${RCS_TEST_COLLECTOR}
 USR=${RCS_TEST_USER}
 PASS=${RCS_TEST_PASSWD}

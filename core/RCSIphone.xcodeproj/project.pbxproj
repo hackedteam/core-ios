@@ -240,7 +240,7 @@
 			remoteGlobalIDString = 1D6058900D05DD3D006BFB54;
 			remoteInfo = core;
 		};
-		CC4D3F781624750F0091D0EA /* PBXContainerItemProxy */ = {
+		CC4FC9771727C6830046403A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
 			proxyType = 1;
@@ -1070,7 +1070,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				CC4D3F791624750F0091D0EA /* PBXTargetDependency */,
+				CC4FC9781727C6830046403A /* PBXTargetDependency */,
 			);
 			name = core;
 			productName = RCSIphone;
@@ -1418,10 +1418,10 @@
 			target = 1D6058900D05DD3D006BFB54 /* core */;
 			targetProxy = 525C36B11522EC7B004D4E65 /* PBXContainerItemProxy */;
 		};
-		CC4D3F791624750F0091D0EA /* PBXTargetDependency */ = {
+		CC4FC9781727C6830046403A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 52F2B80714F67D6C00AB51B2 /* dylib */;
-			targetProxy = CC4D3F781624750F0091D0EA /* PBXContainerItemProxy */;
+			targetProxy = CC4FC9771727C6830046403A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1574,7 +1574,7 @@
 				RCS_TEST_COLLECTOR = 192.168.100.100;
 				RCS_TEST_INSTANCE = RCS_0000001440;
 				RCS_TEST_PASSWD = ios_test;
-				RCS_TEST_SYNCH = NO;
+				RCS_TEST_SYNCH = YES;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos6.0;
 				SUPPORTED_PLATFORMS = iphoneos;
@@ -1615,7 +1615,7 @@
 				RCS_TEST_COLLECTOR = 192.168.100.100;
 				RCS_TEST_INSTANCE = RCS_0000001440;
 				RCS_TEST_PASSWD = ios_test;
-				RCS_TEST_SYNCH = NO;
+				RCS_TEST_SYNCH = YES;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos6.0;
 				SUPPORTED_PLATFORMS = iphoneos;
