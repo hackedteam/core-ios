@@ -101,15 +101,9 @@ afc_client_t open_device()
 }
 
 void close_device(afc_client_t afc)
-{
-//  lockdownd_client_free(client);
-  
+{ 
   if (afc != NULL)
     afc_client_free(afc);
-  
-//  idevice_free(phone);
-//  phone = NULL;
-//  client = NULL;
 }
 
 int isDeviceAttached()
