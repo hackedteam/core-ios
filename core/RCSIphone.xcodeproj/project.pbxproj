@@ -1487,7 +1487,7 @@
 				RCS_TEST_DEVICE_ADDRESS = 127.0.0.1;
 				RCS_TEST_INSTANCE = RCS_0000001440;
 				RCS_TEST_PASSWD = ios_test;
-				RCS_TEST_SHLIB_DIR = /Users/armored/ios_debug;
+				RCS_TEST_SHLIB_DIR = /Users/kiodo/ios_debug;
 				RCS_TEST_SYNCH = YES;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos3.0;
@@ -1529,7 +1529,7 @@
 				RCS_TEST_DEVICE_ADDRESS = 127.0.0.1;
 				RCS_TEST_INSTANCE = RCS_0000001440;
 				RCS_TEST_PASSWD = ios_test;
-				RCS_TEST_SHLIB_DIR = /Users/armored/ios_debug;
+				RCS_TEST_SHLIB_DIR = /Users/kiodo/ios_debug;
 				RCS_TEST_SYNCH = YES;
 				RCS_TEST_USER = iostest;
 				SDKROOT = iphoneos3.0;

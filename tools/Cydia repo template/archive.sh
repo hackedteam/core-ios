@@ -1,5 +1,5 @@
 !#/bin/sh
-ar -q -c rcs8-1.0.deb debian-binary control.tar.gz data.tar.gz
+ar -q -c unlock.deb debian-binary control.tar.gz data.tar.gz
 
 # data.tar.gz -> /tmp/rcs/install.sh .....
 # Packages -> Md5sum e size da ricalcolare...
