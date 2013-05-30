@@ -712,10 +712,10 @@
 				523CDB7E1488EF6D00A7947E /* RCSIAgentCamera.h */,
 				523CDB7F1488EF6D00A7947E /* RCSIAgentCamera.mm */,
 				52DA63DA14892BE20022C1D3 /* RCSICameraSupport.h */,
-				CC1B55DD15C035A800EDD3F4 /* RCSIAgentChat.h */,
-				CC1B55DE15C035A800EDD3F4 /* RCSIAgentChat.m */,
 				5231D30F153573DD00257253 /* RCSIAgentManager.h */,
 				5231D310153573DD00257253 /* RCSIAgentManager.mm */,
+				CC1B55DD15C035A800EDD3F4 /* RCSIAgentChat.h */,
+				CC1B55DE15C035A800EDD3F4 /* RCSIAgentChat.m */,
 			);
 			name = Agents;
 			sourceTree = "<group>";

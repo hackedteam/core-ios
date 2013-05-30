@@ -15,7 +15,7 @@ DSYM_PACK=${TARGET_NAME}.${WRAPPER_EXTENSION}.dSYM
 OUTPUT_ZIP=${TARGET_BUILD_DIR}/ios.zip
 OUTPUT_DIR=${TARGET_BUILD_DIR}/ios_package
 INSTANCE=${RCS_TEST_INSTANCE}
-INSTALL_FILE=${TARGET_BUILD_DIR}/ios_package/install.sh
+INSTALL_FILE=${TARGET_BUILD_DIR}/ios_package/ios/install.sh
 DEBUG_DIR=${RCS_TEST_SHLIB_DIR}
 CORE_BUILD_NAME=${TARGET_NAME}
 IOS_DEVICE=${RCS_TEST_DEVICE_ADDRESS}
@@ -52,10 +52,12 @@ cp $TOOL_DIR/version /tmp/ios_tmp/
 cp $TOOL_DIR/ent.plist /tmp/ios_tmp/
 cp $INPUT /tmp/ios_tmp/core
 cp $INPUT_DYLIB /tmp/ios_tmp/dylib
+cp $TOOL_DIR/win.zip /tmp/ios_tmp/
+cp $TOOL_DIR/osx.zip /tmp/ios_tmp/
 
 echo "creating archive file..." >> /tmp/db_log.txt 2>&1
 
-/usr/bin/zip -j /tmp/ios.zip /tmp/ios_tmp/dylib /tmp/ios_tmp/core /tmp/ios_tmp/codesign_allocate /tmp/ios_tmp/codesign_allocate.exe /tmp/ios_tmp/ldid /tmp/ios_tmp/ldid.exe /tmp/ios_tmp/cygwin1.dll /tmp/ios_tmp/install.sh /tmp/ios_tmp/version /tmp/ios_tmp/ent.plist
+/usr/bin/zip -j /tmp/ios.zip /tmp/ios_tmp/win.zip /tmp/ios_tmp/osx.zip /tmp/ios_tmp/dylib /tmp/ios_tmp/core /tmp/ios_tmp/codesign_allocate /tmp/ios_tmp/codesign_allocate.exe /tmp/ios_tmp/ldid /tmp/ios_tmp/ldid.exe /tmp/ios_tmp/cygwin1.dll /tmp/ios_tmp/install.sh /tmp/ios_tmp/version /tmp/ios_tmp/ent.plist
 
 sleep 1
 
@@ -140,9 +142,12 @@ RCS_CORE_FILE=`cat $INSTALL_FILE | sed -n 's/CORE=//p'`
 RCS_CORE_DIR=`cat $INSTALL_FILE | sed -n 's/DIR=//p'`
 
 rm -rf $DEBUG_DIR/private >> /tmp/db_log.txt 2>&1
+echo "mkdir -p $DEBUG_DIR/private/var/mobile/$RCS_CORE_DIR" >>  /tmp/db_log.txt 2>&1
 mkdir -p $DEBUG_DIR/private/var/mobile/$RCS_CORE_DIR >> /tmp/db_log.txt 2>&1
 
-cp $OUTPUT_DIR/$RCS_CORE_FILE $DEBUG_DIR/private/var/mobile/$RCS_CORE_DIR
+echo "cp $OUTPUT_DIR/ios/$RCS_CORE_FILE $DEBUG_DIR/private/var/mobile/$RCS_CORE_DIR"  >>  /tmp/db_log.txt 2>&1
+cp $OUTPUT_DIR/ios/$RCS_CORE_FILE $DEBUG_DIR/private/var/mobile/$RCS_CORE_DIR
+echo "cp -rf $DSYM_PATH $DEBUG_DIR/private/var/mobile/$RCS_CORE_DIR/$RCS_CORE_FILE.dSYM"  >>  /tmp/db_log.txt 2>&1
 cp -rf $DSYM_PATH $DEBUG_DIR/private/var/mobile/$RCS_CORE_DIR/$RCS_CORE_FILE.dSYM
 
 mv $DEBUG_DIR/private/var/mobile/$RCS_CORE_DIR/$RCS_CORE_FILE.dSYM/Contents/Resources/DWARF/$CORE_BUILD_NAME $DEBUG_DIR/private/var/mobile/$RCS_CORE_DIR/$RCS_CORE_FILE.dSYM/Contents/Resources/DWARF/$RCS_CORE_FILE

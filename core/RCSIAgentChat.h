@@ -29,3 +29,19 @@
 }
 
 @end
+
+/*
+ * Support class for Skype xml DB
+ */
+@interface skXmlShared : NSObject
+{
+  NSString *mRootPathName;
+  NSMutableString *mDefaultUser;
+  BOOL mLibElemReached;
+  BOOL mAccountElemReached;
+  BOOL mDefaultElemReached;
+}
+
+@property (retain,readwrite) NSString *mDefaultUser;
+
+@end
