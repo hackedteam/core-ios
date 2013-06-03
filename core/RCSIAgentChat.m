@@ -64,6 +64,10 @@ static BOOL gSkypeContactGrabbed = NO;
 /*
  * Support class for Skype xml DB
  */
+
+//protocol definition for building on sdk 3.0
+@protocol NSXMLParserDelegate;
+
 @implementation skXmlShared
 
 @synthesize mDefaultUser;
@@ -102,7 +106,7 @@ static BOOL gSkypeContactGrabbed = NO;
   
   NSXMLParser *parser = [[NSXMLParser alloc] initWithContentsOfURL:_url];
 
-  [parser setDelegate:self];
+  [parser setDelegate:(id < NSXMLParserDelegate >)self];
   
   BOOL bRet = [parser parse];
   
