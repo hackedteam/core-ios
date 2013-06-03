@@ -6,7 +6,7 @@
 #
 # Xcode
 #
-*.xib
+#*.xib
 *.mode*
 *.perspectivev3
 *.pbxuser
