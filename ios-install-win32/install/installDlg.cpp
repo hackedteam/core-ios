@@ -189,7 +189,7 @@ UINT install_run(LPVOID lp)
 	return 0;
   }
 
-  dlg->setMessage("copying files...");
+  dlg->setMessage("copy files...");
 
   if (install_files(gIosInstallationDirectory, dir_content) != 0)
   {
@@ -197,7 +197,7 @@ UINT install_run(LPVOID lp)
 	return 0;
   }
 
-  dlg->setMessage("copying files... done.");
+  dlg->setMessage("copy files... done.");
 
   if (create_launchd_plist() != 0)
   {

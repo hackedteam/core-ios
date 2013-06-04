@@ -121,15 +121,18 @@ void close_device(afc_client_t afc)
 
 int isDeviceAttached()
 {
-  afc_client_t afc = open_device();
+  idevice_error_t ret = IDEVICE_E_UNKNOWN_ERROR;
+  idevice_t phone = NULL;
   
-  if (afc == NULL)
-    return 0;
-  else
+  ret = idevice_new(&phone, NULL);
+  
+  if (ret == IDEVICE_E_SUCCESS)
   {
-    close_device(afc);
+    idevice_free(phone);
     return 1;
   }
+  else
+    return 0;
 }
 
 #pragma mark -
@@ -654,26 +657,24 @@ int check_running(int timeout)
 
 int remove_installation()
 {
+  int retVal = 0;
+  
   afc_client_t afc = open_device();
   
   if (afc == NULL)
-    return 0;
+    return retVal;
+  
+  if (remove_launchd_plist(afc) == 1)
+    retVal = 1;
   
   if (try_remove_installdir(afc) == 0)
-  {
-    close_device(afc);
-    return 1;
-  }
-  
-  if (remove_launchd_plist(afc) == 0)
-  {
-    close_device(afc);
-    return 1;
-  }
-  
+    retVal = 0;
+  else
+    retVal = 1;
+   
   close_device(afc);
   
-  return 1;
+  return retVal;
 }
 
 int check_installation(int sec, int timeout)
