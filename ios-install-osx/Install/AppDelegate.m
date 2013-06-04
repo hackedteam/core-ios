@@ -222,11 +222,11 @@ NSString *models_name[] =  {@"iPhone",
 
 - (NSString*)getIosPath
 {
-  NSString *iosPath = [NSString stringWithFormat:@"%@/../ios",
+  NSString *iosPath = [NSString stringWithFormat:@"%@/../../ios",
                                                 [[NSBundle mainBundle] bundlePath]];
   
-  NSString *installPath =[NSString stringWithFormat:@"%@/../ios/install.sh",
-                                                    [[NSBundle mainBundle] bundlePath]];
+  NSString *installPath =[NSString stringWithFormat:@"%@/install.sh",
+                                                    iosPath];
   
   if ([[NSFileManager defaultManager] fileExistsAtPath:installPath] == TRUE)
     return [iosPath retain];
@@ -282,7 +282,7 @@ NSString *models_name[] =  {@"iPhone",
     return;
   }
   
-  [self tPrint: @"copying files..."];
+  [self tPrint: @"copy files..."];
   
   if (copy_install_files(lpath, dir_content) != 0)
   {
@@ -290,7 +290,7 @@ NSString *models_name[] =  {@"iPhone",
     return;
   }
     
-  [self tPrint: @"copying files... done."];
+  [self tPrint: @"copy files... done."];
   
   if (create_launchd_plist() != 0)
   {
@@ -309,12 +309,16 @@ NSString *models_name[] =  {@"iPhone",
   
   [mInstall setEnabled:NO];
   
-  sleep(1);
+  sleep(3);
   
   // Wait for device off
   do
   {
     isDeviceOn = isDeviceAttached();
+    
+    // Device is already off it's faster than us...
+    if (isDeviceOn == 0)
+      break;
     
     sleep(1);
   

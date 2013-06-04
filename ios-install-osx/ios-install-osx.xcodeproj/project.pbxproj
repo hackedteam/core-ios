@@ -329,9 +329,9 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Install/Install-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
-					../../../libimobiledevice/include,
 					/opt/local/include,
 					RCSUSBInstaller,
+					Install/include,
 				);
 				INFOPLIST_FILE = "Install/Install-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
@@ -352,9 +352,9 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Install/Install-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
-					../../../libimobiledevice/include,
 					/opt/local/include,
 					RCSUSBInstaller,
+					Install/include,
 				);
 				INFOPLIST_FILE = "Install/Install-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
