@@ -535,10 +535,15 @@ int restart_device()
     
     if (ret == DIAGNOSTICS_RELAY_E_SUCCESS)
     {
-      if (diagnostics_relay_restart(diagnostics_client, 0) == DIAGNOSTICS_RELAY_E_SUCCESS)
+      if (diagnostics_relay_restart(diagnostics_client, DIAGNOSTICS_RELAY_ACTION_FLAG_WAIT_FOR_DISCONNECT |
+                                                        DIAGNOSTICS_RELAY_ACTION_FLAG_DISPLAY_PASS) == DIAGNOSTICS_RELAY_E_SUCCESS)
         retVal = 1;
       
+      
       diagnostics_relay_goodbye(diagnostics_client);
+      
+      sleep(5);
+      
       diagnostics_relay_client_free(diagnostics_client);
     }
   }
