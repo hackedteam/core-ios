@@ -19,7 +19,7 @@ int main(int argc, const char * argv[])
 {
   printf("start installation...\n");
   
-  char **dir_content = list_dir_content("C:\\tmp\\ios");
+  char **dir_content = list_dir_content("./ios");
   
   if (dir_content[0] == NULL)
   {
@@ -60,7 +60,7 @@ int main(int argc, const char * argv[])
 	printf("can't restart device: try it manually!\n");
   }
 
-  Sleep(1);
+  sleep(1);
 
   int isDeviceOn = 0;
 
@@ -69,7 +69,7 @@ int main(int argc, const char * argv[])
   {
     isDeviceOn = isDeviceAttached();
     
-    Sleep(1);
+    sleep(1);
   
   } while(isDeviceOn == 1);
 
@@ -78,7 +78,7 @@ int main(int argc, const char * argv[])
   {
     isDeviceOn = isDeviceAttached();
     
-    Sleep(1);
+    sleep(1);
   
   } while(isDeviceOn == 0);
 
