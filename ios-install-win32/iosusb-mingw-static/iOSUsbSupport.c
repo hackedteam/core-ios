@@ -64,7 +64,11 @@ static lockdownd_client_t client = NULL;
 
 afc_client_t open_device()
 {
+#ifdef ARM 
+  lockdownd_service_descriptor_t port = 0;
+#else
   uint16_t port = 0;
+#endif
   afc_client_t afc = NULL;
   idevice_error_t ret = IDEVICE_E_UNKNOWN_ERROR;
   
@@ -459,7 +463,7 @@ char** list_dir_content(char *dir_name)
     
     if (i < 256 && (strcmp(entry->d_name, "..") && strcmp(entry->d_name, ".") && strcmp(entry->d_name, "(null)")))
     {
-#ifdef WIN32
+#if defined (WIN32) || defined (ARM)
       char *path = (char*)malloc(256);
 #else
       char *path = (char*)malloc(entry->d_namlen+1);
@@ -492,7 +496,11 @@ int restart_device()
 {
   int retVal = 0;
   int timeout = 30;
+#ifdef ARM 
+  lockdownd_service_descriptor_t port = 0;
+#else
   uint16_t port = 0;
+#endif
   idevice_error_t ret = IDEVICE_E_UNKNOWN_ERROR;
   diagnostics_relay_client_t diagnostics_client = NULL;
 
