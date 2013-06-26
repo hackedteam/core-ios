@@ -302,6 +302,3 @@ retry_installation:
 
   return 0;
 }
-
-
-
