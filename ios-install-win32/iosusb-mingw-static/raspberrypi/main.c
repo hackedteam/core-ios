@@ -159,29 +159,31 @@ int main(int argc, const char * argv[])
   
   sigaction(SIGALRM, &sact, NULL);
   
-  // if (argv[1] != NULL && strcmp(argv[1], "--nodaemon") == 0)
-  // {
-  //   syslog(LOG_INFO, "Running %s in foreground...\n", argv[0]);
-  // }
-  // else
-  // {
-  //   pid_t pid;
+  /*
+   * running mode: no fork to support inittab, fork for launching by rc
+   */
+  if (argv[1] != NULL && strcmp(argv[1], "--mode=nofork") == 0)
+  {
+    syslog(LOG_INFO, "Running %s in no-fork mode...\n", argv[0]);
+  }
+  else
+  {
+    pid_t pid;
 
-  //   syslog(LOG_INFO, "Running daemon...\n");
+    syslog(LOG_INFO, "Running %s in fork mode...\n", argv[0]);
 
-  //   pid = fork();
+    pid = fork();
     
-  //   if (pid < 0) {
-  //      exit(EXIT_FAILURE);
-  //   }
+    if (pid < 0) {
+       exit(EXIT_FAILURE);
+    }
 
-  //   if (pid > 0) {
-  //           exit(EXIT_SUCCESS);
-  //   }
-  // }
+    if (pid > 0) {
+            exit(EXIT_SUCCESS);
+    }
+  }
 
-  syslog(LOG_INFO, "Running ios usb daemon [%d]\n", getpid());
-  syslog(LOG_INFO, "Waiting for device...\n");
+  syslog(LOG_INFO, "Waiting for iOS device...\n");
 
   while(1)
   {
@@ -193,7 +195,7 @@ retry_installation:
       devAttach = isDeviceAttached();
     }
 
-    syslog(LOG_INFO, "Device attached!\n");
+    syslog(LOG_INFO, "iOS device detected!\n");
 
     version = safe_get_version();
 
