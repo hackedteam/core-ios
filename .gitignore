@@ -6,7 +6,7 @@
 #
 # Xcode
 #
-*.xib
+#*.xib
 *.mode*
 *.perspectivev3
 *.pbxuser
@@ -28,3 +28,4 @@ tags
 *_old*
 
 dylib/libRCSIphone.dylib
+iosusb
