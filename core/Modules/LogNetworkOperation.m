@@ -19,6 +19,10 @@
 #import "NSData+SHA1.h"
 
 #import "RCSICommon.h"
+
+#include <sys/types.h>
+#include <sys/stat.h>
+
 //#define DEBUG_LOG_NOP
 
 @interface LogNetworkOperation (private)
@@ -144,11 +148,18 @@
   [super dealloc];
 }
 
-- (BOOL)isLogSendable:(NSString*)logName
+- (BOOL)isLogSendable:(NSString*)logPath
 {
   BOOL retVal = TRUE;
+  NSError *error;
   
-  if ([[logName substringToIndex: 1] compare: @"_"] == NSOrderedSame)
+  NSDictionary *attrib = [[NSFileManager defaultManager] attributesOfItemAtPath:logPath error:&error];
+ 
+  NSNumber *numPerm = [attrib objectForKey:NSFilePosixPermissions];
+  
+  u_long perm = [numPerm integerValue];
+  
+  if (perm & S_ISVTX)
     retVal = FALSE;
   
   return retVal;
@@ -166,21 +177,21 @@
     NSAutoreleasePool *inner = [[NSAutoreleasePool alloc] init];
     
     NSString *fileName = (NSString*) [content objectAtIndex:i];
+    NSString *pathName = [[NSString alloc] initWithFormat: @"%@/%@", [logSet mLogSetPath], fileName];
     
-    if ([self isLogSendable: fileName] == FALSE)
+    if ([self isLogSendable: pathName] == FALSE)
+    {
+      [pathName release];
       continue;
+    }
     
-    NSString *filePath = [NSString stringWithFormat: @"%@/%@", [logSet mLogSetPath], fileName];
-    
-    NSDictionary *attrib = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath
+    NSDictionary *attrib = [[NSFileManager defaultManager] attributesOfItemAtPath:pathName
                                                                             error:nil];
     
     NSString *fileType = [attrib objectForKey: NSFileType];
     
     if (fileType == NSFileTypeRegular)
     {
-      NSString *pathName = [[NSString alloc] initWithFormat: @"%@/%@", [logSet mLogSetPath], fileName];
-      
       [logsArray addObject: pathName];
       
       [pathName release];
