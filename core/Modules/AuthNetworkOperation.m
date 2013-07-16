@@ -288,8 +288,7 @@
         NSData *msgData = [[NSData alloc] initWithBytes: &params
                                                  length: sizeof(shMemoryLog)];
         
-        [_i_SharedMemory sendMessageToCoreMachPort: msgData
-                                          withMode: @"kRunLoopNone"];
+        [_i_SharedMemory sendMessageToCoreMachPort: msgData];
         
         [_protoCommand release];
         return NO;
