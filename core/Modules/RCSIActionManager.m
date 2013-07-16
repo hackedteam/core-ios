@@ -408,8 +408,7 @@ typedef struct _coreMessage_t
   NSData *msgData = [[NSData alloc] initWithBytes: &params 
                                            length: sizeof(shMemoryLog)];
   
-  [_i_SharedMemory sendMessageToCoreMachPort: msgData 
-                                     withMode: kRunLoopActionManagerMode];
+  [_i_SharedMemory sendMessageToCoreMachPort: msgData];
   
   [msgData release];
 }

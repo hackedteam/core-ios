@@ -598,8 +598,7 @@ typedef struct _coreMessage_t
   return TRUE;
 }
 
-+ (BOOL)sendMessageToCoreMachPort:(NSData*)aData 
-                         withMode:(NSString*)aMode
++ (BOOL)sendMessageToCoreMachPort:(NSData*)aData
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
@@ -615,7 +614,7 @@ typedef struct _coreMessage_t
                                     (CFDataRef)aData, 
                                     0.5, 
                                     0.5, 
-                                    /*(CFStringRef)aMode*/ NULL, 
+                                    NULL, 
                                     &retData);
    
   CFRelease(corePort);
