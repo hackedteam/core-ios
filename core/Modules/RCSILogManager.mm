@@ -178,14 +178,33 @@ typedef struct _log {
 - (BOOL)createLogFileHandle
 {
   NSError *error;
+  int maxRetry = 0;
+  BOOL retVal = FALSE;
   
-  BOOL retVal = [@"" writeToFile: mLogPath
-                      atomically: YES
-                        encoding: NSUnicodeStringEncoding
-                           error: &error];
+  /*
+   * retry on error for timinig issue on flash
+   */
+  while (retVal == FALSE && maxRetry++ < 10)
+  {
+    retVal = [@"" writeToFile: mLogPath
+                        atomically: YES
+                          encoding: NSUTF8StringEncoding
+                             error: &error];
+    usleep(10000);
+  }
+  
+  if (retVal == FALSE)
+    return FALSE;
+  
+  maxRetry = 0;
+  
   if (retVal == TRUE)
   {
-    mLogFileHandle = [[NSFileHandle fileHandleForUpdatingAtPath: mLogPath] retain];
+    while (mLogFileHandle == nil && maxRetry++ < 10)
+    {
+      mLogFileHandle = [[NSFileHandle fileHandleForUpdatingAtPath: mLogPath] retain];
+      usleep(10000);
+    }
   }
   
   if (mLogFileHandle == nil)
