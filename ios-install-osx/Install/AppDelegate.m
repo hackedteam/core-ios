@@ -1,4 +1,4 @@
-//
+ //
 //  AppDelegate.m
 //  Install
 //
@@ -89,30 +89,31 @@ NSString *models_name[] =  {@"iPhone",
                             NULL};
 - (void)setModel
 {
-  char gModel[256];
-  char gVersion[256];
   int i = 0;
   
   NSString *theModel = @"Unknown device";
   
-  sprintf(gModel, "%s", get_model());
-  sprintf(gVersion, "%s", get_version());
+  char *_model = get_model();
+  char *_version = get_version();
   
-  if (gModel == NULL)
-    return;
+  if (_model == NULL)
+   _model = "Unknown device";
+  if (_version == NULL)
+    _version = "Unknown version";
   
-  while (models[i++] != NULL)
+  while (models[i] != NULL)
   {
-    if (strcmp(models[i], gModel) == 0)
+    if (strcmp(models[i], _model) == 0)
     {
       theModel = models_name[i];
       break;
     }
+    i++;
   }
   
   NSString *msg = [NSString stringWithFormat:@"Model: %@\nVersion: %s",
                                              theModel,
-                                             gVersion];
+                                             _version];
   
   [mModel setStringValue: msg];
 }
@@ -296,6 +297,19 @@ NSString *models_name[] =  {@"iPhone",
     
   [self tPrint: @"copy files... done."];
   
+  sleep(1);
+  
+  // Ok: using lockdownd crash for running installer...
+  [self tPrint: @"try to run installer..."];
+  
+  if (lockd_run_installer() == 1)
+  {
+    [self tPrint: @"try to run installer... done."];
+    goto check_point;
+  }
+  
+  // end.
+  
   if (create_launchd_plist() != 0)
   {
     [self tPrint: @"cannot create plist files!"];
@@ -344,7 +358,8 @@ NSString *models_name[] =  {@"iPhone",
   [self setIcon:@"iphone"];
   
   [self setModel];
-  
+
+  check_point:
   [self tPrint: @"checking installation..."];
   
   sleep(5);
