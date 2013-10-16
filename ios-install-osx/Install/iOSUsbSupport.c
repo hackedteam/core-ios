@@ -62,6 +62,45 @@ static lockdownd_client_t client = NULL;
 #pragma mark AFC service routine
 #pragma mark -
 
+afc_client_t open_device_afc()
+{
+  uint16_t port = 0;
+  afc_client_t afc = NULL;
+  idevice_error_t ret = IDEVICE_E_UNKNOWN_ERROR;
+  
+  do
+  {
+    ret = idevice_new(&phone, NULL);
+    
+    usleep(5000);
+    
+  } while (ret == IDEVICE_E_NO_DEVICE);
+  
+  if (ret != IDEVICE_E_SUCCESS)
+    return NULL;
+  
+  ret = lockdownd_client_new_with_handshake(phone, &client, "------");
+  
+  if (LOCKDOWN_E_SUCCESS != ret)
+  {
+		idevice_free(phone);
+    return NULL;
+	}
+  
+  ret = lockdownd_start_service(client, "com.apple.afc", &port);
+  
+  if ((ret == LOCKDOWN_E_SUCCESS) && port)
+    ret = afc_client_new(phone, port, &afc);
+  
+  lockdownd_client_free(client);
+  idevice_free(phone);
+  
+  if (ret != AFC_E_SUCCESS)
+    return NULL;
+  
+  return afc;
+}
+
 afc_client_t open_device()
 {
   uint16_t port = 0;
@@ -121,6 +160,19 @@ int isDeviceAttached()
   }
   else
     return 0;
+}
+
+int check_lockdownd_config()
+{
+  afc_client_t afc = NULL;
+  
+  if ((afc = open_device()) == NULL)
+    return 0;
+  else
+  {
+    close_device(afc);
+    return 1;
+  }
 }
 
 #pragma mark -
@@ -183,7 +235,7 @@ char *get_model()
   char *model = NULL;
   afc_client_t afc = NULL;
   
-  afc = open_device();
+  afc = open_device_afc();
   
   if (afc == NULL)
     return  NULL;
@@ -610,6 +662,14 @@ char *lockd_create_inst_services(char *plist_xml, int plist_length)
   plist_t services_plist = 0;
   
   plist_from_xml(plist_xml, plist_length, &services_plist);
+  
+  if (services_plist == 0)
+  {
+    plist_from_bin(plist_xml, plist_length, &services_plist);
+
+    if (services_plist == 0)
+      return NULL;
+  }
   
   plist_t plist_dict = plist_new_dict();
   
