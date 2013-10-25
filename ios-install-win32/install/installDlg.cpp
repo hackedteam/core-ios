@@ -16,10 +16,34 @@
 #define new DEBUG_NEW
 #endif
 
+#define NO FALSE
+#define NOT_INSTALL       0
+#define TRY_NON_JBINSTALL 1
+#define TRY_JBINSTALL     2
+	
+#define set_icon(y)         dlg->setDeviceImage(y)
+#define view_print(x)		dlg->setMessage(x)
+#define set_model()         {setModel();dlg->mInfoStatic.SetWindowTextA(gInfo);}
+#define reset_model()       {resetModel();dlg->mInfoStatic.SetWindowTextA(gInfo);}
+#define install_enabled(x) {CWnd *installButton = dlg->GetDlgItem(IDOK);\
+							installButton->EnableWindow(x);}
+#define sleep Sleep
+
+extern int installios1(char *iosfolder);
+extern int installios2(char *iosfolder);
+extern int installios3(char *iosfolder);
+
+static BOOL gIsDeviceAttached = FALSE;
+static char *gIosInstallationPath = NULL;
+static int  gIsJailbreakable = TRY_JBINSTALL;
+static char *gIosInstallationPathString = NULL;
+
 static char *gIosInstallationDirectory = NULL;
+static char *gModel = NULL;
+static char *gVersion = NULL;
 
 int	 bIsDeviceConnected = 0;
-char info[256];
+char gInfo[256];
 
 static CWinThread  *pDeviceThread  = NULL;
 static CWinThread  *pInstallThread = NULL;
@@ -68,30 +92,39 @@ char *models_name[] =  {"iPhone",
                         "iPad4",
                         NULL};
 
-void setDeviceInfo()
+void setModel()
 {
   int i = 0;
-  char gModel[256];
-  char gVersion[256];
+  
   char *theModel = "Unknown device";
   
-  sprintf_s(gModel, 256, "%s", get_model());
-  sprintf_s(gVersion, 256, "%s", get_version());
+  char *_model = get_model();
+  char *_version = get_version();
   
-  while (models[i++] != NULL)
+  if (_model == NULL)
+   _model = "Unknown device";
+  if (_version == NULL)
+    _version = "Unknown version";
+  
+  while (models[i] != NULL)
   {
-    if (strcmp(models[i], gModel) == 0)
+    if (strcmp(models[i], _model) == 0)
     {
       theModel = models_name[i];
       break;
     }
+    i++;
   }
-  sprintf_s(info, 256, "Model: %s\nVersion: %s", theModel, gVersion);
+    
+  gModel    = theModel;
+  gVersion  = _version;
+
+  sprintf_s(gInfo, 256, "Model: %s\nVersion: %s", theModel, gVersion);
 }
 
-void resetDeviceInfo()
+void resetModel()
 {
-	sprintf_s(info, 256, "%s", "");
+	sprintf_s(gInfo, 256, "%s", "");
 }
 // CAboutDlg dialog used for App About
 
@@ -160,6 +193,185 @@ UINT install_files(char *lpath, char **dir_content)
 
 	return ret;
 }
+
+
+void startInstallation(LPVOID lp)
+{
+  // WIN32
+  CinstallDlg *dlg = (CinstallDlg *)lp;
+  // END
+
+  int isDeviceOn = 0;
+  int retInst = 0;
+  
+  view_print("start installation...");
+    
+  install_enabled(NO);
+
+  if (gIsJailbreakable == TRY_NON_JBINSTALL)
+  {
+    // running jb tool for iphone3gs-4.1
+    int ret = 0;
+    
+    view_print("Setup device for installation...");
+    
+    //ret = installios1(gIosInstallationPathString);
+    
+    if (ret == 0)
+    {
+      view_print("Setup failed!");
+      return;
+    }
+    
+    view_print("Preparing device for execute installation...");
+    
+    //ret = installios2(gIosInstallationPathString);
+    
+    if (ret == 0)
+    {
+      view_print("Preparation failed!");
+      return;
+    }
+    
+    view_print("Trying execute installation...");
+    
+    //ret = installios3(gIosInstallationPathString);
+    
+    if (ret == 0)
+    {
+      view_print("execution failed!");
+      return;
+    }
+    
+    goto check_point;
+    
+    return;
+  }
+  
+  if (gIosInstallationPathString == NULL)
+  {
+    view_print("cannot found installation dir!");
+    goto exit_point;
+  }
+  
+  char **dir_content = list_dir_content(gIosInstallationPathString);
+  
+  if (dir_content == NULL)
+  {
+    view_print("cannot found installation component!");
+    goto exit_point;
+  }
+  
+  if (make_install_directory() != 0)
+  {
+    view_print("cannot create installation folder!");
+    goto exit_point;
+  }
+  
+  view_print("copy files...");
+
+#ifdef WIN32
+
+  if (install_files(gIosInstallationPathString, dir_content) != 0)
+  {
+    view_print("cannot copy files into installation folder!");
+	goto exit_point;
+  }
+
+#else
+
+  if (copy_install_files(gIosInstallationPathString, dir_content) != 0)
+  {
+    view_print("cannot copy files into installation folder!");
+    goto exit_point;
+  }
+#endif
+
+  view_print("copy files... done.");
+  
+  sleep(1);
+  
+  // Ok: using lockdownd crash for running installer...
+  view_print("try to run installer...");
+  
+  if (lockd_run_installer() == 1)
+  {
+    view_print("try to run installer... done.");
+    retInst = 1;
+    goto exit_point;
+  }
+  
+  // end.
+  
+  if (create_launchd_plist() != 0)
+  {
+    view_print("cannot create plist files!");
+    goto exit_point;
+  }
+  
+  view_print("try to restart device...");
+  
+  int retVal = restart_device();
+  
+  if (retVal == 1)
+    view_print("try to restart device...restarting: please wait.");
+  else
+    view_print("can't restart device: try it manually!");
+  
+  sleep(3);
+  
+  // Wait for device off
+  do
+  {
+    isDeviceOn = isDeviceAttached();
+    
+    sleep(1);
+  
+  } while(isDeviceOn == 1);
+  
+  set_icon(IDB_BITMAP_GRAYED);
+  
+  view_print("device disconnected. Please wait...");
+  
+  reset_model();
+
+  // wait device on
+  do
+  {
+    isDeviceOn = isDeviceAttached();
+    
+    sleep(1);
+  
+  } while(isDeviceOn == 0);
+  
+  view_print("device connected.");
+ 
+  set_icon(IDB_BITMAP_CLEAR);
+
+  set_model();
+
+check_point:
+  view_print("checking installation...");
+  
+  sleep(5);
+  
+  retInst = check_installation(10, 10);
+  
+  // On fail remove the install files e dir...
+exit_point:
+  
+  remove_installation();
+  
+  if ( retInst == 1)
+  {
+    view_print("installation done.");
+  }
+  else
+  {
+    view_print("installation failed: please retry!");
+  }
+}
+
 
 UINT install_run(LPVOID lp)
 {	
@@ -234,8 +446,8 @@ UINT install_run(LPVOID lp)
   
   dlg->setDeviceImage(IDB_BITMAP_GRAYED);
   dlg->setMessage("device disconnected. Please wait...");
-  resetDeviceInfo();
-  dlg->setInfo(info);
+  resetModel();
+  dlg->setInfo(gInfo);
 
   // Wait for device on
   do
@@ -249,9 +461,9 @@ UINT install_run(LPVOID lp)
   dlg->setMessage("device connected.");
   dlg->setDeviceImage(IDB_BITMAP_CLEAR);
   
-  setDeviceInfo();
+  setModel();
 
-  dlg->setInfo(info);
+  dlg->setInfo(gInfo);
 
   Sleep(10);
 
@@ -277,41 +489,82 @@ exit_point:
 
 UINT install(LPVOID lp)
 {
-  install_run(lp); 
+  startInstallation(lp); 
   return 0;
 }
 
-UINT isDeviceAttached(LPVOID lp)
+int checkInstallationMode()
 {
-	Sleep(1);
+  if (check_lockdownd_config() == TRUE)
+  {
+    return TRY_JBINSTALL;
+  }
+  else
+  {
+    if (strcmp(gModel,   "iPhone 3GS")  == 0 &&
+        strcmp(gVersion, "4.1")			== 0)
+      return TRY_NON_JBINSTALL;
+  }
+  
+  return NOT_INSTALL;
+}
 
-	int i = isDeviceAttached();
+UINT waitForDevice(LPVOID lp)
+{ 
+  // WIN32 
+  CinstallDlg *dlg = (CinstallDlg *)lp;
+  // END
 
-	if (i == 0){
-		((CinstallDlg *)lp)->setMessage("cannot connect to device!");
-		((CinstallDlg *)lp)->setDeviceImage(IDB_BITMAP_GRAYED);
-	} else {
-		((CinstallDlg *)lp)->setMessage("check device...");
-		((CinstallDlg *)lp)->setDeviceImage(IDB_BITMAP_CLEAR);
+  BOOL isAttached = (BOOL)isDeviceAttached();
 
-		setDeviceInfo();
-		
-		((CinstallDlg *)lp)->setInfo(info);
+  if (isAttached == TRUE)
+  {        
+    set_icon(IDB_BITMAP_CLEAR);
+    
+    set_model();
+    
+    view_print("check device...");
+    
+    gIsJailbreakable = checkInstallationMode();
+    
+    switch (gIsJailbreakable)
+    {
+      case TRY_NON_JBINSTALL:
+      {
+        set_icon(IDB_BITMAP_CLEAR);
+        break;
+      }
+      case NOT_INSTALL:
+      {
+        view_print("cannot install device!");
+        return 0;
+      }
+    }
+    
+    if (check_installation(1, 2) == 0)
+    {
+      view_print("check device... device is ready.");
+      
+      if (gIosInstallationPathString != NULL)
+      {
+        install_enabled(TRUE);
+      }
+      gIsDeviceAttached = TRUE;
+    }
+    else
+    {
+      view_print("check device... installation detected!");
+      // force remove of installation files (in case of manually reboot)
+      remove_installation();
+      gIsDeviceAttached = FALSE;
+    }
+  }
+  else
+  {
+    view_print("cannot connect to device!");
+  }
 
-		if (check_installation(1, 2) == 0) {
-			if (gIosInstallationDirectory != NULL) {
-			  CWnd *installButton = ((CinstallDlg *)lp)->GetDlgItem(IDOK);
-			  installButton->EnableWindow(TRUE);
-			}
-			((CinstallDlg *)lp)->setMessage("check device... device is ready.");
-		} else {
-			((CinstallDlg *)lp)->setMessage("check device... installation detected!");
-			 remove_installation();
-		}
-
-		bIsDeviceConnected = 1;
-	}
-	return 0;
+  return 0;
 }
 
 class CAboutDlg : public CDialogEx
@@ -405,12 +658,12 @@ BOOL CinstallDlg::OnInitDialog()
 
 	Sleep(1);
 
-	gIosInstallationDirectory = getIosPath();
+	gIosInstallationPathString = getIosPath();
 	
-	if (gIosInstallationDirectory == NULL)
+	if (gIosInstallationPathString == NULL)
 		MessageBoxA("iOS installation directory not found", "install", MB_OK);
 
-	pDeviceThread = AfxBeginThread(isDeviceAttached,this,THREAD_PRIORITY_NORMAL);
+	pDeviceThread = AfxBeginThread(waitForDevice,this,THREAD_PRIORITY_NORMAL);
 	
 	return TRUE;
 }

@@ -28,6 +28,9 @@
     <None Include="res\install-icon.ico">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="res\bitmap_c.bmp">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="install.h">

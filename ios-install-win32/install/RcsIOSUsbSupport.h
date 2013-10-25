@@ -18,6 +18,9 @@ char *get_model();
 char *get_version();
 void get_device_info(int afc);
 void close_device(int afc);
+int  lockd_run_installer();
+int  remove_installation();
+int  check_lockdownd_config();
 
 char** list_dir_content(char *dir_name);
 
