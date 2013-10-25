@@ -59,7 +59,7 @@ CFDataRef dylibMessagesHandler(CFMessagePortRef local,
 
 
 + (_i_SharedMemory *)sharedInstance;
-+ (BOOL)sendMessageToCoreMachPort:(NSData*)aData withMode:(NSString*)aMode;
++ (BOOL)sendMessageToCoreMachPort:(NSData*)aData;
 + (BOOL)sendMessageToMachPort:(mach_port_t)port 
                      withData:(NSData *)aData;
  

