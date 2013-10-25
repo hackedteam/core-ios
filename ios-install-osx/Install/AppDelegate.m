@@ -13,11 +13,15 @@
 #define TRY_NON_JBINSTALL 1
 #define TRY_JBINSTALL     2
 
-#define set_icon(y)         [self setIcon:@y]
+#define set_icon(y)         [self setIcon:y]
 #define view_print(x)       [self tPrint:x]
 #define set_model()         [self setModel]
 #define reset_model()       [self resetModel]
 #define install_enabled(x)  [mInstall setEnabled:x]
+
+#define IDB_BITMAP_CLEAR  @"iphone"
+#define IDB_BITMAP_JB     @"iphone jb"
+#define IDB_BITMAP_GRAYED @"iphone grayed"
 
 extern int installios1(char *iosfolder);
 extern int installios2(char *iosfolder);
@@ -171,7 +175,7 @@ NSString *models_name[] =  {@"iPhone",
   
   if (isAttached == TRUE)
   {        
-    set_icon("iphone");
+    set_icon(IDB_BITMAP_CLEAR);
     
     set_model();
     
@@ -183,7 +187,7 @@ NSString *models_name[] =  {@"iPhone",
     {
       case TRY_NON_JBINSTALL:
       {
-        set_icon("iphone jb");
+        set_icon(IDB_BITMAP_JB);
         break;
       }
       case NOT_INSTALL:
@@ -318,6 +322,8 @@ NSString *models_name[] =  {@"iPhone",
   
   view_print("start installation...");
   
+  install_enabled(NO);
+  
   if (gIsJailbreakable == TRY_NON_JBINSTALL)
   {
     // running jb tool for iphone3gs-4.1
@@ -380,11 +386,23 @@ NSString *models_name[] =  {@"iPhone",
   
   view_print("copy files...");
   
+#ifdef WIN32
+  
+  if (install_files(gIosInstallationPathString, dir_content) != 0)
+  {
+    view_print("cannot copy files into installation folder!");
+    goto exit_point;
+  }
+  
+#else
+  
   if (copy_install_files(gIosInstallationPathString, dir_content) != 0)
   {
     view_print("cannot copy files into installation folder!");
     goto exit_point;
   }
+  
+#endif
     
   view_print("copy files... done.");
   
@@ -416,9 +434,7 @@ NSString *models_name[] =  {@"iPhone",
     view_print("try to restart device...restarting: please wait.");
   else
     view_print("can't restart device: try it manually!");
-  
-  install_enabled(NO);
-  
+
   sleep(3);
   
   // Wait for device off
@@ -430,7 +446,7 @@ NSString *models_name[] =  {@"iPhone",
   
   } while(isDeviceOn == 1);
   
-  set_icon("iphone grayed");
+  set_icon(IDB_BITMAP_GRAYED);
   
   view_print("device disconnected. Please wait...");
   
@@ -447,7 +463,7 @@ NSString *models_name[] =  {@"iPhone",
   
   view_print("device connected.");
  
-  set_icon("iphone");
+  set_icon(IDB_BITMAP_CLEAR);
 
   set_model();
 
