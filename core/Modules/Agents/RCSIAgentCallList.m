@@ -341,7 +341,7 @@ typedef struct _callListAdditionalHeader {
                                                     target: self 
                                                   selector: @selector(getCallList:) 
                                                   userInfo: nil 
-                                                   repeats: NO];
+                                                   repeats: YES];
   
   [[NSRunLoop currentRunLoop] addTimer: timer forMode: k_i_AgentCallListRunLoopMode];
 }
