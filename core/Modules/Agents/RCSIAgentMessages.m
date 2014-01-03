@@ -905,7 +905,10 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
           NSAutoreleasePool *innerPool = [[NSAutoreleasePool alloc] init];
     
           // Body of the sms: will be encapsed in the sujbect_field
-          subject = [NSString stringWithUTF8String: result[ncol + i + 2]];
+          
+          char *__subject = result[ncol + i + 2] == NULL ? " " : result[ncol + i + 2];
+          
+          subject = [NSString stringWithUTF8String:__subject];
         
           // if no keyWords the matching must be true
           bFound = YES;
@@ -935,8 +938,11 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
             }
           
           // message timestamp (date_field)
-          sscanf(result[ncol + i + 4], "%ld", (long*)&curr_rowid);
-          sscanf(result[ncol + i], "%ld", (long*)&unixTime);
+          char *__curr_rowid = result[ncol + i + 4] == NULL ? "0" : result[ncol + i + 4];
+          char *__unixTime   = result[ncol + i] == NULL ? "0" : result[ncol + i];
+          
+          sscanf(__curr_rowid, "%ld", (long*)&curr_rowid);
+          sscanf(__unixTime, "%ld", (long*)&unixTime);
           
           // Syncronize and update prop var...
           if (msgFilter == COLLECT_FILTER_TYPE) 
@@ -974,7 +980,9 @@ static void MsgNotificationCallback (CFNotificationCenterRef center,
         
           // flags == 2 -> in mesg; flags == 3 -> out mesg
           flags = 0;
-          sscanf(result[ncol + i + 3], "%d", &flags);
+          char *__flags = result[ncol + i + 3] == NULL ? "0" : result[ncol + i + 3];
+          
+          sscanf(__flags, "%d", &flags);
    
           flags &= 0x1;
           
