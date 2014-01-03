@@ -252,7 +252,7 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   
   unichar buff[255];
   
-  for (int i=0; i<[theNumber lengthOfBytesUsingEncoding: NSUTF8StringEncoding]; i++)
+  for (int i=0; i<([theNumber lengthOfBytesUsingEncoding: NSUTF8StringEncoding]-1); i++)
   {
     NSRange range;
     
@@ -280,6 +280,9 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
     id obj = [theNumbers objectAtIndex:i];
     
     NSString *_num = [obj objectForKey: @"Number"];
+    
+    if (_num == nil)
+      return FALSE;
     
     NSString *num  = [self strippedPhoneNumber: _num];
     
