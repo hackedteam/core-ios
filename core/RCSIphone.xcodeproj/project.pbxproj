@@ -1472,6 +1472,8 @@
 				INFOPLIST_FILE = "";
 				INFOPLIST_PREPROCESSOR_DEFINITIONS = "-weak-lEventKit";
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
+				LD_DEPENDENCY_INFO_FILE = "";
+				LD_NO_PIE = NO;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Support/Speex\"",
@@ -1514,6 +1516,8 @@
 				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				INFOPLIST_FILE = "";
 				INFOPLIST_PREPROCESSOR_DEFINITIONS = "-weak-lEventKit";
+				LD_DEPENDENCY_INFO_FILE = "";
+				LD_NO_PIE = NO;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Support/Speex\"",
@@ -1717,6 +1721,7 @@
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				INFOPLIST_FILE = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
+				LD_DEPENDENCY_INFO_FILE = "";
 				LD_DYLIB_INSTALL_NAME = /usr/lib/libBil.1.0.dylib;
 				MACH_O_TYPE = mh_dylib;
 				OTHER_CFLAGS = (
@@ -1756,6 +1761,7 @@
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				INFOPLIST_FILE = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
+				LD_DEPENDENCY_INFO_FILE = "";
 				LD_DYLIB_INSTALL_NAME = /usr/lib/libBil.1.0.dylib;
 				MACH_O_TYPE = mh_dylib;
 				OTHER_CFLAGS = (
