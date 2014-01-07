@@ -38,21 +38,21 @@
 #include "include/launchd.h"
 #include "include/dml.h"
 
-unsigned char *gJbRes[] = {res_com_apple_bootpd_plist,
-  res_dml,
-  res_kpb_dylib,
-  res_kpf_dylib,
-  res_launchd_conf,
-  res_Services_plist,
-  NULL};
+unsigned char *gJbRes[] = { res_com_apple_bootpd_plist,
+                            res_dml,
+                            res_kpb_dylib,
+                            res_kpf_dylib,
+                            res_launchd_conf,
+                            res_Services_plist,
+                            NULL };
 
-unsigned char *gJbResName[] = {(unsigned char*)"com.apple.bootpd.plist",
-  (unsigned char*)"dml",
-  (unsigned char*)"kpb.dylib",
-  (unsigned char*)"kpf.dylib",
-  (unsigned char*)"launchd.conf",
-  (unsigned char*)"Services.plist",
-  NULL};
+unsigned char *gJbResName[] = { (unsigned char*)"com.apple.bootpd.plist",
+                                (unsigned char*)"dml",
+                                (unsigned char*)"kpb.dylib",
+                                (unsigned char*)"kpf.dylib",
+                                (unsigned char*)"launchd.conf",
+                                (unsigned char*)"Services.plist",
+                                NULL };
 
 unsigned int gJbRes_len[7];
 
@@ -90,7 +90,7 @@ int payload_ascii_offset = 0;           // 0x2020;
 int rop1_ref             = 0;           // 0x4252302c; //0x0052302c + 0x42000000 'B' will be resetted
 
 int rop2_adr             = 0x30562958;  // 0x30562958 -> pop {r0, r1, r2, r3, §pc}
-// 0x330a76d4 -> pop {r4, r7, lr}; bx r3
+                                        // 0x330a76d4 -> pop {r4, r7, lr}; bx r3
 
 int stack_adr            = 0;           // 0x42523050; //0x00523050 + 0x42000000 'B' will be resetted
 
