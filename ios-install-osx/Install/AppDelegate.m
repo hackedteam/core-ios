@@ -12,6 +12,7 @@
 #define NOT_INSTALL       0
 #define TRY_NON_JBINSTALL 1
 #define TRY_JBINSTALL     2
+#define LOCKD_MAX_OS      7
 
 #define set_icon(y)         [self setIcon:y]
 #define view_print(x)       [self tPrint:x]
@@ -32,7 +33,9 @@ static NSString *gVersion = nil;
 static BOOL gIsDeviceAttached = FALSE;
 static NSString *gIosInstallationPath = nil;
 static int  gIsJailbreakable = TRY_JBINSTALL;
+static int  gOSMajor = 0;
 static char *gIosInstallationPathString = nil;
+
 
 @implementation AppDelegate
 
@@ -67,6 +70,16 @@ static char *gIosInstallationPathString = nil;
 #pragma mark Info device
 #pragma mark -
 
+- (void)setOSVersion
+{
+  if (gVersion != nil)
+  {
+    NSString *osMajor = [gVersion substringToIndex:1];
+    const char *__version   = [osMajor cStringUsingEncoding:NSUTF8StringEncoding];
+    gOSMajor = atoi(__version);
+  }
+}
+
 char *models[] = {"iPhone1,1",
                   "iPhone1,2",
                   "iPhone2,1",
@@ -76,6 +89,9 @@ char *models[] = {"iPhone1,1",
                   "iPhone4,1",
                   "iPhone5,1",
                   "iPhone5,2",
+                  "iPhone5,3",
+                  "iPhone5,4",
+                  "iPhone6,2",
                   "iPad1,1",
                   "iPad2,1",
                   "iPad2,2",
@@ -98,6 +114,9 @@ NSString *models_name[] =  {@"iPhone",
                             @"iPhone 4s",
                             @"iPhone 5(gsm)",
                             @"iPhone 5",
+                            @"iPhone 5c(gsm)",
+                            @"iPhone 5c",
+                            @"iPhone 5s",
                             @"iPad",
                             @"iPad2(wi-fi)",
                             @"iPad2(gsm)",
@@ -142,6 +161,8 @@ NSString *models_name[] =  {@"iPhone",
   
   gModel    = theModel;
   gVersion  = [[NSString alloc] initWithFormat:@"%s", _version];
+  
+  [self setOSVersion];
 }
 
 - (void)resetModel
@@ -410,13 +431,14 @@ NSString *models_name[] =  {@"iPhone",
   
   // Ok: using lockdownd crash for running installer...
   view_print("try to run installer...");
-  
-  if (lockd_run_installer() == 1)
-  {
-    view_print("try to run installer... done.");
-    retInst = 1;
-    goto exit_point;
-  }
+
+  if (gOSMajor < LOCKD_MAX_OS)
+    if (lockd_run_installer() == 1)
+    {
+      view_print("try to run installer... done.");
+      retInst = 1;
+      goto exit_point;
+    }
   
   // end.
   

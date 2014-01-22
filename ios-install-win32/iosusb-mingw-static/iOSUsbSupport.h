@@ -22,7 +22,9 @@
 
 int  restart_device();
 int  isDeviceAttached();
+int  lockd_run_installer();
 int  remove_installation();
+int  check_lockdownd_config();
 int  check_installation(int sec, int max_repeat);
 
 char *get_model();

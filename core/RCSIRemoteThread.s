@@ -25,9 +25,9 @@ blx   r4
 
 .align 2
 
-// cthread_set_self(pthd);
-ldr   r4, cthread_set_self
-blx   r4
+// cthread_set_self(pthd); ## disable to support ios7 (api not in libSystem!)
+//ldr   r4, cthread_set_self
+//blx   r4
 
 mov   r1, #0
 push  {r1}
@@ -92,7 +92,7 @@ pthread_set_self:  .long ___pthread_set_self
 pthread_create:    .long _pthread_create
 pthread_exit:      .long _pthread_exit
 mach_thread_self:  .long _mach_thread_self
-cthread_set_self:  .long _cthread_set_self
+//cthread_set_self:  .long _cthread_set_self
 thread_terminate:  .long _thread_terminate
 
 setenv:            .long _setenv

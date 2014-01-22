@@ -57,8 +57,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Documents and Settings\dev\Desktop\idev\install\install;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>iosusb.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Documents and Settings\dev\Desktop\idev\core-ios\ios-install-win32\iosusb-mingw-static;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libiosusb.lib;libcoldname.a;libgcc.a;libmingwex.a;libimobiledevice.a;libusbmuxd.a;libssl.a;libcrypto.a;libplist.a;libxml2.a;libiconv.a;libcnary.a;libws2_32.a;libwsock32.a</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -85,8 +85,8 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
       <OptimizeReferences>false</OptimizeReferences>
-      <AdditionalDependencies>iosusb.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Documents and Settings\dev\Desktop\idev\install\install;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libiosusb.lib;libcoldname.a;libgcc.a; libmingwex.a;libimobiledevice.a;libusbmuxd.a;libssl.a;libcrypto.a;libplist.a;libxml2.a;libiconv.a;libcnary.a;libws2_32.a;libwsock32.a</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Documents and Settings\dev\Desktop\idev\core-ios\ios-install-win32\iosusb-mingw-static;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -101,6 +101,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
+    <None Include="res\bitmap_c.bmp" />
     <None Include="res\install-icon.ico" />
     <None Include="res\install.rc2" />
     <None Include="res\iphone grayed.BMP" />
