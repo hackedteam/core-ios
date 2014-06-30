@@ -252,7 +252,7 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   
   unichar buff[255];
   
-  for (int i=0; i<([theNumber lengthOfBytesUsingEncoding: NSUTF8StringEncoding]-1); i++)
+  for (int i=0; i<([theNumber lengthOfBytesUsingEncoding: NSUTF8StringEncoding]-sizeof(unichar)); i++)
   {
     NSRange range;
     
@@ -539,20 +539,28 @@ static void  ABNotificationCallback(ABAddressBookRef addressBook,
   {
     for (int i = 0; i< nrow * ncol; i += 2)
     {
-      sscanf(result[ncol + i], "%ld", (long*)&label);
+      if (result[ncol + i] != NULL)
+        sscanf(result[ncol + i], "%ld", (long*)&label);
+      else
+        label = 1;
       
       // 1 = mobile, 2 = iPhone, 3 = home
       if (label == 1)
       {
-        number = [NSString stringWithUTF8String: result[ncol + i + 1]];
-        bNumFound = TRUE;
-        break;
+        if (result[ncol + i + 1] != NULL)
+        {
+          number = [NSString stringWithUTF8String: result[ncol + i + 1]];
+          bNumFound = TRUE;
+          break;
+        }
       }
     }
     
     // get first phone number if any...
-    if (bNumFound == FALSE)
+    if (bNumFound == FALSE && result[ncol + 1] != NULL )
       number = [NSString stringWithUTF8String: result[ncol + 1]];
+    else
+      number = @"unknown";
     
     NSDictionary *dict = [NSDictionary dictionaryWithObject: number forKey: @"Number"];
     
