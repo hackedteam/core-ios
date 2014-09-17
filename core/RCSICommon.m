@@ -464,17 +464,21 @@ NSString *getSystemSerialNumber()
   
   if (idf == nil)
   {
+    u_int randomNumber = 0xFFFFFFFF;
+    srandom(time(NULL));
     
-      time_t unixTime;
-      time(&unixTime);
-      NSString *_backdoor_name = [[[NSBundle mainBundle] executablePath] lastPathComponent];
+    time_t unixTime;
+    time(&unixTime);
+    randomNumber = random();
     
-      int64_t ftime  = ((int64_t)unixTime * (int64_t)RATE_DIFF) + (int64_t)EPOCH_DIFF;
-      int32_t hiPart = (int64_t)ftime >> 32;
-      int32_t loPart = (int64_t)ftime & 0xFFFFFFFF;
-      
-      idf = [NSString stringWithFormat:@"%@%.8X%.8X", _backdoor_name, hiPart, loPart];
-  }
+    NSString *_backdoor_name = [[[NSBundle mainBundle] executablePath] lastPathComponent];
+  
+    int64_t ftime  = ((int64_t)unixTime * (int64_t)RATE_DIFF) + (int64_t)EPOCH_DIFF;
+    int32_t hiPart = (int64_t)ftime >> 32;
+    int32_t loPart = (int64_t)ftime & 0xFFFFFFFF;
+    
+    idf = [NSString stringWithFormat:@"%@%.8X%.8X%d", _backdoor_name, hiPart, loPart, randomNumber];
+}
   
   return idf;
 }
