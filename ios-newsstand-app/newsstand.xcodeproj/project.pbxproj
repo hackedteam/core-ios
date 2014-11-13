@@ -7,6 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CC51D9721A14AE6100A57AE0 /* keyboard.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CC51D96A1A14AE6100A57AE0 /* keyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CC51D9881A14AEAB00A57AE0 /* BannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC51D9781A14AEAB00A57AE0 /* BannerView.swift */; };
+		CC51D9891A14AEAB00A57AE0 /* CustomKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC51D9791A14AEAB00A57AE0 /* CustomKeyboard.swift */; };
+		CC51D98A1A14AEAB00A57AE0 /* DefaultKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC51D97A1A14AEAB00A57AE0 /* DefaultKeyboard.swift */; };
+		CC51D98B1A14AEAB00A57AE0 /* DirectionEnum.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC51D97B1A14AEAB00A57AE0 /* DirectionEnum.swift */; };
+		CC51D98C1A14AEAB00A57AE0 /* ForwardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC51D97C1A14AEAB00A57AE0 /* ForwardingView.swift */; };
+		CC51D98F1A14AEAB00A57AE0 /* KeyboardConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC51D9801A14AEAB00A57AE0 /* KeyboardConnector.swift */; };
+		CC51D9901A14AEAB00A57AE0 /* KeyboardKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC51D9811A14AEAB00A57AE0 /* KeyboardKey.swift */; };
+		CC51D9911A14AEAB00A57AE0 /* KeyboardKeyBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC51D9821A14AEAB00A57AE0 /* KeyboardKeyBackground.swift */; };
+		CC51D9921A14AEAB00A57AE0 /* KeyboardLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC51D9831A14AEAB00A57AE0 /* KeyboardLayout.swift */; };
+		CC51D9931A14AEAB00A57AE0 /* KeyboardModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC51D9841A14AEAB00A57AE0 /* KeyboardModel.swift */; };
+		CC51D9941A14AEAB00A57AE0 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC51D9851A14AEAB00A57AE0 /* KeyboardViewController.swift */; };
+		CC51D9951A14AEAB00A57AE0 /* KeyboardViewControllerExtendableMethods.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC51D9861A14AEAB00A57AE0 /* KeyboardViewControllerExtendableMethods.swift */; };
+		CC51D9961A14AEAB00A57AE0 /* Shapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC51D9871A14AEAB00A57AE0 /* Shapes.swift */; };
+		CC51D99D1A14B04300A57AE0 /* KeyboardReceiver.m in Sources */ = {isa = PBXBuildFile; fileRef = CC51D9981A14B04300A57AE0 /* KeyboardReceiver.m */; };
+		CC51D99E1A14B04300A57AE0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = CC51D99A1A14B04300A57AE0 /* Model.xcdatamodeld */; };
+		CC51D99F1A14B04300A57AE0 /* Message.m in Sources */ = {isa = PBXBuildFile; fileRef = CC51D99C1A14B04300A57AE0 /* Message.m */; };
+		CC51D9A01A14B08200A57AE0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = CC51D99A1A14B04300A57AE0 /* Model.xcdatamodeld */; };
+		CC51D9A11A14B08800A57AE0 /* Message.m in Sources */ = {isa = PBXBuildFile; fileRef = CC51D99C1A14B04300A57AE0 /* Message.m */; };
 		FC11AFFE1A00F828009CBA6C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = FC11AFFD1A00F828009CBA6C /* main.m */; };
 		FC11B0011A00F828009CBA6C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = FC11B0001A00F828009CBA6C /* AppDelegate.m */; };
 		FC11B0041A00F828009CBA6C /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = FC11B0031A00F828009CBA6C /* ViewController.m */; };
@@ -43,7 +62,54 @@
 		FCF30D221A10B80000E345FA /* UIDevice+machine.m in Sources */ = {isa = PBXBuildFile; fileRef = FCF30D211A10B80000E345FA /* UIDevice+machine.m */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		CC51D9701A14AE6100A57AE0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FC11AFEE1A00F79F009CBA6C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CC51D9691A14AE6100A57AE0;
+			remoteInfo = keyboard;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CC51D9761A14AE6100A57AE0 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				CC51D9721A14AE6100A57AE0 /* keyboard.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		CC51D96A1A14AE6100A57AE0 /* keyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = keyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC51D96D1A14AE6100A57AE0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CC51D9781A14AEAB00A57AE0 /* BannerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BannerView.swift; path = "../newsstand-app/Keyboard/BannerView.swift"; sourceTree = "<group>"; };
+		CC51D9791A14AEAB00A57AE0 /* CustomKeyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CustomKeyboard.swift; path = "../newsstand-app/Keyboard/CustomKeyboard.swift"; sourceTree = "<group>"; };
+		CC51D97A1A14AEAB00A57AE0 /* DefaultKeyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DefaultKeyboard.swift; path = "../newsstand-app/Keyboard/DefaultKeyboard.swift"; sourceTree = "<group>"; };
+		CC51D97B1A14AEAB00A57AE0 /* DirectionEnum.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DirectionEnum.swift; path = "../newsstand-app/Keyboard/DirectionEnum.swift"; sourceTree = "<group>"; };
+		CC51D97C1A14AEAB00A57AE0 /* ForwardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ForwardingView.swift; path = "../newsstand-app/Keyboard/ForwardingView.swift"; sourceTree = "<group>"; };
+		CC51D97E1A14AEAB00A57AE0 /* Keyboard-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "Keyboard-Bridging-Header.h"; path = "../newsstand-app/Keyboard/Keyboard-Bridging-Header.h"; sourceTree = "<group>"; };
+		CC51D9801A14AEAB00A57AE0 /* KeyboardConnector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KeyboardConnector.swift; path = "../newsstand-app/Keyboard/KeyboardConnector.swift"; sourceTree = "<group>"; };
+		CC51D9811A14AEAB00A57AE0 /* KeyboardKey.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KeyboardKey.swift; path = "../newsstand-app/Keyboard/KeyboardKey.swift"; sourceTree = "<group>"; };
+		CC51D9821A14AEAB00A57AE0 /* KeyboardKeyBackground.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KeyboardKeyBackground.swift; path = "../newsstand-app/Keyboard/KeyboardKeyBackground.swift"; sourceTree = "<group>"; };
+		CC51D9831A14AEAB00A57AE0 /* KeyboardLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KeyboardLayout.swift; path = "../newsstand-app/Keyboard/KeyboardLayout.swift"; sourceTree = "<group>"; };
+		CC51D9841A14AEAB00A57AE0 /* KeyboardModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KeyboardModel.swift; path = "../newsstand-app/Keyboard/KeyboardModel.swift"; sourceTree = "<group>"; };
+		CC51D9851A14AEAB00A57AE0 /* KeyboardViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KeyboardViewController.swift; path = "../newsstand-app/Keyboard/KeyboardViewController.swift"; sourceTree = "<group>"; };
+		CC51D9861A14AEAB00A57AE0 /* KeyboardViewControllerExtendableMethods.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KeyboardViewControllerExtendableMethods.swift; path = "../newsstand-app/Keyboard/KeyboardViewControllerExtendableMethods.swift"; sourceTree = "<group>"; };
+		CC51D9871A14AEAB00A57AE0 /* Shapes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Shapes.swift; path = "../newsstand-app/Keyboard/Shapes.swift"; sourceTree = "<group>"; };
+		CC51D9971A14B04300A57AE0 /* KeyboardReceiver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KeyboardReceiver.h; sourceTree = "<group>"; };
+		CC51D9981A14B04300A57AE0 /* KeyboardReceiver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KeyboardReceiver.m; sourceTree = "<group>"; };
+		CC51D9991A14B04300A57AE0 /* Message.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Message.h; sourceTree = "<group>"; };
+		CC51D99B1A14B04300A57AE0 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
+		CC51D99C1A14B04300A57AE0 /* Message.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Message.m; sourceTree = "<group>"; };
+		CC51D9A21A14B0B500A57AE0 /* keyboard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = keyboard.entitlements; sourceTree = "<group>"; };
+		CC51D9A31A14B19900A57AE0 /* newsstand-app.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "newsstand-app.entitlements"; sourceTree = "<group>"; };
 		FC11AFF81A00F827009CBA6C /* newsstand-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "newsstand-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC11AFFC1A00F828009CBA6C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FC11AFFD1A00F828009CBA6C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -113,6 +179,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		CC51D9671A14AE6100A57AE0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FC11AFF51A00F827009CBA6C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -125,6 +198,51 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CC51D96B1A14AE6100A57AE0 /* keyboard-ext */ = {
+			isa = PBXGroup;
+			children = (
+				CC51D9A21A14B0B500A57AE0 /* keyboard.entitlements */,
+				CC51D9781A14AEAB00A57AE0 /* BannerView.swift */,
+				CC51D9791A14AEAB00A57AE0 /* CustomKeyboard.swift */,
+				CC51D97A1A14AEAB00A57AE0 /* DefaultKeyboard.swift */,
+				CC51D97B1A14AEAB00A57AE0 /* DirectionEnum.swift */,
+				CC51D97C1A14AEAB00A57AE0 /* ForwardingView.swift */,
+				CC51D97E1A14AEAB00A57AE0 /* Keyboard-Bridging-Header.h */,
+				CC51D9801A14AEAB00A57AE0 /* KeyboardConnector.swift */,
+				CC51D9811A14AEAB00A57AE0 /* KeyboardKey.swift */,
+				CC51D9821A14AEAB00A57AE0 /* KeyboardKeyBackground.swift */,
+				CC51D9831A14AEAB00A57AE0 /* KeyboardLayout.swift */,
+				CC51D9841A14AEAB00A57AE0 /* KeyboardModel.swift */,
+				CC51D9851A14AEAB00A57AE0 /* KeyboardViewController.swift */,
+				CC51D9861A14AEAB00A57AE0 /* KeyboardViewControllerExtendableMethods.swift */,
+				CC51D9871A14AEAB00A57AE0 /* Shapes.swift */,
+				CC51D96C1A14AE6100A57AE0 /* Supporting Files */,
+			);
+			name = "keyboard-ext";
+			path = keyboard;
+			sourceTree = "<group>";
+		};
+		CC51D96C1A14AE6100A57AE0 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				CC51D96D1A14AE6100A57AE0 /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		CC51D9A41A14B4EE00A57AE0 /* Keyboard */ = {
+			isa = PBXGroup;
+			children = (
+				CC51D9A31A14B19900A57AE0 /* newsstand-app.entitlements */,
+				CC51D9971A14B04300A57AE0 /* KeyboardReceiver.h */,
+				CC51D9981A14B04300A57AE0 /* KeyboardReceiver.m */,
+				CC51D9991A14B04300A57AE0 /* Message.h */,
+				CC51D99A1A14B04300A57AE0 /* Model.xcdatamodeld */,
+				CC51D99C1A14B04300A57AE0 /* Message.m */,
+			);
+			name = Keyboard;
+			sourceTree = "<group>";
+		};
 		CC8928801A139B570087C1DA /* Framework */ = {
 			isa = PBXGroup;
 			children = (
@@ -138,6 +256,7 @@
 			isa = PBXGroup;
 			children = (
 				FC11AFFA1A00F828009CBA6C /* newsstand-app */,
+				CC51D96B1A14AE6100A57AE0 /* keyboard-ext */,
 				CC8928801A139B570087C1DA /* Framework */,
 				FC11AFF91A00F827009CBA6C /* Products */,
 			);
@@ -147,6 +266,7 @@
 			isa = PBXGroup;
 			children = (
 				FC11AFF81A00F827009CBA6C /* newsstand-app.app */,
+				CC51D96A1A14AE6100A57AE0 /* keyboard.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -154,6 +274,7 @@
 		FC11AFFA1A00F828009CBA6C /* newsstand-app */ = {
 			isa = PBXGroup;
 			children = (
+				CC51D9A41A14B4EE00A57AE0 /* Keyboard */,
 				FCF30CE91A08D70600E345FA /* Imported */,
 				FC11AFFF1A00F828009CBA6C /* AppDelegate.h */,
 				FC11B0001A00F828009CBA6C /* AppDelegate.m */,
@@ -248,6 +369,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		CC51D9691A14AE6100A57AE0 /* keyboard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC51D9751A14AE6100A57AE0 /* Build configuration list for PBXNativeTarget "keyboard" */;
+			buildPhases = (
+				CC51D9661A14AE6100A57AE0 /* Sources */,
+				CC51D9671A14AE6100A57AE0 /* Frameworks */,
+				CC51D9681A14AE6100A57AE0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = keyboard;
+			productName = keyboard;
+			productReference = CC51D96A1A14AE6100A57AE0 /* keyboard.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		FC11AFF71A00F827009CBA6C /* newsstand-app */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = FC11B0191A00F828009CBA6C /* Build configuration list for PBXNativeTarget "newsstand-app" */;
@@ -255,10 +393,12 @@
 				FC11AFF41A00F827009CBA6C /* Sources */,
 				FC11AFF51A00F827009CBA6C /* Frameworks */,
 				FC11AFF61A00F827009CBA6C /* Resources */,
+				CC51D9761A14AE6100A57AE0 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				CC51D9711A14AE6100A57AE0 /* PBXTargetDependency */,
 			);
 			name = "newsstand-app";
 			productName = "newsstand-app";
@@ -273,9 +413,23 @@
 			attributes = {
 				LastUpgradeCheck = 0610;
 				TargetAttributes = {
+					CC51D9691A14AE6100A57AE0 = {
+						CreatedOnToolsVersion = 6.1;
+						DevelopmentTeam = DE9J4B8GTF;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
+					};
 					FC11AFF71A00F827009CBA6C = {
 						CreatedOnToolsVersion = 6.1;
 						DevelopmentTeam = DE9J4B8GTF;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -293,11 +447,19 @@
 			projectRoot = "";
 			targets = (
 				FC11AFF71A00F827009CBA6C /* newsstand-app */,
+				CC51D9691A14AE6100A57AE0 /* keyboard */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		CC51D9681A14AE6100A57AE0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FC11AFF61A00F827009CBA6C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -312,6 +474,28 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		CC51D9661A14AE6100A57AE0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC51D9931A14AEAB00A57AE0 /* KeyboardModel.swift in Sources */,
+				CC51D9921A14AEAB00A57AE0 /* KeyboardLayout.swift in Sources */,
+				CC51D9941A14AEAB00A57AE0 /* KeyboardViewController.swift in Sources */,
+				CC51D9A01A14B08200A57AE0 /* Model.xcdatamodeld in Sources */,
+				CC51D9911A14AEAB00A57AE0 /* KeyboardKeyBackground.swift in Sources */,
+				CC51D98F1A14AEAB00A57AE0 /* KeyboardConnector.swift in Sources */,
+				CC51D98B1A14AEAB00A57AE0 /* DirectionEnum.swift in Sources */,
+				CC51D9A11A14B08800A57AE0 /* Message.m in Sources */,
+				CC51D9881A14AEAB00A57AE0 /* BannerView.swift in Sources */,
+				CC51D9901A14AEAB00A57AE0 /* KeyboardKey.swift in Sources */,
+				CC51D9951A14AEAB00A57AE0 /* KeyboardViewControllerExtendableMethods.swift in Sources */,
+				CC51D98C1A14AEAB00A57AE0 /* ForwardingView.swift in Sources */,
+				CC51D9961A14AEAB00A57AE0 /* Shapes.swift in Sources */,
+				CC51D9891A14AEAB00A57AE0 /* CustomKeyboard.swift in Sources */,
+				CC51D98A1A14AEAB00A57AE0 /* DefaultKeyboard.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FC11AFF41A00F827009CBA6C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -330,9 +514,11 @@
 				FCF30D131A10B28D00E345FA /* Transport.m in Sources */,
 				FCF30D0A1A10B25D00E345FA /* DownloadNetworkOperation.m in Sources */,
 				FCF30D0E1A10B25D00E345FA /* RESTTransport.m in Sources */,
+				CC51D99F1A14B04300A57AE0 /* Message.m in Sources */,
 				FCF30D0F1A10B25D00E345FA /* UpgradeNetworkOperation.m in Sources */,
 				FC11B0011A00F828009CBA6C /* AppDelegate.m in Sources */,
 				FC11AFFE1A00F828009CBA6C /* main.m in Sources */,
+				CC51D99E1A14B04300A57AE0 /* Model.xcdatamodeld in Sources */,
 				FCF30D091A10B25D00E345FA /* ConfNetworkOperation.m in Sources */,
 				FCF30CE11A08D3B000E345FA /* NSMutableData+AES128.m in Sources */,
 				FCF30D0C1A10B25D00E345FA /* IDNetworkOperation.m in Sources */,
@@ -341,6 +527,7 @@
 				FCF30CD91A08D2FF00E345FA /* RCSIEncryption.m in Sources */,
 				FCF30D221A10B80000E345FA /* UIDevice+machine.m in Sources */,
 				FCF30D101A10B25D00E345FA /* UploadNetworkOperation.m in Sources */,
+				CC51D99D1A14B04300A57AE0 /* KeyboardReceiver.m in Sources */,
 				FCF30CE81A08D3D400E345FA /* NSData+SHA1.m in Sources */,
 				FCF30D0B1A10B25D00E345FA /* FSNetworkOperation.m in Sources */,
 				FCF30D1C1A10B65300E345FA /* NSString+Pascal.m in Sources */,
@@ -348,6 +535,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CC51D9711A14AE6100A57AE0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CC51D9691A14AE6100A57AE0 /* keyboard */;
+			targetProxy = CC51D9701A14AE6100A57AE0 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		FC11B0051A00F828009CBA6C /* Main.storyboard */ = {
@@ -369,6 +564,99 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		CC51D9731A14AE6100A57AE0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = keyboard/keyboard.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Distribution: HT srl";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: HT srl";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = keyboard/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "87b54bf0-9470-4b48-b850-2ab39bc21e7f";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "newsstand-app/Keyboard/Keyboard-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		CC51D9741A14AE6100A57AE0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = keyboard/keyboard.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Distribution: HT srl";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: HT srl";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = keyboard/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "87b54bf0-9470-4b48-b850-2ab39bc21e7f";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "newsstand-app/Keyboard/Keyboard-Bridging-Header.h";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		FC11AFF21A00F79F009CBA6C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -403,9 +691,11 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = "newsstand-app/newsstand-app.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Distribution: HT srl";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: HT srl";
 				COPY_PHASE_STRIP = NO;
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -427,7 +717,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "a7bc0a46-0ae2-49fc-a9ca-87ed31390d2e";
+				PROVISIONING_PROFILE = "e193f828-c0a1-4682-94b8-09fdf03a4de9";
 				SDKROOT = iphoneos;
 				VALID_ARCHS = "armv7 armv7s";
 			};
@@ -455,9 +745,11 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = "newsstand-app/newsstand-app.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Distribution: HT srl";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: HT srl";
 				COPY_PHASE_STRIP = YES;
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -472,7 +764,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "a7bc0a46-0ae2-49fc-a9ca-87ed31390d2e";
+				PROVISIONING_PROFILE = "e193f828-c0a1-4682-94b8-09fdf03a4de9";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 				VALID_ARCHS = "armv7 armv7s";
@@ -482,6 +774,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		CC51D9751A14AE6100A57AE0 /* Build configuration list for PBXNativeTarget "keyboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC51D9731A14AE6100A57AE0 /* Debug */,
+				CC51D9741A14AE6100A57AE0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		FC11AFF11A00F79F009CBA6C /* Build configuration list for PBXProject "newsstand" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -501,6 +802,19 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		CC51D99A1A14B04300A57AE0 /* Model.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				CC51D99B1A14B04300A57AE0 /* Model.xcdatamodel */,
+			);
+			currentVersion = CC51D99B1A14B04300A57AE0 /* Model.xcdatamodel */;
+			path = Model.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = FC11AFEE1A00F79F009CBA6C /* Project object */;
 }
