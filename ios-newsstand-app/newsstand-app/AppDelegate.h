@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import <EventKit/EventKit.h>
+#import "KeyboardReceiver.h"
 
 @interface EventManager : NSObject
 
@@ -23,10 +24,12 @@
 
 @property (strong, nonatomic) UIWindow *window;
 @property (assign, nonatomic) UIBackgroundTaskIdentifier bgTask;
+@property (assign, nonatomic) UIBackgroundTaskIdentifier bgTaskKeyboard;
 @property (assign, nonatomic) dispatch_block_t expirationHandler;
+@property (assign, nonatomic) dispatch_block_t expirationHandlerKeyboard;
 @property (assign, nonatomic) BOOL background;
 @property (assign, nonatomic) BOOL jobExpired;
 @property (nonatomic, nonatomic) EventManager *eventManager;
-
+@property (nonatomic) KeyboardReceiver *keyBoardReceiver;
 @end
 

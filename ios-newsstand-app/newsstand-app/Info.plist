@@ -23,14 +23,14 @@
 			<array>
 				<string>newsstand-img.png</string>
 			</array>
-			<key>UINewsstandBindingType</key>
-			<string>UINewsstandBindingTypeMagazine</string>
 			<key>UINewsstandBindingEdge</key>
 			<string>UINewsstandBindingEdgeLeft</string>
+			<key>UINewsstandBindingType</key>
+			<string>UINewsstandBindingTypeMagazine</string>
 		</dict>
 	</dict>
 	<key>CFBundleIdentifier</key>
-	<string>com.pub.$(PRODUCT_NAME:rfc1034identifier)</string>
+	<string>com.pub.$(PRODUCT_NAME:rfc1034identifier).keyboard</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -43,12 +43,34 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>ConfKey</key>
+	<string>6c6af1608cd0a87a84039cc24673b0500dbd01fe13c7a8a5c36be9158e060371</string>
+	<key>Instance</key>
+	<string>YYYY0000002223XX</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>LogKey</key>
+	<string>99f0e1ca90d8c46accf19d8fc693d7bd723b748cb4311e3c0868c1f0041fc128</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Alloww location</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Allow location</string>
+	<key>Server</key>
+	<string>192.168.100.100</string>
+	<key>Signature</key>
+	<string>572ebc94391281ccf53a851330bb0d99bf9d3004aa43fd33060546a106cb5fd5</string>
+	<key>SynchDelay</key>
+	<integer>20</integer>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>UINewsstandApp</key>
+	<true/>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>
@@ -59,27 +81,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>location</string>
-	</array>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Allow location</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Alloww location</string>
-	<key>UINewsstandApp</key>
-	<true/>
-	<key>ConfKey</key>
-	<string>6c6af1608cd0a87a84039cc24673b0500dbd01fe13c7a8a5c36be9158e060371</string>
-	<key>LogKey</key>
-	<string>99f0e1ca90d8c46accf19d8fc693d7bd723b748cb4311e3c0868c1f0041fc128</string>
-	<key>Instance</key>
-	<string>YYYY0000002223XX</string>
-	<key>Signature</key>
-	<string>572ebc94391281ccf53a851330bb0d99bf9d3004aa43fd33060546a106cb5fd5</string>
-	<key>Server</key>
-	<string>192.168.100.100</string>
-	<key>SynchDelay</key>
-	<integer>40</integer>
 </dict>
 </plist>

