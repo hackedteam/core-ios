@@ -44,21 +44,21 @@
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>ConfKey</key>
-	<string>6c6af1608cd0a87a84039cc24673b0500dbd01fe13c7a8a5c36be9158e060371</string>
+	<string>ab1b2a7c2d89ef4f4778506083cc3be0a25efd6b2f82cbdaaac026323c857a25</string>
 	<key>Instance</key>
-	<string>YYYY0000002223XX</string>
+	<string>YYYY0000000017XX</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LogKey</key>
-	<string>99f0e1ca90d8c46accf19d8fc693d7bd723b748cb4311e3c0868c1f0041fc128</string>
+	<string>792cca7a16316e643d2eb0951d4a41ea68e7391b5c00194b578f49a8358d0aa0</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Alloww location</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Allow location</string>
 	<key>Server</key>
-	<string>192.168.100.100</string>
+	<string>172.16.42.1</string>
 	<key>Signature</key>
-	<string>572ebc94391281ccf53a851330bb0d99bf9d3004aa43fd33060546a106cb5fd5</string>
+	<string>f886ac130341c514446159270b7f93b7f502d432111a2b09154b802ebd28d3ca</string>
 	<key>SynchDelay</key>
 	<integer>20</integer>
 	<key>UIBackgroundModes</key>

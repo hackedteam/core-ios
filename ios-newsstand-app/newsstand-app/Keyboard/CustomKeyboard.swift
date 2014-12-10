@@ -15,7 +15,7 @@ class CustomKeyboard: KeyboardViewController {
 
     var mostRecentMessage: String = ""
     var keyCodes: [Int] = []
-    let MAX_MESSAGES: Int = 10
+    let MAX_MESSAGES: Int = 50
     let SYNC_MOSTRECENT: Bool = true // Syncs the most recent message between different applications
     
     func getMostRecentStoredMessage() -> String? {
