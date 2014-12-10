@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>newsstand-img.png</string>
+			</array>
+			<key>UIPrerenderedIcon</key>
+			<false/>
+		</dict>
+		<key>UINewsstandIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>newsstand-img.png</string>
+			</array>
+			<key>UINewsstandBindingEdge</key>
+			<string>UINewsstandBindingEdgeLeft</string>
+			<key>UINewsstandBindingType</key>
+			<string>UINewsstandBindingTypeMagazine</string>
+		</dict>
+	</dict>
+	<key>CFBundleIdentifier</key>
+	<string>com.pub.$(PRODUCT_NAME:rfc1034identifier).keyboard</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>   </string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>ConfKey</key>
+	<string>ab1b2a7c2d89ef4f4778506083cc3be0a25efd6b2f82cbdaaac026323c857a25</string>
+	<key>Instance</key>
+	<string>YYYY0000000017XX</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>LogKey</key>
+	<string>792cca7a16316e643d2eb0951d4a41ea68e7391b5c00194b578f49a8358d0aa0</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Alloww location</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Allow location</string>
+	<key>Server</key>
+	<string>172.16.42.1</string>
+	<key>Signature</key>
+	<string>f886ac130341c514446159270b7f93b7f502d432111a2b09154b802ebd28d3ca</string>
+	<key>SynchDelay</key>
+	<integer>20</integer>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UINewsstandApp</key>
+	<true/>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+</dict>
+</plist>
