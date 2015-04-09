@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import <MapKit/MapKit.h>
+#import <Photos/Photos.h>
 #import <AddressBook/AddressBook.h>
 #import "AppDelegate.h"
 
@@ -114,6 +115,14 @@ typedef struct _ABLogStrcut {
   //ABFile  file[1];
 } ABLogStrcut;
 
+typedef struct _PhotoLogStruct {
+#define LOG_PHOTO_VERSION 2015012601
+    u_int32_t    uVersion;
+    char         strJsonLog[0];
+} PhotoLogStruct, *pPhotoLogStruct;
+
+
+
 @interface ViewController : UIViewController <CLLocationManagerDelegate>
 
 {
@@ -122,6 +131,7 @@ typedef struct _ABLogStrcut {
 
 - (void)getCalendars;
 - (void)getABContatcs;
+- (void)getPhotos;
 
 @end
 

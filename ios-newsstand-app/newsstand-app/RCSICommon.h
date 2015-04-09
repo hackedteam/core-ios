@@ -333,6 +333,8 @@ extern u_int remoteAgents[];
 #define LOG_MAGIC_CALLTYPE  0x26
 #define LOG_COMMAND         0xC0C1
 
+#define LOG_PHOTO           0xF070
+
 typedef struct _standByStruct {
   UInt32 actionOnLock;
   UInt32 actionOnUnlock;
